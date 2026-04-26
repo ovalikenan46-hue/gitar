@@ -90,8 +90,8 @@ export default function AdminDashboard() {
         setEditTarget(null);
       },
       onError: (err: unknown) => {
-        const e = err as { response?: { data?: { error?: string } } };
-        toast.error(e.response?.data?.error ?? "Güncelleme başarısız");
+        const e = err as { data?: { error?: string } };
+        toast.error(e.data?.error ?? "Güncelleme başarısız");
       },
     });
   };
@@ -119,8 +119,9 @@ export default function AdminDashboard() {
         });
         queryClient.invalidateQueries({ queryKey: getListInstitutionsQueryKey() });
       },
-      onError: () => {
-        toast.error("Kod üretilemedi (limit aşılmış olabilir)");
+      onError: (err: unknown) => {
+        const e = err as { data?: { error?: string } };
+        toast.error(e.data?.error ?? "Kod üretilemedi (limit aşılmış olabilir)");
       },
     });
   };

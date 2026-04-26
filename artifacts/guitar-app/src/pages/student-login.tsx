@@ -31,9 +31,9 @@ export default function StudentLogin() {
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     login.mutate({ data: values }, {
-      onSuccess: (data) => {
+      onSuccess: async (data) => {
         setToken(data.token);
-        queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
+        await queryClient.refetchQueries({ queryKey: getGetMeQueryKey() });
         setLocation("/student");
       },
     });

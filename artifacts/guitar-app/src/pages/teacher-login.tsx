@@ -63,9 +63,9 @@ export default function TeacherLogin() {
     login.mutate(
       { data: { code: validatedCode.code, firstName: values.firstName, lastName: values.lastName } },
       {
-        onSuccess: (data) => {
+        onSuccess: async (data) => {
           setToken(data.token);
-          queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
+          await queryClient.refetchQueries({ queryKey: getGetMeQueryKey() });
           setLocation("/teacher");
         },
         onError: () => {

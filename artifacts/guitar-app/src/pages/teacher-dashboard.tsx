@@ -28,6 +28,7 @@ import {
   CheckCircle2,
   Circle,
   Plus,
+  AlertCircle,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { pageVariants, pageTransition } from "@/lib/animations";
@@ -44,6 +45,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+
+interface ApiErr {
+  data?: { error?: string };
+}
+function getApiError(err: unknown, fallback: string): string {
+  return (err as ApiErr)?.data?.error ?? fallback;
+}
 
 const classSchema = z.object({
   name: z.string().min(2, "Sınıf adı gerekli"),
@@ -79,9 +87,12 @@ export default function TeacherDashboard() {
   const [createOpen, setCreateOpen] = useState(false);
   const [expandTarget, setExpandTarget] = useState<ClassData | null>(null);
 
+  const classList = (classes as ClassData[] | undefined) ?? [];
+  const totalUsedCapacity = classList.reduce((acc, c) => acc + (c.studentCapacity ?? 0), 0);
+
   const form = useForm<z.infer<typeof classSchema>>({
     resolver: zodResolver(classSchema),
-    defaultValues: { name: "", studentCount: 10 },
+    defaultValues: { name: "", studentCount: 5 },
   });
 
   const expandForm = useForm<z.infer<typeof expandSchema>>({
@@ -94,14 +105,13 @@ export default function TeacherDashboard() {
       { data: values },
       {
         onSuccess: () => {
-          toast.success(`Sınıf oluşturuldu — ${values.studentCount} öğrenci kodu hazır`);
+          toast.success(`"${values.name}" sınıfı oluşturuldu — ${values.studentCount} öğrenci kodu hazır`);
           queryClient.invalidateQueries({ queryKey: getListMyClassesQueryKey() });
           setCreateOpen(false);
-          form.reset({ name: "", studentCount: 10 });
+          form.reset({ name: "", studentCount: 5 });
         },
-        onError: (err: unknown) => {
-          const e = err as { response?: { data?: { error?: string } } };
-          toast.error(e.response?.data?.error ?? "Sınıf oluşturulamadı");
+        onError: (err) => {
+          toast.error(getApiError(err, "Sınıf oluşturulamadı"), { duration: 6000 });
         },
       },
     );
@@ -118,9 +128,8 @@ export default function TeacherDashboard() {
           setExpandTarget(null);
           expandForm.reset({ additional: 5 });
         },
-        onError: (err: unknown) => {
-          const e = err as { response?: { data?: { error?: string } } };
-          toast.error(e.response?.data?.error ?? "Genişletme başarısız");
+        onError: (err) => {
+          toast.error(getApiError(err, "Genişletme başarısız"), { duration: 6000 });
         },
       },
     );
@@ -133,6 +142,9 @@ export default function TeacherDashboard() {
         onSuccess: () => {
           toast.success("Yeni seviye açıldı! 🎉");
           queryClient.invalidateQueries({ queryKey: getListMyClassesQueryKey() });
+        },
+        onError: (err) => {
+          toast.error(getApiError(err, "Seviye açılamadı"));
         },
       },
     );
@@ -151,23 +163,17 @@ export default function TeacherDashboard() {
     const text = `${className} sınıfı için Gitar Öğreniyorum öğrenci kodun: ${code}`;
     const nav = navigator as Navigator & { share?: (data: { title?: string; text?: string }) => Promise<void> };
     if (nav.share) {
-      try {
-        await nav.share({ title: "Öğrenci Kodu", text });
-        return;
-      } catch {
-        // ignore
-      }
+      try { await nav.share({ title: "Öğrenci Kodu", text }); return; } catch { /* ignore */ }
     }
     try {
       await navigator.clipboard.writeText(text);
       toast.success("Paylaşım metni kopyalandı");
-    } catch {
-      toast.error("Paylaşılamadı");
-    }
+    } catch { toast.error("Paylaşılamadı"); }
   };
 
   const handleLogout = () => {
     clearToken();
+    queryClient.clear();
     setLocation("/");
   };
 
@@ -189,6 +195,7 @@ export default function TeacherDashboard() {
       className="min-h-screen bg-background p-4 sm:p-8"
     >
       <div className="max-w-5xl mx-auto space-y-8">
+        {/* Header */}
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/50 p-6 rounded-3xl border border-white backdrop-blur-xl shadow-sm">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center">
@@ -199,12 +206,21 @@ export default function TeacherDashboard() {
               <p className="text-muted-foreground">{me?.institutionName}</p>
             </div>
           </div>
-          <Button variant="ghost" onClick={handleLogout} className="rounded-xl">
-            <LogOut className="w-4 h-4 mr-2" /> Çıkış
-          </Button>
+          <div className="flex items-center gap-3">
+            {totalUsedCapacity > 0 && (
+              <div className="bg-primary/8 rounded-2xl px-4 py-2 text-center">
+                <p className="text-xs text-muted-foreground">Toplam öğrenci kotası</p>
+                <p className="font-bold text-primary">{totalUsedCapacity} kullanılıyor</p>
+              </div>
+            )}
+            <Button variant="ghost" onClick={handleLogout} className="rounded-xl">
+              <LogOut className="w-4 h-4 mr-2" /> Çıkış
+            </Button>
+          </div>
         </header>
 
-        <div className="flex items-center justify-between mt-8">
+        {/* Class list header */}
+        <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold">Sınıflarım</h2>
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
             <DialogTrigger asChild>
@@ -215,12 +231,18 @@ export default function TeacherDashboard() {
             <DialogContent className="sm:max-w-md rounded-3xl">
               <DialogHeader>
                 <DialogTitle>Yeni Sınıf Oluştur</DialogTitle>
-                <DialogDescription>
-                  Sınıf kapasitesi kadar öğrenci kodu otomatik üretilir.
+                <DialogDescription asChild>
+                  <div className="space-y-2">
+                    <p>Sınıf kapasitesi kadar öğrenci kodu otomatik üretilir ve kurum kotanızdan düşülür.</p>
+                    <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl p-3 text-amber-800 text-sm">
+                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                      <span>Öğrenci sayısı kurumunuzun kalan kotasını aşamaz. Kota yetersizse yöneticinizden limit artırmasını isteyin.</span>
+                    </div>
+                  </div>
                 </DialogDescription>
               </DialogHeader>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleCreateClass)} className="space-y-4">
+                <form onSubmit={form.handleSubmit(handleCreateClass)} className="space-y-4 mt-2">
                   <FormField
                     control={form.control}
                     name="name"
@@ -228,7 +250,7 @@ export default function TeacherDashboard() {
                       <FormItem>
                         <FormLabel>Sınıf Adı</FormLabel>
                         <FormControl>
-                          <Input placeholder="Örn: 5/A" className="rounded-xl" {...field} />
+                          <Input placeholder="Örn: 5/A" className="rounded-xl" autoFocus {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -243,13 +265,22 @@ export default function TeacherDashboard() {
                         <FormControl>
                           <Input type="number" min={1} className="rounded-xl" {...field} />
                         </FormControl>
+                        <p className="text-xs text-muted-foreground">Bu kadar öğrenci kodu oluşturulacak</p>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  <DialogFooter className="mt-6">
-                    <Button type="submit" className="w-full rounded-xl" disabled={createClass.isPending}>
-                      {createClass.isPending ? "Oluşturuluyor..." : "Oluştur"}
+                  <DialogFooter className="mt-4">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="rounded-xl"
+                      onClick={() => setCreateOpen(false)}
+                    >
+                      İptal
+                    </Button>
+                    <Button type="submit" className="rounded-xl flex-1" disabled={createClass.isPending}>
+                      {createClass.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Oluşturuluyor...</> : "Oluştur"}
                     </Button>
                   </DialogFooter>
                 </form>
@@ -258,8 +289,9 @@ export default function TeacherDashboard() {
           </Dialog>
         </div>
 
+        {/* Classes grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {(classes as ClassData[] | undefined)?.map((cls) => (
+          {classList.map((cls) => (
             <Card key={cls.id} className="rounded-3xl border-none shadow-md overflow-hidden bg-white/80 backdrop-blur-sm">
               <CardHeader className="bg-gradient-to-br from-primary/5 to-transparent pb-4">
                 <div className="flex justify-between items-start">
@@ -273,21 +305,23 @@ export default function TeacherDashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-6 space-y-4">
+                {/* Capacity counters */}
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div className="bg-primary/5 rounded-2xl p-3">
                     <p className="text-xs text-muted-foreground">Toplam</p>
                     <p className="text-xl font-extrabold text-primary">{cls.studentCapacity}</p>
                   </div>
                   <div className="bg-secondary/10 rounded-2xl p-3">
-                    <p className="text-xs text-muted-foreground">Kullanılan</p>
+                    <p className="text-xs text-muted-foreground">Kayıtlı</p>
                     <p className="text-xl font-extrabold text-secondary-foreground">{cls.usedStudentCount}</p>
                   </div>
                   <div className="bg-accent/10 rounded-2xl p-3">
-                    <p className="text-xs text-muted-foreground">Kalan</p>
-                    <p className="text-xl font-extrabold text-accent-foreground">{cls.remainingSlots}</p>
+                    <p className="text-xs text-muted-foreground">Boş Kod</p>
+                    <p className="text-xl font-extrabold text-accent-foreground">{cls.unusedStudentCodes}</p>
                   </div>
                 </div>
 
+                {/* Student codes header */}
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-semibold text-muted-foreground">Öğrenci Kodları</p>
                   <Button
@@ -304,6 +338,7 @@ export default function TeacherDashboard() {
                   </Button>
                 </div>
 
+                {/* Code list */}
                 {cls.studentCodes.length === 0 ? (
                   <div className="p-4 bg-muted/60 rounded-2xl text-center text-sm text-muted-foreground">
                     Henüz kod yok
@@ -330,7 +365,6 @@ export default function TeacherDashboard() {
                               className={`font-mono font-bold tracking-wider text-sm block ${
                                 sc.used ? "line-through" : "text-foreground"
                               }`}
-                              title={sc.code}
                             >
                               {sc.code}
                             </span>
@@ -343,22 +377,14 @@ export default function TeacherDashboard() {
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
                           <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-7 w-7 rounded-lg"
-                            onClick={() => copyCode(sc.code)}
-                            title="Kopyala"
-                            disabled={sc.used}
+                            size="icon" variant="ghost" className="h-7 w-7 rounded-lg"
+                            onClick={() => copyCode(sc.code)} title="Kopyala" disabled={sc.used}
                           >
                             <Copy className="w-3.5 h-3.5" />
                           </Button>
                           <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-7 w-7 rounded-lg"
-                            onClick={() => shareCode(cls.name, sc.code)}
-                            title="Paylaş"
-                            disabled={sc.used}
+                            size="icon" variant="ghost" className="h-7 w-7 rounded-lg"
+                            onClick={() => shareCode(cls.name, sc.code)} title="Paylaş" disabled={sc.used}
                           >
                             <Share2 className="w-3.5 h-3.5" />
                           </Button>
@@ -380,32 +406,32 @@ export default function TeacherDashboard() {
               </CardFooter>
             </Card>
           ))}
-          {classes?.length === 0 && (
+
+          {classList.length === 0 && (
             <div className="col-span-full py-16 text-center">
               <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
                 <School className="w-10 h-10 text-muted-foreground" />
               </div>
               <h3 className="text-xl font-medium text-foreground">Henüz sınıfınız yok</h3>
-              <p className="text-muted-foreground mt-2">İlk sınıfınızı oluşturarak başlayın.</p>
+              <p className="text-muted-foreground mt-2">İlk sınıfınızı oluşturmak için "Yeni Sınıf" butonuna tıklayın.</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Expand class modal */}
+      {/* Expand modal */}
       <Dialog open={expandTarget !== null} onOpenChange={(o) => !o && setExpandTarget(null)}>
         <DialogContent className="sm:max-w-md rounded-3xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <KeyRound className="w-5 h-5 text-primary" />
-              Ek Öğrenci Ekle
+              <KeyRound className="w-5 h-5 text-primary" /> Ek Öğrenci Ekle
             </DialogTitle>
             <DialogDescription>
               {expandTarget && (
-                <>
+                <span>
                   <span className="font-semibold text-foreground">{expandTarget.name}</span> sınıfına yeni
-                  öğrenci kontenjanı ekleyin. Eklediğiniz sayı kadar yeni kod üretilecek.
-                </>
+                  öğrenci kontenjanı ekleyin. Kurum kotanızdan düşülür.
+                </span>
               )}
             </DialogDescription>
           </DialogHeader>
@@ -424,13 +450,8 @@ export default function TeacherDashboard() {
                   </FormItem>
                 )}
               />
-              <DialogFooter className="mt-6 flex flex-row gap-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="rounded-xl"
-                  onClick={() => setExpandTarget(null)}
-                >
+              <DialogFooter className="flex flex-row gap-2">
+                <Button type="button" variant="ghost" className="rounded-xl" onClick={() => setExpandTarget(null)}>
                   İptal
                 </Button>
                 <Button type="submit" className="flex-1 rounded-xl" disabled={expandClass.isPending}>

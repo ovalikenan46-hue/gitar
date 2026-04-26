@@ -23,9 +23,9 @@ export default function Landing() {
   const handleAdminSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     adminLogin.mutate({ data: { password: adminPassword } }, {
-      onSuccess: (data) => {
+      onSuccess: async (data) => {
         setToken(data.token);
-        queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
+        await queryClient.refetchQueries({ queryKey: getGetMeQueryKey() });
         setAdminOpen(false);
         setLocation("/admin");
       },

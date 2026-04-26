@@ -11,7 +11,7 @@ interface ProtectedProps {
 
 export function Protected({ role, children }: ProtectedProps) {
   const [, setLocation] = useLocation();
-  const { data: user, isLoading, isError } = useGetMe({
+  const { data: user, isLoading, isFetching, isError } = useGetMe({
     query: {
       queryKey: getGetMeQueryKey(),
       retry: false,
@@ -20,18 +20,18 @@ export function Protected({ role, children }: ProtectedProps) {
     },
   });
 
-  useEffect(() => {
-    if (isLoading) return;
-    if (isError || !user) {
-      setLocation("/");
-      return;
-    }
-    if (role && user.role !== role) {
-      setLocation("/");
-    }
-  }, [isLoading, isError, user, role, setLocation]);
+  const notAuthorized =
+    !isLoading &&
+    !isFetching &&
+    (isError || !user || (role !== undefined && user.role !== role));
 
-  if (isLoading) {
+  useEffect(() => {
+    if (notAuthorized) {
+      setLocation("/");
+    }
+  }, [notAuthorized, setLocation]);
+
+  if (isLoading || isFetching) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -39,8 +39,7 @@ export function Protected({ role, children }: ProtectedProps) {
     );
   }
 
-  if (isError || !user) return null;
-  if (role && user.role !== role) return null;
+  if (notAuthorized) return null;
 
   return <>{children}</>;
 }
