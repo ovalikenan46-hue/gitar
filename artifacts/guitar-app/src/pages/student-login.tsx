@@ -2,7 +2,8 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLocation } from "wouter";
-import { useStudentLogin } from "@workspace/api-client-react";
+import { useStudentLogin, getGetMeQueryKey } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { setToken } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,7 @@ const formSchema = z.object({
 
 export default function StudentLogin() {
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
   const login = useStudentLogin();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -31,6 +33,7 @@ export default function StudentLogin() {
     login.mutate({ data: values }, {
       onSuccess: (data) => {
         setToken(data.token);
+        queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
         setLocation("/student");
       },
     });

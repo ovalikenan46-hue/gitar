@@ -3,7 +3,8 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLocation } from "wouter";
-import { useTeacherLogin, useCheckInviteCode } from "@workspace/api-client-react";
+import { useTeacherLogin, useCheckInviteCode, getGetMeQueryKey } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { setToken } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,7 @@ const identitySchema = z.object({
 
 export default function TeacherLogin() {
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
   const checkCode = useCheckInviteCode();
   const login = useTeacherLogin();
   const [validatedCode, setValidatedCode] = useState<{ code: string; institutionName: string } | null>(null);
@@ -63,6 +65,7 @@ export default function TeacherLogin() {
       {
         onSuccess: (data) => {
           setToken(data.token);
+          queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
           setLocation("/teacher");
         },
         onError: () => {

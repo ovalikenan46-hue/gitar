@@ -375,16 +375,18 @@ export default function AdminDashboard() {
             <DialogTitle className="flex items-center gap-2 text-destructive">
               <Trash2 className="w-5 h-5" /> Kurumu Sil
             </DialogTitle>
-            <DialogDescription className="pt-2 space-y-2">
-              <span className="block">
-                <span className="font-semibold text-foreground">{deleteTarget?.name}</span> kurumunu ve buna bağlı tüm verileri silmek üzeresiniz:
-              </span>
-              <ul className="list-disc list-inside text-sm space-y-1">
-                <li>Tüm öğretmen kodları ve öğretmen hesapları</li>
-                <li>Tüm sınıflar ve öğrenci kodları</li>
-                <li>Tüm öğrenci hesapları</li>
-              </ul>
-              <span className="block font-semibold text-destructive">Bu işlem geri alınamaz.</span>
+            <DialogDescription asChild>
+              <div className="pt-2 space-y-3 text-sm text-muted-foreground">
+                <p>
+                  <span className="font-semibold text-foreground">{deleteTarget?.name}</span> kurumunu ve buna bağlı tüm verileri silmek üzeresiniz:
+                </p>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Tüm öğretmen kodları ve öğretmen hesapları</li>
+                  <li>Tüm sınıflar ve öğrenci kodları</li>
+                  <li>Tüm öğrenci hesapları</li>
+                </ul>
+                <p className="font-semibold text-destructive">Bu işlem geri alınamaz.</p>
+              </div>
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex flex-row gap-2 mt-4">

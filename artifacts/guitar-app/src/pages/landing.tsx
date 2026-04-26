@@ -7,9 +7,10 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { MusicBg, TrebleClef, BassClef } from "@/components/music-bg";
-import { useAdminLogin } from "@workspace/api-client-react";
+import { useAdminLogin, getGetMeQueryKey } from "@workspace/api-client-react";
 import { setToken } from "@/lib/auth";
 import { useLocation } from "wouter";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 export default function Landing() {
@@ -17,12 +18,14 @@ export default function Landing() {
   const [adminPassword, setAdminPassword] = useState("");
   const adminLogin = useAdminLogin();
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
 
   const handleAdminSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     adminLogin.mutate({ data: { password: adminPassword } }, {
       onSuccess: (data) => {
         setToken(data.token);
+        queryClient.invalidateQueries({ queryKey: getGetMeQueryKey() });
         setAdminOpen(false);
         setLocation("/admin");
       },

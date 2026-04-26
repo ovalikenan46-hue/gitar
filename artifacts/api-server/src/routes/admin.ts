@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, institutionsTable, usersTable, teacherCodesTable, classesTable } from "@workspace/db";
+import { db, institutionsTable, usersTable, teacherCodesTable, classesTable, studentCodesTable } from "@workspace/db";
 import { eq, and, isNull, count } from "drizzle-orm";
 import { CreateInstitutionBody, UpdateInstitutionLimitsBody } from "@workspace/api-zod";
 import { requireAuth, generateInviteCode } from "../lib/auth";

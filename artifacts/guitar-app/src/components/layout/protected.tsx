@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useGetMe, getGetMeQueryKey } from "@workspace/api-client-react";
 import type { UserRole } from "@workspace/api-client-react";
@@ -15,8 +15,21 @@ export function Protected({ role, children }: ProtectedProps) {
     query: {
       queryKey: getGetMeQueryKey(),
       retry: false,
+      staleTime: 0,
+      refetchOnMount: "always",
     },
   });
+
+  useEffect(() => {
+    if (isLoading) return;
+    if (isError || !user) {
+      setLocation("/");
+      return;
+    }
+    if (role && user.role !== role) {
+      setLocation("/");
+    }
+  }, [isLoading, isError, user, role, setLocation]);
 
   if (isLoading) {
     return (
@@ -26,15 +39,8 @@ export function Protected({ role, children }: ProtectedProps) {
     );
   }
 
-  if (isError || !user) {
-    setLocation("/");
-    return null;
-  }
-
-  if (role && user.role !== role) {
-    setLocation("/");
-    return null;
-  }
+  if (isError || !user) return null;
+  if (role && user.role !== role) return null;
 
   return <>{children}</>;
 }
