@@ -180,6 +180,27 @@ paths:
                 $ref: "#/components/schemas/InstitutionWithStats"
 
   /admin/institutions/{id}:
+    delete:
+      operationId: deleteInstitution
+      tags: [admin]
+      summary: Delete an institution and all its data
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     patch:
       operationId: updateInstitutionLimits
       tags: [admin]

@@ -82,6 +82,26 @@ router.post("/admin/institutions", async (req, res) => {
   res.status(201).json(stats);
 });
 
+router.delete("/admin/institutions/:id", async (req, res) => {
+  const id = req.params.id;
+  const [inst] = await db.select().from(institutionsTable).where(eq(institutionsTable.id, id)).limit(1);
+  if (!inst) {
+    res.status(404).json({ error: "Kurum bulunamadı" });
+    return;
+  }
+  // Cascade delete: student codes -> classes -> users -> teacher codes -> institution
+  const instClasses = await db.select({ id: classesTable.id }).from(classesTable).where(eq(classesTable.institutionId, id));
+  for (const cls of instClasses) {
+    await db.delete(studentCodesTable).where(eq(studentCodesTable.classId, cls.id));
+  }
+  await db.delete(classesTable).where(eq(classesTable.institutionId, id));
+  await db.delete(usersTable).where(and(eq(usersTable.institutionId, id), eq(usersTable.role, "student")));
+  await db.delete(usersTable).where(and(eq(usersTable.institutionId, id), eq(usersTable.role, "teacher")));
+  await db.delete(teacherCodesTable).where(eq(teacherCodesTable.institutionId, id));
+  await db.delete(institutionsTable).where(eq(institutionsTable.id, id));
+  res.status(204).send();
+});
+
 router.patch("/admin/institutions/:id", async (req, res) => {
   const parsed = UpdateInstitutionLimitsBody.safeParse(req.body);
   if (!parsed.success) {

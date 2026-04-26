@@ -691,6 +691,90 @@ export const useCreateInstitution = <
 };
 
 /**
+ * @summary Delete an institution and all its data
+ */
+export const getDeleteInstitutionUrl = (id: string) => {
+  return `/api/admin/institutions/${id}`;
+};
+
+export const deleteInstitution = async (
+  id: string,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteInstitutionUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteInstitutionMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteInstitution>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteInstitution>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["deleteInstitution"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteInstitution>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteInstitution(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteInstitutionMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteInstitution>>
+>;
+
+export type DeleteInstitutionMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Delete an institution and all its data
+ */
+export const useDeleteInstitution = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteInstitution>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteInstitution>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(getDeleteInstitutionMutationOptions(options));
+};
+
+/**
  * @summary Update teacher and student limits of an institution
  */
 export const getUpdateInstitutionLimitsUrl = (id: string) => {

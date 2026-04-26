@@ -151,6 +151,13 @@ export const CreateInstitutionBody = zod.object({
 });
 
 /**
+ * @summary Delete an institution and all its data
+ */
+export const DeleteInstitutionParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+/**
  * @summary Update teacher and student limits of an institution
  */
 export const UpdateInstitutionLimitsParams = zod.object({

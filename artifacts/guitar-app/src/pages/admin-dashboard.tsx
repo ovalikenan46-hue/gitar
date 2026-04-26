@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useGetAdminStats, getGetAdminStatsQueryKey, useListInstitutions, getListInstitutionsQueryKey, useCreateInstitution, useGenerateTeacherCode, useUpdateInstitutionLimits } from "@workspace/api-client-react";
+import { useGetAdminStats, getGetAdminStatsQueryKey, useListInstitutions, getListInstitutionsQueryKey, useCreateInstitution, useGenerateTeacherCode, useUpdateInstitutionLimits, useDeleteInstitution } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Building2, Users, GraduationCap, School, Copy, LogOut, Loader2, Share2, Plus, CheckCircle2, Circle, Settings2 } from "lucide-react";
+import { Building2, Users, GraduationCap, School, Copy, LogOut, Loader2, Share2, Plus, CheckCircle2, Circle, Settings2, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { pageVariants, pageTransition } from "@/lib/animations";
 import { clearToken } from "@/lib/auth";
@@ -52,9 +52,11 @@ export default function AdminDashboard() {
   const createInst = useCreateInstitution();
   const generateCode = useGenerateTeacherCode();
   const updateLimits = useUpdateInstitutionLimits();
+  const deleteInst = useDeleteInstitution();
 
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<InstitutionRow | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<InstitutionRow | null>(null);
 
   const form = useForm<z.infer<typeof instSchema>>({
     resolver: zodResolver(instSchema),
@@ -90,6 +92,21 @@ export default function AdminDashboard() {
       onError: (err: unknown) => {
         const e = err as { response?: { data?: { error?: string } } };
         toast.error(e.response?.data?.error ?? "Güncelleme başarısız");
+      },
+    });
+  };
+
+  const handleDeleteInst = () => {
+    if (!deleteTarget) return;
+    deleteInst.mutate({ id: deleteTarget.id }, {
+      onSuccess: () => {
+        toast.success(`"${deleteTarget.name}" silindi`);
+        queryClient.invalidateQueries({ queryKey: getListInstitutionsQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getGetAdminStatsQueryKey() });
+        setDeleteTarget(null);
+      },
+      onError: () => {
+        toast.error("Kurum silinemedi");
       },
     });
   };
@@ -221,21 +238,32 @@ export default function AdminDashboard() {
                     <CardTitle className="text-xl truncate">{inst.name}</CardTitle>
                     <CardDescription className="font-mono text-xs mt-1">Kod: {inst.code}</CardDescription>
                   </div>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-8 w-8 rounded-lg shrink-0"
-                    title="Limitleri düzenle"
-                    onClick={() => {
-                      setEditTarget(inst);
-                      limitsForm.reset({
-                        teacherLimit: inst.teacherLimit,
-                        studentLimit: inst.studentLimit,
-                      });
-                    }}
-                  >
-                    <Settings2 className="w-4 h-4" />
-                  </Button>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 rounded-lg"
+                      title="Limitleri düzenle"
+                      onClick={() => {
+                        setEditTarget(inst);
+                        limitsForm.reset({
+                          teacherLimit: inst.teacherLimit,
+                          studentLimit: inst.studentLimit,
+                        });
+                      }}
+                    >
+                      <Settings2 className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 rounded-lg text-destructive hover:bg-destructive/10"
+                      title="Kurumu sil"
+                      onClick={() => setDeleteTarget(inst)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -340,6 +368,41 @@ export default function AdminDashboard() {
           )}
         </div>
       </div>
+
+      <Dialog open={deleteTarget !== null} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <DialogContent className="sm:max-w-md rounded-3xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="w-5 h-5" /> Kurumu Sil
+            </DialogTitle>
+            <DialogDescription className="pt-2 space-y-2">
+              <span className="block">
+                <span className="font-semibold text-foreground">{deleteTarget?.name}</span> kurumunu ve buna bağlı tüm verileri silmek üzeresiniz:
+              </span>
+              <ul className="list-disc list-inside text-sm space-y-1">
+                <li>Tüm öğretmen kodları ve öğretmen hesapları</li>
+                <li>Tüm sınıflar ve öğrenci kodları</li>
+                <li>Tüm öğrenci hesapları</li>
+              </ul>
+              <span className="block font-semibold text-destructive">Bu işlem geri alınamaz.</span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-row gap-2 mt-4">
+            <Button variant="ghost" className="rounded-xl flex-1" onClick={() => setDeleteTarget(null)}>
+              İptal
+            </Button>
+            <Button
+              variant="destructive"
+              className="rounded-xl flex-1"
+              onClick={handleDeleteInst}
+              disabled={deleteInst.isPending}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              {deleteInst.isPending ? "Siliniyor..." : "Evet, Sil"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={editTarget !== null} onOpenChange={(o) => !o && setEditTarget(null)}>
         <DialogContent className="sm:max-w-md rounded-3xl">
