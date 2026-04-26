@@ -6,9 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface CreateClassBody {
-  /** @minLength 1 */
-  name: string;
-  /** @minimum 1 */
-  studentCount: number;
+export interface StudentCodeInfo {
+  code: string;
+  used: boolean;
+  usedByName?: string | null;
 }

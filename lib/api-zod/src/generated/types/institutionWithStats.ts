@@ -14,6 +14,10 @@ export interface InstitutionWithStats {
   studentLimit: number;
   totalTeachers: number;
   totalStudents: number;
+  usedTeacherCount: number;
+  usedStudentCount: number;
+  remainingTeacherSlots: number;
+  remainingStudentSlots: number;
   unusedTeacherCodes: number;
   teacherCodes: TeacherCodeInfo[];
 }

@@ -11,6 +11,8 @@ export interface UserProfile {
   id: string;
   role: UserRole;
   name: string;
+  firstName?: string | null;
+  lastName?: string | null;
   institutionId?: string | null;
   institutionName?: string | null;
   classId?: string | null;

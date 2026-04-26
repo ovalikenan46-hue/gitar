@@ -5,7 +5,7 @@ import { requireAuth, type AuthedRequest } from "../lib/auth";
 
 const router: IRouter = Router();
 
-router.use(requireAuth(["student"]));
+router.use("/student", requireAuth(["student"]));
 
 async function loadStudent(userId: string) {
   const [u] = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);

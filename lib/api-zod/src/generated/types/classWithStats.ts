@@ -5,11 +5,16 @@
  * Guitar learning app API
  * OpenAPI spec version: 0.1.0
  */
+import type { StudentCodeInfo } from "./studentCodeInfo";
 
 export interface ClassWithStats {
   id: string;
   name: string;
   levelUnlocked: number;
   studentCount: number;
+  studentCapacity: number;
+  usedStudentCount: number;
+  remainingSlots: number;
   unusedStudentCodes: number;
+  studentCodes: StudentCodeInfo[];
 }

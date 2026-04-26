@@ -27,6 +27,8 @@ export const AdminLoginResponse = zod.object({
     id: zod.string(),
     role: zod.enum(["admin", "teacher", "student"]),
     name: zod.string(),
+    firstName: zod.string().nullish(),
+    lastName: zod.string().nullish(),
     institutionId: zod.string().nullish(),
     institutionName: zod.string().nullish(),
     classId: zod.string().nullish(),
@@ -35,11 +37,30 @@ export const AdminLoginResponse = zod.object({
 });
 
 /**
- * @summary Teacher login with code
+ * @summary Inspect a teacher or student invite code without logging in
  */
+export const CheckInviteCodeBody = zod.object({
+  code: zod.string(),
+});
+
+export const CheckInviteCodeResponse = zod.object({
+  kind: zod.enum(["teacher", "student"]),
+  institutionName: zod.string(),
+  className: zod.string().nullish(),
+  used: zod.boolean().optional(),
+});
+
+/**
+ * @summary Teacher login with code and identity
+ */
+export const teacherLoginBodyFirstNameMin = 2;
+
+export const teacherLoginBodyLastNameMin = 2;
+
 export const TeacherLoginBody = zod.object({
   code: zod.string(),
-  name: zod.string(),
+  firstName: zod.string().min(teacherLoginBodyFirstNameMin),
+  lastName: zod.string().min(teacherLoginBodyLastNameMin),
 });
 
 export const TeacherLoginResponse = zod.object({
@@ -48,6 +69,8 @@ export const TeacherLoginResponse = zod.object({
     id: zod.string(),
     role: zod.enum(["admin", "teacher", "student"]),
     name: zod.string(),
+    firstName: zod.string().nullish(),
+    lastName: zod.string().nullish(),
     institutionId: zod.string().nullish(),
     institutionName: zod.string().nullish(),
     classId: zod.string().nullish(),
@@ -69,6 +92,8 @@ export const StudentLoginResponse = zod.object({
     id: zod.string(),
     role: zod.enum(["admin", "teacher", "student"]),
     name: zod.string(),
+    firstName: zod.string().nullish(),
+    lastName: zod.string().nullish(),
     institutionId: zod.string().nullish(),
     institutionName: zod.string().nullish(),
     classId: zod.string().nullish(),
@@ -83,6 +108,8 @@ export const GetMeResponse = zod.object({
   id: zod.string(),
   role: zod.enum(["admin", "teacher", "student"]),
   name: zod.string(),
+  firstName: zod.string().nullish(),
+  lastName: zod.string().nullish(),
   institutionId: zod.string().nullish(),
   institutionName: zod.string().nullish(),
   classId: zod.string().nullish(),
@@ -99,6 +126,10 @@ export const ListInstitutionsResponseItem = zod.object({
   studentLimit: zod.number(),
   totalTeachers: zod.number(),
   totalStudents: zod.number(),
+  usedTeacherCount: zod.number(),
+  usedStudentCount: zod.number(),
+  remainingTeacherSlots: zod.number(),
+  remainingStudentSlots: zod.number(),
   unusedTeacherCodes: zod.number(),
   teacherCodes: zod.array(
     zod.object({
@@ -117,6 +148,38 @@ export const CreateInstitutionBody = zod.object({
   name: zod.string(),
   teacherLimit: zod.number().min(1),
   studentLimit: zod.number().min(1),
+});
+
+/**
+ * @summary Update teacher and student limits of an institution
+ */
+export const UpdateInstitutionLimitsParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const UpdateInstitutionLimitsBody = zod.object({
+  teacherLimit: zod.number().min(1),
+  studentLimit: zod.number().min(1),
+});
+
+export const UpdateInstitutionLimitsResponse = zod.object({
+  id: zod.string(),
+  name: zod.string(),
+  teacherLimit: zod.number(),
+  studentLimit: zod.number(),
+  totalTeachers: zod.number(),
+  totalStudents: zod.number(),
+  usedTeacherCount: zod.number(),
+  usedStudentCount: zod.number(),
+  remainingTeacherSlots: zod.number(),
+  remainingStudentSlots: zod.number(),
+  unusedTeacherCodes: zod.number(),
+  teacherCodes: zod.array(
+    zod.object({
+      code: zod.string(),
+      used: zod.boolean(),
+    }),
+  ),
 });
 
 /**
@@ -144,22 +207,56 @@ export const ListMyClassesResponseItem = zod.object({
   name: zod.string(),
   levelUnlocked: zod.number(),
   studentCount: zod.number(),
+  studentCapacity: zod.number(),
+  usedStudentCount: zod.number(),
+  remainingSlots: zod.number(),
   unusedStudentCodes: zod.number(),
+  studentCodes: zod.array(
+    zod.object({
+      code: zod.string(),
+      used: zod.boolean(),
+      usedByName: zod.string().nullish(),
+    }),
+  ),
 });
 export const ListMyClassesResponse = zod.array(ListMyClassesResponseItem);
 
 /**
  * @summary Create a new class
  */
+
 export const CreateClassBody = zod.object({
-  name: zod.string(),
+  name: zod.string().min(1),
+  studentCount: zod.number().min(1),
 });
 
 /**
- * @summary Generate a student invite code for a class
+ * @summary Add additional student slots (and codes) to an existing class
  */
-export const GenerateStudentCodeParams = zod.object({
+export const ExpandClassCapacityParams = zod.object({
   id: zod.coerce.string(),
+});
+
+export const ExpandClassCapacityBody = zod.object({
+  additional: zod.number().min(1),
+});
+
+export const ExpandClassCapacityResponse = zod.object({
+  id: zod.string(),
+  name: zod.string(),
+  levelUnlocked: zod.number(),
+  studentCount: zod.number(),
+  studentCapacity: zod.number(),
+  usedStudentCount: zod.number(),
+  remainingSlots: zod.number(),
+  unusedStudentCodes: zod.number(),
+  studentCodes: zod.array(
+    zod.object({
+      code: zod.string(),
+      used: zod.boolean(),
+      usedByName: zod.string().nullish(),
+    }),
+  ),
 });
 
 /**
@@ -174,7 +271,17 @@ export const UnlockNextLevelResponse = zod.object({
   name: zod.string(),
   levelUnlocked: zod.number(),
   studentCount: zod.number(),
+  studentCapacity: zod.number(),
+  usedStudentCount: zod.number(),
+  remainingSlots: zod.number(),
   unusedStudentCodes: zod.number(),
+  studentCodes: zod.array(
+    zod.object({
+      code: zod.string(),
+      used: zod.boolean(),
+      usedByName: zod.string().nullish(),
+    }),
+  ),
 });
 
 /**

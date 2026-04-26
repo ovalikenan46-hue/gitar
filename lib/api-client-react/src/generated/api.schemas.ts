@@ -30,10 +30,39 @@ export interface CodeLoginBody {
   name: string;
 }
 
+export interface TeacherLoginBody {
+  code: string;
+  /** @minLength 2 */
+  firstName: string;
+  /** @minLength 2 */
+  lastName: string;
+}
+
+export interface CheckCodeBody {
+  code: string;
+}
+
+export type CodeCheckResultKind =
+  (typeof CodeCheckResultKind)[keyof typeof CodeCheckResultKind];
+
+export const CodeCheckResultKind = {
+  teacher: "teacher",
+  student: "student",
+} as const;
+
+export interface CodeCheckResult {
+  kind: CodeCheckResultKind;
+  institutionName: string;
+  className?: string | null;
+  used?: boolean;
+}
+
 export interface UserProfile {
   id: string;
   role: UserRole;
   name: string;
+  firstName?: string | null;
+  lastName?: string | null;
   institutionId?: string | null;
   institutionName?: string | null;
   classId?: string | null;
@@ -57,6 +86,13 @@ export interface CreateInstitutionBody {
   studentLimit: number;
 }
 
+export interface UpdateInstitutionLimitsBody {
+  /** @minimum 1 */
+  teacherLimit: number;
+  /** @minimum 1 */
+  studentLimit: number;
+}
+
 export interface TeacherCodeInfo {
   code: string;
   used: boolean;
@@ -69,6 +105,10 @@ export interface InstitutionWithStats {
   studentLimit: number;
   totalTeachers: number;
   totalStudents: number;
+  usedTeacherCount: number;
+  usedStudentCount: number;
+  remainingTeacherSlots: number;
+  remainingStudentSlots: number;
   unusedTeacherCodes: number;
   teacherCodes: TeacherCodeInfo[];
 }
@@ -81,7 +121,21 @@ export interface AdminStats {
 }
 
 export interface CreateClassBody {
+  /** @minLength 1 */
   name: string;
+  /** @minimum 1 */
+  studentCount: number;
+}
+
+export interface ExpandClassBody {
+  /** @minimum 1 */
+  additional: number;
+}
+
+export interface StudentCodeInfo {
+  code: string;
+  used: boolean;
+  usedByName?: string | null;
 }
 
 export interface ClassWithStats {
@@ -89,7 +143,11 @@ export interface ClassWithStats {
   name: string;
   levelUnlocked: number;
   studentCount: number;
+  studentCapacity: number;
+  usedStudentCount: number;
+  remainingSlots: number;
   unusedStudentCodes: number;
+  studentCodes: StudentCodeInfo[];
 }
 
 export interface LessonWithProgress {

@@ -1,25 +1,25 @@
 import { Router, type IRouter } from "express";
 import { db, institutionsTable, usersTable, teacherCodesTable, classesTable } from "@workspace/db";
-import { eq, sql, and, isNotNull, isNull, count } from "drizzle-orm";
-import { CreateInstitutionBody } from "@workspace/api-zod";
+import { eq, and, isNull, count } from "drizzle-orm";
+import { CreateInstitutionBody, UpdateInstitutionLimitsBody } from "@workspace/api-zod";
 import { requireAuth, generateInviteCode } from "../lib/auth";
 
 const router: IRouter = Router();
 
-router.use(requireAuth(["admin"]));
+router.use("/admin", requireAuth(["admin"]));
 
 async function getInstitutionStats(id: string) {
   const [inst] = await db.select().from(institutionsTable).where(eq(institutionsTable.id, id)).limit(1);
   if (!inst) return null;
-  const teachers = await db
+  const [teachers] = await db
     .select({ c: count() })
     .from(usersTable)
     .where(and(eq(usersTable.institutionId, id), eq(usersTable.role, "teacher")));
-  const students = await db
+  const [students] = await db
     .select({ c: count() })
     .from(usersTable)
     .where(and(eq(usersTable.institutionId, id), eq(usersTable.role, "student")));
-  const unused = await db
+  const [unusedTeachers] = await db
     .select({ c: count() })
     .from(teacherCodesTable)
     .where(and(eq(teacherCodesTable.institutionId, id), isNull(teacherCodesTable.usedByUserId)));
@@ -28,14 +28,32 @@ async function getInstitutionStats(id: string) {
     .from(teacherCodesTable)
     .where(eq(teacherCodesTable.institutionId, id))
     .orderBy(teacherCodesTable.createdAt);
+
+  const totalTeachers = teachers?.c ?? 0;
+  const totalStudents = students?.c ?? 0;
+  const unusedTeacherCount = unusedTeachers?.c ?? 0;
+  const usedTeacherCount = totalTeachers + unusedTeacherCount;
+
+  // For students, the institution-level "used" capacity is the sum of class capacities,
+  // not just enrolled students. That way creating a class actually consumes the quota.
+  const classesOfInst = await db
+    .select({ cap: classesTable.studentCapacity })
+    .from(classesTable)
+    .where(eq(classesTable.institutionId, id));
+  const usedStudentCount = classesOfInst.reduce((acc, r) => acc + (r.cap ?? 0), 0);
+
   return {
     id: inst.id,
     name: inst.name,
     teacherLimit: inst.teacherLimit,
     studentLimit: inst.studentLimit,
-    totalTeachers: teachers[0]?.c ?? 0,
-    totalStudents: students[0]?.c ?? 0,
-    unusedTeacherCodes: unused[0]?.c ?? 0,
+    totalTeachers,
+    totalStudents,
+    usedTeacherCount,
+    usedStudentCount,
+    remainingTeacherSlots: Math.max(0, inst.teacherLimit - usedTeacherCount),
+    remainingStudentSlots: Math.max(0, inst.studentLimit - usedStudentCount),
+    unusedTeacherCodes: unusedTeacherCount,
     teacherCodes: codes.map((c) => ({ code: c.code, used: c.usedByUserId !== null })),
   };
 }
@@ -64,24 +82,50 @@ router.post("/admin/institutions", async (req, res) => {
   res.status(201).json(stats);
 });
 
-router.post("/admin/institutions/:id/teacher-codes", async (req, res) => {
+router.patch("/admin/institutions/:id", async (req, res) => {
+  const parsed = UpdateInstitutionLimitsBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Geçersiz istek" });
+    return;
+  }
   const id = req.params.id;
-  const [inst] = await db.select().from(institutionsTable).where(eq(institutionsTable.id, id)).limit(1);
-  if (!inst) {
+  const current = await getInstitutionStats(id);
+  if (!current) {
     res.status(404).json({ error: "Kurum bulunamadı" });
     return;
   }
-  const teachersUsed = await db
-    .select({ c: count() })
-    .from(usersTable)
-    .where(and(eq(usersTable.institutionId, id), eq(usersTable.role, "teacher")));
-  const unusedCodes = await db
-    .select({ c: count() })
-    .from(teacherCodesTable)
-    .where(and(eq(teacherCodesTable.institutionId, id), isNull(teacherCodesTable.usedByUserId)));
-  const allocated = (teachersUsed[0]?.c ?? 0) + (unusedCodes[0]?.c ?? 0);
-  if (allocated >= inst.teacherLimit) {
-    res.status(400).json({ error: "Öğretmen limiti aşıldı" });
+  if (parsed.data.teacherLimit < current.usedTeacherCount) {
+    res.status(400).json({
+      error: `Öğretmen limiti mevcut kullanımdan (${current.usedTeacherCount}) küçük olamaz`,
+    });
+    return;
+  }
+  if (parsed.data.studentLimit < current.usedStudentCount) {
+    res.status(400).json({
+      error: `Öğrenci limiti mevcut kullanımdan (${current.usedStudentCount}) küçük olamaz`,
+    });
+    return;
+  }
+  await db
+    .update(institutionsTable)
+    .set({
+      teacherLimit: parsed.data.teacherLimit,
+      studentLimit: parsed.data.studentLimit,
+    })
+    .where(eq(institutionsTable.id, id));
+  const updated = await getInstitutionStats(id);
+  res.json(updated);
+});
+
+router.post("/admin/institutions/:id/teacher-codes", async (req, res) => {
+  const id = req.params.id;
+  const stats = await getInstitutionStats(id);
+  if (!stats) {
+    res.status(404).json({ error: "Kurum bulunamadı" });
+    return;
+  }
+  if (stats.remainingTeacherSlots <= 0) {
+    res.status(400).json({ error: "Öğretmen limiti doldu" });
     return;
   }
   let code = generateInviteCode();

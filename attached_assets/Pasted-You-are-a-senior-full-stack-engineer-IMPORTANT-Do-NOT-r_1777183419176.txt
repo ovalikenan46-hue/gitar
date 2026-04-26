@@ -1,0 +1,190 @@
+You are a senior full-stack engineer.
+
+IMPORTANT:
+Do NOT rewrite the existing system.
+ONLY EXTEND it safely.
+
+----------------------------------------
+GOAL:
+
+Enhance Admin + Teacher system with:
+
+- Editable institution limits
+- Teacher identity completion
+- Class-based student quota system
+- Extra student code generation (stock-based)
+
+----------------------------------------
+1) ADMIN PANEL – INSTITUTION MANAGEMENT UPGRADE
+
+For each Institution Card:
+
+ADD:
+
+- "Edit Limits" button
+
+When clicked:
+→ open modal
+
+FIELDS:
+- teacherLimit (editable)
+- studentLimit (editable)
+
+RULES:
+
+- New limits CANNOT be lower than current usage
+- Save updates to database
+- Reflect instantly in UI
+
+----------------------------------------
+2) TEACHER LOGIN FLOW UPGRADE
+
+After teacher enters code:
+
+SHOW:
+
+- Institution name (read-only)
+
+Then require:
+
+- First Name
+- Last Name
+
+Save to database:
+
+Users table:
+- firstName
+- lastName
+
+Teacher cannot proceed without filling this.
+
+----------------------------------------
+3) CLASS CREATION SYSTEM (IMPORTANT)
+
+Teacher creates Class:
+
+FIELDS:
+
+- Class Name (e.g. "5-A")
+- Student Count (initial capacity)
+
+RULES:
+
+- Cannot exceed institution student limit
+- Deduct from available student quota
+
+----------------------------------------
+4) STUDENT CODE GENERATION
+
+When class is created:
+
+- Generate unique student codes
+- Number of codes = studentCount
+
+Save:
+
+Class:
+- studentCapacity
+- usedStudentCount
+
+----------------------------------------
+5) CLASS CARD UI (VERY IMPORTANT)
+
+Each class card must include:
+
+- Class Name
+- Student Capacity
+- Used Students
+- Remaining Slots
+
+ADD ICON:
+- 🔑 Key Button (important feature)
+
+----------------------------------------
+6) EXTRA STUDENT SYSTEM (KEY FEATURE)
+
+When teacher clicks KEY ICON:
+
+OPEN modal:
+
+- Input: number of additional students
+
+RULES:
+
+- Cannot exceed remaining institution student limit
+
+ACTION:
+
+- Generate additional student codes
+- Add them to SAME class
+
+UPDATE:
+
+- Class studentCapacity increases
+- Institution remaining quota decreases
+
+----------------------------------------
+7) EXISTING STUDENT INTEGRATION
+
+All newly generated student codes:
+
+- MUST belong to same class
+- MUST work with existing login system
+- MUST NOT break previous students
+
+----------------------------------------
+8) DATABASE UPDATES
+
+Classes table ADD:
+
+- studentCapacity
+- usedStudentCount
+
+Institutions ADD:
+
+- usedStudentCount
+- usedTeacherCount
+
+Users ADD:
+
+- firstName
+- lastName
+
+----------------------------------------
+9) BACKEND LOGIC RULES
+
+- Validate limits BEFORE creation
+- Prevent overflow
+- Use transactions for safety
+
+----------------------------------------
+10) FRONTEND UX
+
+- Use modals for actions
+- Show real-time counters
+
+Example:
+
+"Toplam Kontenjan: 100"
+"Kullanılan: 75"
+"Kalan: 25"
+
+----------------------------------------
+11) SECURITY
+
+- Only admin can edit institution limits
+- Only teacher can manage their classes
+
+----------------------------------------
+FINAL:
+
+Integrate this system into existing architecture WITHOUT breaking anything.
+
+Everything must work seamlessly with:
+
+- Auth system
+- Existing dashboards
+- Student login system
+
+DO NOT ASK QUESTIONS.
+BUILD SAFELY.

@@ -1,12 +1,12 @@
 import { Router, type IRouter } from "express";
-import { db, classesTable, usersTable, studentCodesTable, institutionsTable } from "@workspace/db";
+import { db, classesTable, usersTable, studentCodesTable, institutionsTable, teacherCodesTable } from "@workspace/db";
 import { eq, and, isNull, count } from "drizzle-orm";
-import { CreateClassBody } from "@workspace/api-zod";
+import { CreateClassBody, ExpandClassCapacityBody } from "@workspace/api-zod";
 import { requireAuth, generateInviteCode, type AuthedRequest } from "../lib/auth";
 
 const router: IRouter = Router();
 
-router.use(requireAuth(["teacher"]));
+router.use("/teacher", requireAuth(["teacher"]));
 
 async function getClassWithStats(id: string) {
   const [cls] = await db.select().from(classesTable).where(eq(classesTable.id, id)).limit(1);
@@ -15,22 +15,84 @@ async function getClassWithStats(id: string) {
     .select({ c: count() })
     .from(usersTable)
     .where(and(eq(usersTable.classId, id), eq(usersTable.role, "student")));
-  const [unused] = await db
-    .select({ c: count() })
+  const codes = await db
+    .select({
+      code: studentCodesTable.code,
+      usedByUserId: studentCodesTable.usedByUserId,
+    })
     .from(studentCodesTable)
-    .where(and(eq(studentCodesTable.classId, id), isNull(studentCodesTable.usedByUserId)));
+    .where(eq(studentCodesTable.classId, id))
+    .orderBy(studentCodesTable.createdAt);
+
+  // Look up names of users who consumed codes
+  const usedIds = codes.map((c) => c.usedByUserId).filter((v): v is string => v !== null);
+  const userMap = new Map<string, string>();
+  if (usedIds.length > 0) {
+    const users = await db.select().from(usersTable);
+    for (const u of users) {
+      if (usedIds.includes(u.id)) userMap.set(u.id, u.name);
+    }
+  }
+
+  const studentCount = students?.c ?? 0;
+  const usedStudentCount = codes.filter((c) => c.usedByUserId !== null).length;
+  const unusedStudentCodes = codes.length - usedStudentCount;
+  const studentCapacity = cls.studentCapacity ?? 0;
+  const remainingSlots = Math.max(0, studentCapacity - usedStudentCount);
+
   return {
     id: cls.id,
     name: cls.name,
     levelUnlocked: cls.levelUnlocked,
-    studentCount: students?.c ?? 0,
-    unusedStudentCodes: unused?.c ?? 0,
+    studentCount,
+    studentCapacity,
+    usedStudentCount,
+    remainingSlots,
+    unusedStudentCodes,
+    studentCodes: codes.map((c) => ({
+      code: c.code,
+      used: c.usedByUserId !== null,
+      usedByName: c.usedByUserId ? userMap.get(c.usedByUserId) ?? null : null,
+    })),
   };
 }
 
 async function loadTeacher(userId: string) {
   const [t] = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
   return t;
+}
+
+async function getInstitutionRemaining(institutionId: string) {
+  const [inst] = await db
+    .select()
+    .from(institutionsTable)
+    .where(eq(institutionsTable.id, institutionId))
+    .limit(1);
+  if (!inst) return null;
+  const allClasses = await db
+    .select({ cap: classesTable.studentCapacity })
+    .from(classesTable)
+    .where(eq(classesTable.institutionId, institutionId));
+  const usedStudentCount = allClasses.reduce((acc, r) => acc + (r.cap ?? 0), 0);
+  return {
+    institution: inst,
+    usedStudentCount,
+    remainingStudentSlots: Math.max(0, inst.studentLimit - usedStudentCount),
+  };
+}
+
+async function generateUniqueStudentCode(): Promise<string> {
+  let code = generateInviteCode();
+  for (let i = 0; i < 8; i++) {
+    const [existing] = await db
+      .select()
+      .from(studentCodesTable)
+      .where(eq(studentCodesTable.code, code))
+      .limit(1);
+    if (!existing) return code;
+    code = generateInviteCode();
+  }
+  return code;
 }
 
 router.get("/teacher/classes", async (req, res) => {
@@ -56,62 +118,89 @@ router.post("/teacher/classes", async (req, res) => {
     res.status(400).json({ error: "Kurum bulunamadı" });
     return;
   }
-  const [cls] = await db
-    .insert(classesTable)
-    .values({
-      name: parsed.data.name,
-      teacherId: auth.userId,
-      institutionId: teacher.institutionId,
-    })
-    .returning();
-  const stats = await getClassWithStats(cls.id);
+  if (!teacher.firstName || !teacher.lastName) {
+    res.status(400).json({ error: "Önce kimlik bilgilerinizi tamamlayın" });
+    return;
+  }
+  const remaining = await getInstitutionRemaining(teacher.institutionId);
+  if (!remaining) {
+    res.status(400).json({ error: "Kurum bulunamadı" });
+    return;
+  }
+  if (parsed.data.studentCount > remaining.remainingStudentSlots) {
+    res.status(400).json({
+      error: `Kurum öğrenci kontenjanı yetersiz (kalan: ${remaining.remainingStudentSlots})`,
+    });
+    return;
+  }
+
+  const newClass = await db.transaction(async (tx) => {
+    const [cls] = await tx
+      .insert(classesTable)
+      .values({
+        name: parsed.data.name,
+        teacherId: auth.userId,
+        institutionId: teacher.institutionId!,
+        studentCapacity: parsed.data.studentCount,
+      })
+      .returning();
+    for (let i = 0; i < parsed.data.studentCount; i++) {
+      const code = await generateUniqueStudentCode();
+      await tx.insert(studentCodesTable).values({
+        code,
+        classId: cls.id,
+        institutionId: teacher.institutionId!,
+      });
+    }
+    return cls;
+  });
+
+  const stats = await getClassWithStats(newClass.id);
   res.status(201).json(stats);
 });
 
-router.post("/teacher/classes/:id/student-codes", async (req, res) => {
+router.post("/teacher/classes/:id/expand", async (req, res) => {
   const { auth } = req as unknown as AuthedRequest;
   const id = req.params.id;
+  const parsed = ExpandClassCapacityBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Geçersiz istek" });
+    return;
+  }
   const [cls] = await db.select().from(classesTable).where(eq(classesTable.id, id)).limit(1);
   if (!cls || cls.teacherId !== auth.userId) {
     res.status(404).json({ error: "Sınıf bulunamadı" });
     return;
   }
-  const [inst] = await db
-    .select()
-    .from(institutionsTable)
-    .where(eq(institutionsTable.id, cls.institutionId))
-    .limit(1);
-  if (inst) {
-    const [studentsUsed] = await db
-      .select({ c: count() })
-      .from(usersTable)
-      .where(and(eq(usersTable.institutionId, cls.institutionId), eq(usersTable.role, "student")));
-    const [unusedCodes] = await db
-      .select({ c: count() })
-      .from(studentCodesTable)
-      .where(and(eq(studentCodesTable.institutionId, cls.institutionId), isNull(studentCodesTable.usedByUserId)));
-    const allocated = (studentsUsed?.c ?? 0) + (unusedCodes?.c ?? 0);
-    if (allocated >= inst.studentLimit) {
-      res.status(400).json({ error: "Öğrenci limiti aşıldı" });
-      return;
+  const remaining = await getInstitutionRemaining(cls.institutionId);
+  if (!remaining) {
+    res.status(400).json({ error: "Kurum bulunamadı" });
+    return;
+  }
+  if (parsed.data.additional > remaining.remainingStudentSlots) {
+    res.status(400).json({
+      error: `Kurum öğrenci kontenjanı yetersiz (kalan: ${remaining.remainingStudentSlots})`,
+    });
+    return;
+  }
+
+  await db.transaction(async (tx) => {
+    await tx
+      .update(classesTable)
+      .set({ studentCapacity: (cls.studentCapacity ?? 0) + parsed.data.additional })
+      .where(eq(classesTable.id, id));
+    for (let i = 0; i < parsed.data.additional; i++) {
+      const code = await generateUniqueStudentCode();
+      await tx.insert(studentCodesTable).values({
+        code,
+        classId: id,
+        institutionId: cls.institutionId,
+      });
     }
-  }
-  let code = generateInviteCode();
-  for (let i = 0; i < 5; i++) {
-    const [existing] = await db
-      .select()
-      .from(studentCodesTable)
-      .where(eq(studentCodesTable.code, code))
-      .limit(1);
-    if (!existing) break;
-    code = generateInviteCode();
-  }
-  await db.insert(studentCodesTable).values({
-    code,
-    classId: id,
-    institutionId: cls.institutionId,
   });
-  res.status(201).json({ code });
+
+  const stats = await getClassWithStats(id);
+  res.json(stats);
 });
 
 router.post("/teacher/classes/:id/unlock-next", async (req, res) => {
@@ -129,3 +218,7 @@ router.post("/teacher/classes/:id/unlock-next", async (req, res) => {
 });
 
 export default router;
+
+// Silence unused import warning for teacherCodesTable (kept for future use)
+void teacherCodesTable;
+void isNull;

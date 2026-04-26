@@ -1,6 +1,14 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useGetMe, getGetMeQueryKey, useListMyClasses, getListMyClassesQueryKey, useCreateClass, useGenerateStudentCode, useUnlockNextLevel } from "@workspace/api-client-react";
+import {
+  useGetMe,
+  getGetMeQueryKey,
+  useListMyClasses,
+  getListMyClassesQueryKey,
+  useCreateClass,
+  useExpandClassCapacity,
+  useUnlockNextLevel,
+} from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,67 +16,154 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Users, Copy, LockOpen, LogOut, Loader2, School } from "lucide-react";
+import {
+  Users,
+  Copy,
+  LockOpen,
+  LogOut,
+  Loader2,
+  School,
+  KeyRound,
+  Share2,
+  CheckCircle2,
+  Circle,
+  Plus,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { pageVariants, pageTransition } from "@/lib/animations";
 import { clearToken } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 
 const classSchema = z.object({
   name: z.string().min(2, "Sınıf adı gerekli"),
+  studentCount: z.coerce.number().int().min(1, "En az 1 öğrenci olmalı"),
 });
+const expandSchema = z.object({
+  additional: z.coerce.number().int().min(1, "En az 1 ek öğrenci"),
+});
+
+interface ClassData {
+  id: string;
+  name: string;
+  levelUnlocked: number;
+  studentCount: number;
+  studentCapacity: number;
+  usedStudentCount: number;
+  remainingSlots: number;
+  unusedStudentCodes: number;
+  studentCodes: { code: string; used: boolean; usedByName?: string | null }[];
+}
 
 export default function TeacherDashboard() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
-  
+
   const { data: me } = useGetMe({ query: { queryKey: getGetMeQueryKey() } });
   const { data: classes, isLoading } = useListMyClasses({ query: { queryKey: getListMyClassesQueryKey() } });
-  
+
   const createClass = useCreateClass();
-  const generateCode = useGenerateStudentCode();
+  const expandClass = useExpandClassCapacity();
   const unlockLevel = useUnlockNextLevel();
-  
+
   const [createOpen, setCreateOpen] = useState(false);
+  const [expandTarget, setExpandTarget] = useState<ClassData | null>(null);
 
   const form = useForm<z.infer<typeof classSchema>>({
     resolver: zodResolver(classSchema),
-    defaultValues: { name: "" },
+    defaultValues: { name: "", studentCount: 10 },
+  });
+
+  const expandForm = useForm<z.infer<typeof expandSchema>>({
+    resolver: zodResolver(expandSchema),
+    defaultValues: { additional: 5 },
   });
 
   const handleCreateClass = (values: z.infer<typeof classSchema>) => {
-    createClass.mutate({ data: values }, {
-      onSuccess: () => {
-        toast.success("Sınıf oluşturuldu!");
-        queryClient.invalidateQueries({ queryKey: getListMyClassesQueryKey() });
-        setCreateOpen(false);
-        form.reset();
-      }
-    });
+    createClass.mutate(
+      { data: values },
+      {
+        onSuccess: () => {
+          toast.success(`Sınıf oluşturuldu — ${values.studentCount} öğrenci kodu hazır`);
+          queryClient.invalidateQueries({ queryKey: getListMyClassesQueryKey() });
+          setCreateOpen(false);
+          form.reset({ name: "", studentCount: 10 });
+        },
+        onError: (err: unknown) => {
+          const e = err as { response?: { data?: { error?: string } } };
+          toast.error(e.response?.data?.error ?? "Sınıf oluşturulamadı");
+        },
+      },
+    );
   };
 
-  const handleGenerateCode = (id: string) => {
-    generateCode.mutate({ id }, {
-      onSuccess: (data) => {
-        navigator.clipboard.writeText(data.code);
-        toast.success("Öğrenci kodu kopyalandı!", {
-          description: `Kod: ${data.code}`
-        });
-        queryClient.invalidateQueries({ queryKey: getListMyClassesQueryKey() });
-      }
-    });
+  const handleExpand = (values: z.infer<typeof expandSchema>) => {
+    if (!expandTarget) return;
+    expandClass.mutate(
+      { id: expandTarget.id, data: values },
+      {
+        onSuccess: () => {
+          toast.success(`${values.additional} ek öğrenci kodu üretildi`);
+          queryClient.invalidateQueries({ queryKey: getListMyClassesQueryKey() });
+          setExpandTarget(null);
+          expandForm.reset({ additional: 5 });
+        },
+        onError: (err: unknown) => {
+          const e = err as { response?: { data?: { error?: string } } };
+          toast.error(e.response?.data?.error ?? "Genişletme başarısız");
+        },
+      },
+    );
   };
 
   const handleUnlockLevel = (id: string) => {
-    unlockLevel.mutate({ id }, {
-      onSuccess: () => {
-        toast.success("Yeni seviye açıldı! 🎉");
-        queryClient.invalidateQueries({ queryKey: getListMyClassesQueryKey() });
+    unlockLevel.mutate(
+      { id },
+      {
+        onSuccess: () => {
+          toast.success("Yeni seviye açıldı! 🎉");
+          queryClient.invalidateQueries({ queryKey: getListMyClassesQueryKey() });
+        },
+      },
+    );
+  };
+
+  const copyCode = async (code: string) => {
+    try {
+      await navigator.clipboard.writeText(code);
+      toast.success(`${code} kopyalandı`);
+    } catch {
+      toast.error("Kopyalanamadı");
+    }
+  };
+
+  const shareCode = async (className: string, code: string) => {
+    const text = `${className} sınıfı için Gitar Öğreniyorum öğrenci kodun: ${code}`;
+    const nav = navigator as Navigator & { share?: (data: { title?: string; text?: string }) => Promise<void> };
+    if (nav.share) {
+      try {
+        await nav.share({ title: "Öğrenci Kodu", text });
+        return;
+      } catch {
+        // ignore
       }
-    });
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Paylaşım metni kopyalandı");
+    } catch {
+      toast.error("Paylaşılamadı");
+    }
   };
 
   const handleLogout = () => {
@@ -77,20 +172,30 @@ export default function TeacherDashboard() {
   };
 
   if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return (
-    <motion.div initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition} className="min-h-screen bg-background p-4 sm:p-8">
+    <motion.div
+      initial="initial"
+      animate="in"
+      exit="out"
+      variants={pageVariants}
+      transition={pageTransition}
+      className="min-h-screen bg-background p-4 sm:p-8"
+    >
       <div className="max-w-5xl mx-auto space-y-8">
-        
         <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/50 p-6 rounded-3xl border border-white backdrop-blur-xl shadow-sm">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 bg-primary/10 text-primary rounded-2xl flex items-center justify-center">
               <School className="w-8 h-8" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Merhaba, {me?.name} Öğretmen</h1>
+              <h1 className="text-2xl font-bold text-foreground">Merhaba, {me?.name}</h1>
               <p className="text-muted-foreground">{me?.institutionName}</p>
             </div>
           </div>
@@ -110,14 +215,42 @@ export default function TeacherDashboard() {
             <DialogContent className="sm:max-w-md rounded-3xl">
               <DialogHeader>
                 <DialogTitle>Yeni Sınıf Oluştur</DialogTitle>
+                <DialogDescription>
+                  Sınıf kapasitesi kadar öğrenci kodu otomatik üretilir.
+                </DialogDescription>
               </DialogHeader>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleCreateClass)} className="space-y-4">
-                  <FormField control={form.control} name="name" render={({field}) => (
-                    <FormItem><FormLabel>Sınıf Adı</FormLabel><FormControl><Input placeholder="Örn: 5/A" className="rounded-xl" {...field} /></FormControl><FormMessage/></FormItem>
-                  )} />
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Sınıf Adı</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Örn: 5/A" className="rounded-xl" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="studentCount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Öğrenci Sayısı (Kontenjan)</FormLabel>
+                        <FormControl>
+                          <Input type="number" min={1} className="rounded-xl" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <DialogFooter className="mt-6">
-                    <Button type="submit" className="w-full rounded-xl" disabled={createClass.isPending}>Oluştur</Button>
+                    <Button type="submit" className="w-full rounded-xl" disabled={createClass.isPending}>
+                      {createClass.isPending ? "Oluşturuluyor..." : "Oluştur"}
+                    </Button>
                   </DialogFooter>
                 </form>
               </Form>
@@ -126,35 +259,123 @@ export default function TeacherDashboard() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {classes?.map(cls => (
+          {(classes as ClassData[] | undefined)?.map((cls) => (
             <Card key={cls.id} className="rounded-3xl border-none shadow-md overflow-hidden bg-white/80 backdrop-blur-sm">
               <CardHeader className="bg-gradient-to-br from-primary/5 to-transparent pb-4">
                 <div className="flex justify-between items-start">
                   <CardTitle className="text-xl font-bold">{cls.name}</CardTitle>
-                  <Badge variant="outline" className="bg-white rounded-full">Seviye {cls.levelUnlocked}</Badge>
+                  <Badge variant="outline" className="bg-white rounded-full">
+                    Seviye {cls.levelUnlocked}
+                  </Badge>
                 </div>
                 <CardDescription className="flex items-center mt-2 text-foreground font-medium">
-                  <Users className="w-4 h-4 mr-2 text-primary" /> {cls.studentCount} Öğrenci
+                  <Users className="w-4 h-4 mr-2 text-primary" /> {cls.studentCount} kayıtlı öğrenci
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-6 space-y-4">
-                <div className="bg-muted p-4 rounded-2xl flex flex-col gap-2">
-                  <div className="flex justify-between text-sm items-center">
-                    <span className="text-muted-foreground">Kullanılmamış Kodlar:</span>
-                    <span className="font-bold">{cls.unusedStudentCodes}</span>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="bg-primary/5 rounded-2xl p-3">
+                    <p className="text-xs text-muted-foreground">Toplam</p>
+                    <p className="text-xl font-extrabold text-primary">{cls.studentCapacity}</p>
                   </div>
-                  <Button size="sm" variant="outline" className="w-full rounded-xl border-dashed" onClick={() => handleGenerateCode(cls.id)} disabled={generateCode.isPending}>
-                    <Copy className="w-4 h-4 mr-2" /> Öğrenci Kodu Üret
+                  <div className="bg-secondary/10 rounded-2xl p-3">
+                    <p className="text-xs text-muted-foreground">Kullanılan</p>
+                    <p className="text-xl font-extrabold text-secondary-foreground">{cls.usedStudentCount}</p>
+                  </div>
+                  <div className="bg-accent/10 rounded-2xl p-3">
+                    <p className="text-xs text-muted-foreground">Kalan</p>
+                    <p className="text-xl font-extrabold text-accent-foreground">{cls.remainingSlots}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-muted-foreground">Öğrenci Kodları</p>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="rounded-xl h-8"
+                    onClick={() => {
+                      setExpandTarget(cls);
+                      expandForm.reset({ additional: 5 });
+                    }}
+                    title="Ek öğrenci kodu üret"
+                  >
+                    <KeyRound className="w-4 h-4 mr-1" /> Ek Öğrenci
                   </Button>
                 </div>
+
+                {cls.studentCodes.length === 0 ? (
+                  <div className="p-4 bg-muted/60 rounded-2xl text-center text-sm text-muted-foreground">
+                    Henüz kod yok
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                    {cls.studentCodes.map((sc) => (
+                      <div
+                        key={sc.code}
+                        className={`flex items-center justify-between p-2.5 rounded-xl border ${
+                          sc.used
+                            ? "bg-muted/40 border-transparent text-muted-foreground"
+                            : "bg-primary/5 border-primary/20"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          {sc.used ? (
+                            <CheckCircle2 className="w-4 h-4 shrink-0 text-green-500" />
+                          ) : (
+                            <Circle className="w-4 h-4 shrink-0 text-primary" />
+                          )}
+                          <div className="min-w-0">
+                            <span
+                              className={`font-mono font-bold tracking-wider text-sm block ${
+                                sc.used ? "line-through" : "text-foreground"
+                              }`}
+                              title={sc.code}
+                            >
+                              {sc.code}
+                            </span>
+                            {sc.used && sc.usedByName && (
+                              <span className="text-[11px] text-muted-foreground truncate block">
+                                {sc.usedByName}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 rounded-lg"
+                            onClick={() => copyCode(sc.code)}
+                            title="Kopyala"
+                            disabled={sc.used}
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-7 w-7 rounded-lg"
+                            onClick={() => shareCode(cls.name, sc.code)}
+                            title="Paylaş"
+                            disabled={sc.used}
+                          >
+                            <Share2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
               <CardFooter className="bg-primary/5 border-t border-primary/10">
-                <Button 
-                  className="w-full rounded-xl bg-primary hover:bg-primary/90 text-white shadow-sm" 
-                  onClick={() => handleUnlockLevel(cls.id)} 
-                  disabled={unlockLevel.isPending}
+                <Button
+                  className="w-full rounded-xl bg-primary hover:bg-primary/90 text-white shadow-sm"
+                  onClick={() => handleUnlockLevel(cls.id)}
+                  disabled={unlockLevel.isPending || cls.levelUnlocked >= 2}
                 >
-                  <LockOpen className="w-4 h-4 mr-2" /> {cls.levelUnlocked + 1}. Seviyeyi Aç
+                  <LockOpen className="w-4 h-4 mr-2" />
+                  {cls.levelUnlocked >= 2 ? "Tüm Seviyeler Açık" : `${cls.levelUnlocked + 1}. Seviyeyi Aç`}
                 </Button>
               </CardFooter>
             </Card>
@@ -165,12 +386,62 @@ export default function TeacherDashboard() {
                 <School className="w-10 h-10 text-muted-foreground" />
               </div>
               <h3 className="text-xl font-medium text-foreground">Henüz sınıfınız yok</h3>
-              <p className="text-muted-foreground mt-2">Öğrencilerinizi eklemek için ilk sınıfınızı oluşturun.</p>
+              <p className="text-muted-foreground mt-2">İlk sınıfınızı oluşturarak başlayın.</p>
             </div>
           )}
         </div>
-
       </div>
+
+      {/* Expand class modal */}
+      <Dialog open={expandTarget !== null} onOpenChange={(o) => !o && setExpandTarget(null)}>
+        <DialogContent className="sm:max-w-md rounded-3xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="w-5 h-5 text-primary" />
+              Ek Öğrenci Ekle
+            </DialogTitle>
+            <DialogDescription>
+              {expandTarget && (
+                <>
+                  <span className="font-semibold text-foreground">{expandTarget.name}</span> sınıfına yeni
+                  öğrenci kontenjanı ekleyin. Eklediğiniz sayı kadar yeni kod üretilecek.
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...expandForm}>
+            <form onSubmit={expandForm.handleSubmit(handleExpand)} className="space-y-4">
+              <FormField
+                control={expandForm.control}
+                name="additional"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Eklenecek Öğrenci Sayısı</FormLabel>
+                    <FormControl>
+                      <Input type="number" min={1} className="rounded-xl py-6 text-lg" autoFocus {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter className="mt-6 flex flex-row gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="rounded-xl"
+                  onClick={() => setExpandTarget(null)}
+                >
+                  İptal
+                </Button>
+                <Button type="submit" className="flex-1 rounded-xl" disabled={expandClass.isPending}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  {expandClass.isPending ? "Ekleniyor..." : "Ekle ve Kodları Üret"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }

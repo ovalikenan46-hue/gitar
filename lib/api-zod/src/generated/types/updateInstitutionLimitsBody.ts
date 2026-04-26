@@ -6,9 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface CreateClassBody {
-  /** @minLength 1 */
-  name: string;
+export interface UpdateInstitutionLimitsBody {
   /** @minimum 1 */
-  studentCount: number;
+  teacherLimit: number;
+  /** @minimum 1 */
+  studentLimit: number;
 }

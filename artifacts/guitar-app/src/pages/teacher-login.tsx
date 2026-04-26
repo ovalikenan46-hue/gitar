@@ -1,39 +1,75 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLocation } from "wouter";
-import { useTeacherLogin } from "@workspace/api-client-react";
+import { useTeacherLogin, useCheckInviteCode } from "@workspace/api-client-react";
 import { setToken } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { GraduationCap, ArrowLeft } from "lucide-react";
+import { GraduationCap, ArrowLeft, Building2, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { pageVariants, pageTransition } from "@/lib/animations";
 import { Link } from "wouter";
+import { toast } from "sonner";
 
-const formSchema = z.object({
+const codeSchema = z.object({
   code: z.string().min(1, "Kod gerekli"),
-  name: z.string().min(2, "Adınız en az 2 karakter olmalı"),
+});
+const identitySchema = z.object({
+  firstName: z.string().min(2, "Adınız en az 2 karakter olmalı"),
+  lastName: z.string().min(2, "Soyadınız en az 2 karakter olmalı"),
 });
 
 export default function TeacherLogin() {
   const [, setLocation] = useLocation();
+  const checkCode = useCheckInviteCode();
   const login = useTeacherLogin();
+  const [validatedCode, setValidatedCode] = useState<{ code: string; institutionName: string } | null>(null);
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: { code: "", name: "" },
+  const codeForm = useForm<z.infer<typeof codeSchema>>({
+    resolver: zodResolver(codeSchema),
+    defaultValues: { code: "" },
+  });
+  const identityForm = useForm<z.infer<typeof identitySchema>>({
+    resolver: zodResolver(identitySchema),
+    defaultValues: { firstName: "", lastName: "" },
   });
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    login.mutate({ data: values }, {
-      onSuccess: (data) => {
-        setToken(data.token);
-        setLocation("/teacher");
+  const onCheckCode = (values: z.infer<typeof codeSchema>) => {
+    checkCode.mutate(
+      { data: { code: values.code } },
+      {
+        onSuccess: (data) => {
+          if (data.kind !== "teacher") {
+            toast.error("Bu kod öğretmen kodu değil");
+            return;
+          }
+          setValidatedCode({ code: values.code, institutionName: data.institutionName });
+        },
+        onError: () => {
+          toast.error("Kod bulunamadı");
+        },
       },
-    });
+    );
+  };
+
+  const onLogin = (values: z.infer<typeof identitySchema>) => {
+    if (!validatedCode) return;
+    login.mutate(
+      { data: { code: validatedCode.code, firstName: values.firstName, lastName: values.lastName } },
+      {
+        onSuccess: (data) => {
+          setToken(data.token);
+          setLocation("/teacher");
+        },
+        onError: () => {
+          toast.error("Giriş başarısız");
+        },
+      },
+    );
   };
 
   return (
@@ -56,43 +92,112 @@ export default function TeacherLogin() {
           </div>
           <CardTitle className="text-3xl font-bold text-foreground">Öğretmen Girişi</CardTitle>
           <CardDescription className="text-muted-foreground text-base">
-            Kurumunuzun sağladığı kod ve adınızla giriş yapın
+            {validatedCode ? "Bilgilerinizi doğrulayın ve devam edin" : "Kurumunuzun verdiği kodu girin"}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="code"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-base">Öğretmen Kodu</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Kodunuzu girin" className="text-lg py-6 rounded-2xl bg-white/50" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-base">Adınız Soyadınız</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Adınızı girin" className="text-lg py-6 rounded-2xl bg-white/50" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button type="submit" variant="secondary" className="w-full py-6 text-lg rounded-2xl shadow-md hover:shadow-lg transition-all" disabled={login.isPending}>
-                {login.isPending ? "Giriş yapılıyor..." : "Giriş Yap"}
-              </Button>
-            </form>
-          </Form>
+          {!validatedCode ? (
+            <Form {...codeForm}>
+              <form onSubmit={codeForm.handleSubmit(onCheckCode)} className="space-y-6">
+                <FormField
+                  control={codeForm.control}
+                  name="code"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">Öğretmen Kodu</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Kodunuzu girin"
+                          autoFocus
+                          className="text-lg py-6 rounded-2xl bg-white/50 uppercase tracking-widest font-mono"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button
+                  type="submit"
+                  variant="secondary"
+                  className="w-full py-6 text-lg rounded-2xl shadow-md hover:shadow-lg transition-all"
+                  disabled={checkCode.isPending}
+                >
+                  {checkCode.isPending ? "Kontrol ediliyor..." : (
+                    <>Devam Et <ArrowRight className="w-5 h-5 ml-2" /></>
+                  )}
+                </Button>
+              </form>
+            </Form>
+          ) : (
+            <div className="space-y-6">
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-primary/5 border border-primary/20 rounded-2xl p-4 flex items-center gap-3"
+              >
+                <div className="w-10 h-10 bg-primary/15 rounded-xl flex items-center justify-center text-primary shrink-0">
+                  <Building2 className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs text-muted-foreground font-medium">Kurumunuz</p>
+                  <p className="font-bold text-foreground truncate">{validatedCode.institutionName}</p>
+                </div>
+              </motion.div>
+
+              <Form {...identityForm}>
+                <form onSubmit={identityForm.handleSubmit(onLogin)} className="space-y-4">
+                  <FormField
+                    control={identityForm.control}
+                    name="firstName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base">Adınız</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ad" autoFocus className="text-lg py-6 rounded-2xl bg-white/50" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={identityForm.control}
+                    name="lastName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base">Soyadınız</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Soyad" className="text-lg py-6 rounded-2xl bg-white/50" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="rounded-2xl"
+                      onClick={() => {
+                        setValidatedCode(null);
+                        identityForm.reset();
+                      }}
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-1" /> Kodu değiştir
+                    </Button>
+                    <Button
+                      type="submit"
+                      variant="secondary"
+                      className="flex-1 py-6 text-lg rounded-2xl shadow-md"
+                      disabled={login.isPending}
+                    >
+                      {login.isPending ? "Giriş yapılıyor..." : "Giriş Yap"}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </div>
+          )}
         </CardContent>
       </Card>
     </motion.div>

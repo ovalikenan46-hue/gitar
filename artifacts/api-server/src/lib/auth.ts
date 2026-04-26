@@ -62,8 +62,10 @@ export async function loadCurrentUser(payload: JwtPayload) {
       id: ADMIN_USER_ID,
       role: "admin" as const,
       name: "Yönetici",
-      institutionId: null,
-      classId: null,
+      firstName: null as string | null,
+      lastName: null as string | null,
+      institutionId: null as string | null,
+      classId: null as string | null,
     };
   }
   const [user] = await db

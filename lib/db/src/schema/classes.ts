@@ -7,6 +7,7 @@ export const classesTable = pgTable("classes", {
   teacherId: text("teacher_id").notNull(),
   institutionId: text("institution_id").notNull(),
   levelUnlocked: integer("level_unlocked").notNull().default(1),
+  studentCapacity: integer("student_capacity").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

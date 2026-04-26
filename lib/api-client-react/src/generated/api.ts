@@ -20,16 +20,21 @@ import type {
   AdminLoginBody,
   AdminStats,
   AuthResponse,
+  CheckCodeBody,
   ClassWithStats,
+  CodeCheckResult,
   CodeLoginBody,
   CreateClassBody,
   CreateInstitutionBody,
   ErrorResponse,
+  ExpandClassBody,
   HealthStatus,
   InstitutionWithStats,
   InviteCode,
   LessonWithProgress,
   StudentDashboard,
+  TeacherLoginBody,
+  UpdateInstitutionLimitsBody,
   UserProfile,
 } from "./api.schemas";
 
@@ -204,21 +209,107 @@ export const useAdminLogin = <
 };
 
 /**
- * @summary Teacher login with code
+ * @summary Inspect a teacher or student invite code without logging in
+ */
+export const getCheckInviteCodeUrl = () => {
+  return `/api/auth/check-code`;
+};
+
+export const checkInviteCode = async (
+  checkCodeBody: CheckCodeBody,
+  options?: RequestInit,
+): Promise<CodeCheckResult> => {
+  return customFetch<CodeCheckResult>(getCheckInviteCodeUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(checkCodeBody),
+  });
+};
+
+export const getCheckInviteCodeMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof checkInviteCode>>,
+    TError,
+    { data: BodyType<CheckCodeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof checkInviteCode>>,
+  TError,
+  { data: BodyType<CheckCodeBody> },
+  TContext
+> => {
+  const mutationKey = ["checkInviteCode"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof checkInviteCode>>,
+    { data: BodyType<CheckCodeBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return checkInviteCode(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CheckInviteCodeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof checkInviteCode>>
+>;
+export type CheckInviteCodeMutationBody = BodyType<CheckCodeBody>;
+export type CheckInviteCodeMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Inspect a teacher or student invite code without logging in
+ */
+export const useCheckInviteCode = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof checkInviteCode>>,
+    TError,
+    { data: BodyType<CheckCodeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof checkInviteCode>>,
+  TError,
+  { data: BodyType<CheckCodeBody> },
+  TContext
+> => {
+  return useMutation(getCheckInviteCodeMutationOptions(options));
+};
+
+/**
+ * @summary Teacher login with code and identity
  */
 export const getTeacherLoginUrl = () => {
   return `/api/auth/teacher-login`;
 };
 
 export const teacherLogin = async (
-  codeLoginBody: CodeLoginBody,
+  teacherLoginBody: TeacherLoginBody,
   options?: RequestInit,
 ): Promise<AuthResponse> => {
   return customFetch<AuthResponse>(getTeacherLoginUrl(), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(codeLoginBody),
+    body: JSON.stringify(teacherLoginBody),
   });
 };
 
@@ -229,14 +320,14 @@ export const getTeacherLoginMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof teacherLogin>>,
     TError,
-    { data: BodyType<CodeLoginBody> },
+    { data: BodyType<TeacherLoginBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof teacherLogin>>,
   TError,
-  { data: BodyType<CodeLoginBody> },
+  { data: BodyType<TeacherLoginBody> },
   TContext
 > => {
   const mutationKey = ["teacherLogin"];
@@ -250,7 +341,7 @@ export const getTeacherLoginMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof teacherLogin>>,
-    { data: BodyType<CodeLoginBody> }
+    { data: BodyType<TeacherLoginBody> }
   > = (props) => {
     const { data } = props ?? {};
 
@@ -263,11 +354,11 @@ export const getTeacherLoginMutationOptions = <
 export type TeacherLoginMutationResult = NonNullable<
   Awaited<ReturnType<typeof teacherLogin>>
 >;
-export type TeacherLoginMutationBody = BodyType<CodeLoginBody>;
+export type TeacherLoginMutationBody = BodyType<TeacherLoginBody>;
 export type TeacherLoginMutationError = ErrorType<ErrorResponse>;
 
 /**
- * @summary Teacher login with code
+ * @summary Teacher login with code and identity
  */
 export const useTeacherLogin = <
   TError = ErrorType<ErrorResponse>,
@@ -276,14 +367,14 @@ export const useTeacherLogin = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof teacherLogin>>,
     TError,
-    { data: BodyType<CodeLoginBody> },
+    { data: BodyType<TeacherLoginBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationResult<
   Awaited<ReturnType<typeof teacherLogin>>,
   TError,
-  { data: BodyType<CodeLoginBody> },
+  { data: BodyType<TeacherLoginBody> },
   TContext
 > => {
   return useMutation(getTeacherLoginMutationOptions(options));
@@ -597,6 +688,94 @@ export const useCreateInstitution = <
   TContext
 > => {
   return useMutation(getCreateInstitutionMutationOptions(options));
+};
+
+/**
+ * @summary Update teacher and student limits of an institution
+ */
+export const getUpdateInstitutionLimitsUrl = (id: string) => {
+  return `/api/admin/institutions/${id}`;
+};
+
+export const updateInstitutionLimits = async (
+  id: string,
+  updateInstitutionLimitsBody: UpdateInstitutionLimitsBody,
+  options?: RequestInit,
+): Promise<InstitutionWithStats> => {
+  return customFetch<InstitutionWithStats>(getUpdateInstitutionLimitsUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateInstitutionLimitsBody),
+  });
+};
+
+export const getUpdateInstitutionLimitsMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateInstitutionLimits>>,
+    TError,
+    { id: string; data: BodyType<UpdateInstitutionLimitsBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateInstitutionLimits>>,
+  TError,
+  { id: string; data: BodyType<UpdateInstitutionLimitsBody> },
+  TContext
+> => {
+  const mutationKey = ["updateInstitutionLimits"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateInstitutionLimits>>,
+    { id: string; data: BodyType<UpdateInstitutionLimitsBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateInstitutionLimits(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateInstitutionLimitsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateInstitutionLimits>>
+>;
+export type UpdateInstitutionLimitsMutationBody =
+  BodyType<UpdateInstitutionLimitsBody>;
+export type UpdateInstitutionLimitsMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Update teacher and student limits of an institution
+ */
+export const useUpdateInstitutionLimits = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateInstitutionLimits>>,
+    TError,
+    { id: string; data: BodyType<UpdateInstitutionLimitsBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateInstitutionLimits>>,
+  TError,
+  { id: string; data: BodyType<UpdateInstitutionLimitsBody> },
+  TContext
+> => {
+  return useMutation(getUpdateInstitutionLimitsMutationOptions(options));
 };
 
 /**
@@ -920,40 +1099,43 @@ export const useCreateClass = <
 };
 
 /**
- * @summary Generate a student invite code for a class
+ * @summary Add additional student slots (and codes) to an existing class
  */
-export const getGenerateStudentCodeUrl = (id: string) => {
-  return `/api/teacher/classes/${id}/student-codes`;
+export const getExpandClassCapacityUrl = (id: string) => {
+  return `/api/teacher/classes/${id}/expand`;
 };
 
-export const generateStudentCode = async (
+export const expandClassCapacity = async (
   id: string,
+  expandClassBody: ExpandClassBody,
   options?: RequestInit,
-): Promise<InviteCode> => {
-  return customFetch<InviteCode>(getGenerateStudentCodeUrl(id), {
+): Promise<ClassWithStats> => {
+  return customFetch<ClassWithStats>(getExpandClassCapacityUrl(id), {
     ...options,
     method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(expandClassBody),
   });
 };
 
-export const getGenerateStudentCodeMutationOptions = <
-  TError = ErrorType<unknown>,
+export const getExpandClassCapacityMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof generateStudentCode>>,
+    Awaited<ReturnType<typeof expandClassCapacity>>,
     TError,
-    { id: string },
+    { id: string; data: BodyType<ExpandClassBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
-  Awaited<ReturnType<typeof generateStudentCode>>,
+  Awaited<ReturnType<typeof expandClassCapacity>>,
   TError,
-  { id: string },
+  { id: string; data: BodyType<ExpandClassBody> },
   TContext
 > => {
-  const mutationKey = ["generateStudentCode"];
+  const mutationKey = ["expandClassCapacity"];
   const { mutation: mutationOptions, request: requestOptions } = options
     ? options.mutation &&
       "mutationKey" in options.mutation &&
@@ -963,44 +1145,44 @@ export const getGenerateStudentCodeMutationOptions = <
     : { mutation: { mutationKey }, request: undefined };
 
   const mutationFn: MutationFunction<
-    Awaited<ReturnType<typeof generateStudentCode>>,
-    { id: string }
+    Awaited<ReturnType<typeof expandClassCapacity>>,
+    { id: string; data: BodyType<ExpandClassBody> }
   > = (props) => {
-    const { id } = props ?? {};
+    const { id, data } = props ?? {};
 
-    return generateStudentCode(id, requestOptions);
+    return expandClassCapacity(id, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
 };
 
-export type GenerateStudentCodeMutationResult = NonNullable<
-  Awaited<ReturnType<typeof generateStudentCode>>
+export type ExpandClassCapacityMutationResult = NonNullable<
+  Awaited<ReturnType<typeof expandClassCapacity>>
 >;
-
-export type GenerateStudentCodeMutationError = ErrorType<unknown>;
+export type ExpandClassCapacityMutationBody = BodyType<ExpandClassBody>;
+export type ExpandClassCapacityMutationError = ErrorType<ErrorResponse>;
 
 /**
- * @summary Generate a student invite code for a class
+ * @summary Add additional student slots (and codes) to an existing class
  */
-export const useGenerateStudentCode = <
-  TError = ErrorType<unknown>,
+export const useExpandClassCapacity = <
+  TError = ErrorType<ErrorResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
-    Awaited<ReturnType<typeof generateStudentCode>>,
+    Awaited<ReturnType<typeof expandClassCapacity>>,
     TError,
-    { id: string },
+    { id: string; data: BodyType<ExpandClassBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationResult<
-  Awaited<ReturnType<typeof generateStudentCode>>,
+  Awaited<ReturnType<typeof expandClassCapacity>>,
   TError,
-  { id: string },
+  { id: string; data: BodyType<ExpandClassBody> },
   TContext
 > => {
-  return useMutation(getGenerateStudentCodeMutationOptions(options));
+  return useMutation(getExpandClassCapacityMutationOptions(options));
 };
 
 /**

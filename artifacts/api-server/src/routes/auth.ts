@@ -1,11 +1,12 @@
 import { Router, type IRouter } from "express";
 import { db, usersTable } from "@workspace/db";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { teacherCodesTable, studentCodesTable, classesTable, institutionsTable } from "@workspace/db";
 import {
   AdminLoginBody,
   TeacherLoginBody,
   StudentLoginBody,
+  CheckInviteCodeBody,
   AdminLoginResponse,
   GetMeResponse,
 } from "@workspace/api-zod";
@@ -38,14 +39,71 @@ router.post("/auth/admin-login", async (req, res) => {
   res.json(body);
 });
 
+router.post("/auth/check-code", async (req, res) => {
+  const parsed = CheckInviteCodeBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "Geçersiz istek" });
+    return;
+  }
+  const cleanCode = parsed.data.code.trim().toUpperCase();
+  const [tCode] = await db
+    .select()
+    .from(teacherCodesTable)
+    .where(eq(teacherCodesTable.code, cleanCode))
+    .limit(1);
+  if (tCode) {
+    const [inst] = await db
+      .select()
+      .from(institutionsTable)
+      .where(eq(institutionsTable.id, tCode.institutionId))
+      .limit(1);
+    res.json({
+      kind: "teacher",
+      institutionName: inst?.name ?? "",
+      className: null,
+      used: tCode.usedByUserId !== null,
+    });
+    return;
+  }
+  const [sCode] = await db
+    .select()
+    .from(studentCodesTable)
+    .where(eq(studentCodesTable.code, cleanCode))
+    .limit(1);
+  if (sCode) {
+    const [inst] = await db
+      .select()
+      .from(institutionsTable)
+      .where(eq(institutionsTable.id, sCode.institutionId))
+      .limit(1);
+    const [cls] = await db
+      .select()
+      .from(classesTable)
+      .where(eq(classesTable.id, sCode.classId))
+      .limit(1);
+    res.json({
+      kind: "student",
+      institutionName: inst?.name ?? "",
+      className: cls?.name ?? null,
+      used: sCode.usedByUserId !== null,
+    });
+    return;
+  }
+  res.status(404).json({ error: "Kod bulunamadı" });
+});
+
 router.post("/auth/teacher-login", async (req, res) => {
   const parsed = TeacherLoginBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Geçersiz istek" });
     return;
   }
-  const { code, name } = parsed.data;
+  const { code, firstName, lastName } = parsed.data;
   const cleanCode = code.trim().toUpperCase();
+  const fName = firstName.trim();
+  const lName = lastName.trim();
+  const fullName = `${fName} ${lName}`.trim();
+
   const [tCode] = await db
     .select()
     .from(teacherCodesTable)
@@ -62,13 +120,22 @@ router.post("/auth/teacher-login", async (req, res) => {
       .from(usersTable)
       .where(eq(usersTable.id, tCode.usedByUserId))
       .limit(1);
+    if (user) {
+      [user] = await db
+        .update(usersTable)
+        .set({ firstName: fName, lastName: lName, name: fullName })
+        .where(eq(usersTable.id, user.id))
+        .returning();
+    }
   }
   if (!user) {
     [user] = await db
       .insert(usersTable)
       .values({
         role: "teacher",
-        name: name.trim() || "Öğretmen",
+        name: fullName,
+        firstName: fName,
+        lastName: lName,
         institutionId: tCode.institutionId,
       })
       .returning();
@@ -83,13 +150,16 @@ router.post("/auth/teacher-login", async (req, res) => {
     .from(institutionsTable)
     .where(eq(institutionsTable.id, tCode.institutionId))
     .limit(1);
+  const teacherUser = user as typeof usersTable.$inferSelect;
   res.json({
     token,
     user: {
-      id: user.id,
+      id: teacherUser.id,
       role: "teacher",
-      name: user.name,
-      institutionId: user.institutionId,
+      name: teacherUser.name,
+      firstName: teacherUser.firstName ?? null,
+      lastName: teacherUser.lastName ?? null,
+      institutionId: teacherUser.institutionId,
       institutionName: inst?.name ?? null,
     },
   });
@@ -189,6 +259,8 @@ router.get("/auth/me", requireAuth(), async (req, res) => {
     id: user.id,
     role: user.role,
     name: user.name,
+    firstName: user.firstName ?? null,
+    lastName: user.lastName ?? null,
     institutionId: user.institutionId ?? null,
     institutionName,
     classId: user.classId ?? null,
