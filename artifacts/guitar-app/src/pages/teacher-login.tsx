@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,15 +10,37 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { GraduationCap, ArrowLeft, Building2, ArrowRight } from "lucide-react";
+import { GraduationCap, ArrowLeft, Building2, ArrowRight, Loader2, UserCheck, RefreshCw } from "lucide-react";
 import { motion } from "framer-motion";
 import { pageVariants, pageTransition } from "@/lib/animations";
 import { Link } from "wouter";
 import { toast } from "sonner";
 
-const codeSchema = z.object({
-  code: z.string().min(1, "Kod gerekli"),
-});
+const STORAGE_KEY = "guitar_teacher_saved";
+
+interface SavedTeacher {
+  code: string;
+  firstName: string;
+  lastName: string;
+  institutionName: string;
+}
+
+function loadSaved(): SavedTeacher | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as SavedTeacher) : null;
+  } catch {
+    return null;
+  }
+}
+function saveSaved(data: SavedTeacher) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+function clearSaved() {
+  localStorage.removeItem(STORAGE_KEY);
+}
+
+const codeSchema = z.object({ code: z.string().min(1, "Kod gerekli") });
 const identitySchema = z.object({
   firstName: z.string().min(2, "Adınız en az 2 karakter olmalı"),
   lastName: z.string().min(2, "Soyadınız en az 2 karakter olmalı"),
@@ -29,7 +51,13 @@ export default function TeacherLogin() {
   const queryClient = useQueryClient();
   const checkCode = useCheckInviteCode();
   const login = useTeacherLogin();
+
+  const [saved, setSaved] = useState<SavedTeacher | null>(null);
   const [validatedCode, setValidatedCode] = useState<{ code: string; institutionName: string } | null>(null);
+
+  useEffect(() => {
+    setSaved(loadSaved());
+  }, []);
 
   const codeForm = useForm<z.infer<typeof codeSchema>>({
     resolver: zodResolver(codeSchema),
@@ -39,6 +67,28 @@ export default function TeacherLogin() {
     resolver: zodResolver(identitySchema),
     defaultValues: { firstName: "", lastName: "" },
   });
+
+  const doLogin = async (code: string, firstName: string, lastName: string, institutionName: string) => {
+    login.mutate(
+      { data: { code, firstName, lastName } },
+      {
+        onSuccess: async (data) => {
+          saveSaved({ code, firstName, lastName, institutionName });
+          setToken(data.token);
+          await queryClient.refetchQueries({ queryKey: getGetMeQueryKey() });
+          setLocation("/teacher");
+        },
+        onError: () => {
+          toast.error("Giriş başarısız. Bilgilerinizi kontrol edin.");
+        },
+      },
+    );
+  };
+
+  const onQuickLogin = () => {
+    if (!saved) return;
+    doLogin(saved.code, saved.firstName, saved.lastName, saved.institutionName);
+  };
 
   const onCheckCode = (values: z.infer<typeof codeSchema>) => {
     checkCode.mutate(
@@ -60,19 +110,7 @@ export default function TeacherLogin() {
 
   const onLogin = (values: z.infer<typeof identitySchema>) => {
     if (!validatedCode) return;
-    login.mutate(
-      { data: { code: validatedCode.code, firstName: values.firstName, lastName: values.lastName } },
-      {
-        onSuccess: async (data) => {
-          setToken(data.token);
-          await queryClient.refetchQueries({ queryKey: getGetMeQueryKey() });
-          setLocation("/teacher");
-        },
-        onError: () => {
-          toast.error("Giriş başarısız");
-        },
-      },
-    );
+    doLogin(validatedCode.code, values.firstName, values.lastName, validatedCode.institutionName);
   };
 
   return (
@@ -95,11 +133,65 @@ export default function TeacherLogin() {
           </div>
           <CardTitle className="text-3xl font-bold text-foreground">Öğretmen Girişi</CardTitle>
           <CardDescription className="text-muted-foreground text-base">
-            {validatedCode ? "Bilgilerinizi doğrulayın ve devam edin" : "Kurumunuzun verdiği kodu girin"}
+            {saved
+              ? "Kaydedilmiş hesabınızla hızlı giriş yapın"
+              : validatedCode
+              ? "Bilgilerinizi doğrulayın ve devam edin"
+              : "Kurumunuzun verdiği kodu girin"}
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          {!validatedCode ? (
+
+        <CardContent className="space-y-4">
+          {/* ── HIZLI GİRİŞ KARTI ── */}
+          {saved && !validatedCode && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-3"
+            >
+              <div className="bg-secondary/10 border border-secondary/30 rounded-2xl p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-secondary/20 rounded-xl flex items-center justify-center text-secondary shrink-0">
+                    <UserCheck className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-foreground text-lg truncate">
+                      {saved.firstName} {saved.lastName}
+                    </p>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Building2 className="w-3 h-3" /> {saved.institutionName}
+                    </p>
+                  </div>
+                </div>
+
+                <Button
+                  className="w-full py-6 text-base rounded-2xl bg-secondary text-secondary-foreground hover:bg-secondary/90 shadow-md"
+                  onClick={onQuickLogin}
+                  disabled={login.isPending}
+                >
+                  {login.isPending ? (
+                    <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Giriş yapılıyor...</>
+                  ) : (
+                    "Hızlı Giriş Yap →"
+                  )}
+                </Button>
+              </div>
+
+              <button
+                type="button"
+                className="w-full text-sm text-muted-foreground hover:text-foreground flex items-center justify-center gap-1 py-1 transition-colors"
+                onClick={() => {
+                  clearSaved();
+                  setSaved(null);
+                }}
+              >
+                <RefreshCw className="w-3.5 h-3.5" /> Farklı hesapla giriş yap
+              </button>
+            </motion.div>
+          )}
+
+          {/* ── KOD FORMU ── */}
+          {!saved && !validatedCode && (
             <Form {...codeForm}>
               <form onSubmit={codeForm.handleSubmit(onCheckCode)} className="space-y-6">
                 <FormField
@@ -114,6 +206,7 @@ export default function TeacherLogin() {
                           autoFocus
                           className="text-lg py-6 rounded-2xl bg-white/50 uppercase tracking-widest font-mono"
                           {...field}
+                          onChange={(e) => field.onChange(e.target.value.toUpperCase())}
                         />
                       </FormControl>
                       <FormMessage />
@@ -126,13 +219,18 @@ export default function TeacherLogin() {
                   className="w-full py-6 text-lg rounded-2xl shadow-md hover:shadow-lg transition-all"
                   disabled={checkCode.isPending}
                 >
-                  {checkCode.isPending ? "Kontrol ediliyor..." : (
+                  {checkCode.isPending ? (
+                    <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Kontrol ediliyor...</>
+                  ) : (
                     <>Devam Et <ArrowRight className="w-5 h-5 ml-2" /></>
                   )}
                 </Button>
               </form>
             </Form>
-          ) : (
+          )}
+
+          {/* ── KİMLİK FORMU ── */}
+          {!saved && validatedCode && (
             <div className="space-y-6">
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -194,7 +292,11 @@ export default function TeacherLogin() {
                       className="flex-1 py-6 text-lg rounded-2xl shadow-md"
                       disabled={login.isPending}
                     >
-                      {login.isPending ? "Giriş yapılıyor..." : "Giriş Yap"}
+                      {login.isPending ? (
+                        <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Giriş yapılıyor...</>
+                      ) : (
+                        "Giriş Yap"
+                      )}
                     </Button>
                   </div>
                 </form>
