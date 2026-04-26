@@ -1,0 +1,250 @@
+You are a senior full-stack engineer AND a senior UI/UX designer.
+
+DO NOT EXPLAIN. BUILD DIRECTLY.
+
+----------------------------------------
+PROJECT:
+Modern Guitar Learning Web App (Middle School)
+
+----------------------------------------
+TECH STACK:
+- React (Vite)
+- Node.js (Express)
+- PostgreSQL (Neon)
+- JWT Auth (1 hour expiry)
+
+----------------------------------------
+DESIGN SYSTEM (VERY IMPORTANT):
+
+Target:
+- Ages 10–14
+- Fun but educational
+- Modern but NOT boring
+
+STYLE:
+- Soft gradients + warm colors
+- Slightly playful but clean
+- Rounded corners (border-radius everywhere)
+- Smooth hover animations
+- Glassmorphism (light usage)
+
+COLOR PALETTE:
+- Primary: #6C63FF (soft purple)
+- Secondary: #FFB86C (warm orange)
+- Accent: #00C2A8 (teal)
+- Background: soft gradient (light cream → pastel tone)
+- Text: dark grey (#333)
+
+FONTS:
+- Rounded, friendly font (e.g. Poppins)
+
+----------------------------------------
+WEB APP EXPERIENCE:
+
+- Must feel like a mobile app
+- Add:
+  - Fixed bottom navigation (for students)
+  - Smooth page transitions
+  - No page reload feeling
+
+----------------------------------------
+LANDING PAGE (IMPORTANT DESIGN):
+
+- Full screen modern layout
+
+BACKGROUND:
+- Soft gradient + blurred guitar illustration
+
+TOP LEFT:
+- Animated Treble Clef (floating slowly)
+
+TOP RIGHT:
+- Animated Bass Clef (floating)
+- CLICK → opens Admin Login modal
+
+CENTER:
+
+- Large modern card (glass effect)
+- Inside:
+  - App title: "Gitar Öğreniyorum"
+  - Subtitle: "Eğlenceli ve interaktif gitar eğitimi"
+
+- Buttons:
+  - 🎓 Öğretmen Girişi
+  - 🎵 Öğrenci Girişi
+
+- Add subtle hover animations
+
+----------------------------------------
+ADMIN LOGIN:
+
+Password: 114344_Kenan
+
+- Modern modal design
+- Smooth open/close animation
+
+----------------------------------------
+ADMIN PANEL:
+
+- Modern dashboard cards
+
+FEATURES:
+- Create Institution
+- Set teacher limit
+- Set student limit
+- Generate teacher codes
+
+- Show stats:
+  - total teachers
+  - total students
+
+----------------------------------------
+TEACHER PANEL:
+
+- Clean dashboard
+
+- Create Class
+- Generate student code
+
+- Class cards:
+  - Show class name
+  - Student count
+  - Button:
+    "2. Seviyeyi Aç"
+
+----------------------------------------
+STUDENT PANEL:
+
+- Bottom navigation:
+  - Ana Sayfa
+  - Dersler
+  - Profil
+
+- Card-based lesson UI
+
+----------------------------------------
+ANIMATION ENGINE (REAL SYSTEM):
+
+- Use Framer Motion
+
+Each lesson must include:
+- Play
+- Pause
+- Reset
+
+- Timeline-based animation
+- Smooth transitions
+
+Add speech bubble:
+"Nasıl yapılır? İzle"
+
+----------------------------------------
+FRETBOARD SYSTEM:
+
+- 6 strings (E A D G B E)
+- 12 frets
+
+- Clean horizontal UI
+
+Interaction:
+- Click → highlight note
+- Show note name
+- Play sound
+
+- Glow effect on active note
+
+----------------------------------------
+SOUND SYSTEM:
+
+- Use Web Audio API
+
+- Map all notes correctly
+
+- Instant playback (<100ms)
+
+- Prevent sound overlap
+
+----------------------------------------
+LESSON STRUCTURE:
+
+MODULE 1
+
+A – Gitar Tutuş
+- Animated guide
+- 3 min loop animation
+
+B – Akort + Notlar
+- Interactive fretboard
+- Tuner icon (simple UI)
+
+C – Sağ El Ritim
+- Pattern:
+  ↓ ↓ ↑ ↑ ↓ ↑
+- Show:
+  1 2 3 4 1 2
+
+----------------------------------------
+MODULE 2
+
+A – Akorlar
+
+Chord 1: Em
+- Show finger placement
+- Animation + sound
+
+Chord 2: Am
+- Show order:
+  index → middle → ring
+
+----------------------------------------
+PROGRESSION SYSTEM:
+
+- Locked lessons
+- Only teacher unlocks next level
+
+----------------------------------------
+DATABASE:
+
+Users:
+- id
+- role
+- code
+- institutionId
+
+Institutions:
+- id
+- name
+- teacherLimit
+- studentLimit
+
+Classes:
+- id
+- teacherId
+- studentCode
+- levelUnlocked
+
+----------------------------------------
+PERFORMANCE:
+
+- No lag animations
+- Memoized components
+- Efficient rendering
+
+----------------------------------------
+FINAL:
+
+Build FULL MVP:
+
+- Auth system
+- Role dashboards
+- Modern UI
+- Animation system
+- Fretboard system
+- Sound system
+- Lesson system
+- Progression lock
+
+Make it visually impressive and production-ready.
+
+DO NOT ASK QUESTIONS.
+BUILD NOW.

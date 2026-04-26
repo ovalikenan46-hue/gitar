@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Gitar Öğreniyorum"
+version = "1.0.0"
+id = "artifacts/guitar-app"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23277
+
+[services.development]
+run = "pnpm --filter @workspace/guitar-app run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/guitar-app", "run", "build" ]
+publicDir = "artifacts/guitar-app/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23277"
+BASE_PATH = "/"
