@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { MusicBg, TrebleClef, BassClef } from "@/components/music-bg";
 import { useAdminLogin } from "@workspace/api-client-react";
 import { setToken } from "@/lib/auth";
 import { useLocation } from "wouter";
@@ -47,30 +48,27 @@ export default function Landing() {
         />
       </div>
 
-      {/* Floating Clefs */}
+      {/* Animated background notes */}
+      <MusicBg count={16} />
+
+      {/* Sol anahtarı (treble clef) — sol üstte */}
       <motion.div
-        className="absolute top-10 left-10 text-primary/30 z-10 pointer-events-none"
-        animate={{ y: [-15, 15, -15], rotate: [-5, 5, -5] }}
+        className="absolute top-8 left-8 text-primary/40 z-10 pointer-events-none"
+        animate={{ y: [-12, 12, -12], rotate: [-4, 4, -4] }}
         transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
       >
-        <svg width="80" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 2C8 2 6 5 6 8c0 3 4 5 4 8 0 4-4 4-6 1"/>
-          <path d="M12 2v20"/>
-        </svg>
+        <TrebleClef className="w-16 h-36 sm:w-20 sm:h-44" />
       </motion.div>
 
+      {/* Fa anahtarı (bass clef) — sağ üstte, admin girişi */}
       <motion.button
-        className="absolute top-10 right-10 text-accent/30 z-10 hover:text-accent/60 transition-colors"
-        animate={{ y: [15, -15, 15], rotate: [5, -5, 5] }}
+        className="absolute top-10 right-8 text-accent/50 z-10 hover:text-accent transition-colors"
+        animate={{ y: [12, -12, 12], rotate: [4, -4, 4] }}
         transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
         onClick={() => setAdminOpen(true)}
+        aria-label="Yönetici girişi"
       >
-        <svg width="60" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="9" cy="9" r="2"/>
-          <path d="M11 9c0 5-3 8-7 11"/>
-          <circle cx="15" cy="11" r="1"/>
-          <circle cx="15" cy="7" r="1"/>
-        </svg>
+        <BassClef className="w-16 h-20 sm:w-20 sm:h-24" />
       </motion.button>
 
       {/* Main Card */}

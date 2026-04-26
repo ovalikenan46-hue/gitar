@@ -5,6 +5,7 @@
  * Guitar learning app API
  * OpenAPI spec version: 0.1.0
  */
+import type { TeacherCodeInfo } from "./teacherCodeInfo";
 
 export interface InstitutionWithStats {
   id: string;
@@ -14,4 +15,5 @@ export interface InstitutionWithStats {
   totalTeachers: number;
   totalStudents: number;
   unusedTeacherCodes: number;
+  teacherCodes: TeacherCodeInfo[];
 }

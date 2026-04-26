@@ -57,6 +57,11 @@ export interface CreateInstitutionBody {
   studentLimit: number;
 }
 
+export interface TeacherCodeInfo {
+  code: string;
+  used: boolean;
+}
+
 export interface InstitutionWithStats {
   id: string;
   name: string;
@@ -65,6 +70,7 @@ export interface InstitutionWithStats {
   totalTeachers: number;
   totalStudents: number;
   unusedTeacherCodes: number;
+  teacherCodes: TeacherCodeInfo[];
 }
 
 export interface AdminStats {

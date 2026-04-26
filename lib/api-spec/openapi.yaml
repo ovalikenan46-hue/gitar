@@ -416,7 +416,7 @@ components:
 
     InstitutionWithStats:
       type: object
-      required: [id, name, teacherLimit, studentLimit, totalTeachers, totalStudents, unusedTeacherCodes]
+      required: [id, name, teacherLimit, studentLimit, totalTeachers, totalStudents, unusedTeacherCodes, teacherCodes]
       properties:
         id:
           type: string
@@ -432,6 +432,19 @@ components:
           type: integer
         unusedTeacherCodes:
           type: integer
+        teacherCodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/TeacherCodeInfo"
+
+    TeacherCodeInfo:
+      type: object
+      required: [code, used]
+      properties:
+        code:
+          type: string
+        used:
+          type: boolean
 
     AdminStats:
       type: object

@@ -19,5 +19,6 @@ export * from "./institutionWithStats";
 export * from "./inviteCode";
 export * from "./lessonWithProgress";
 export * from "./studentDashboard";
+export * from "./teacherCodeInfo";
 export * from "./userProfile";
 export * from "./userRole";

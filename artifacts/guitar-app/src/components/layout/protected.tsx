@@ -1,9 +1,8 @@
 import { ReactNode } from "react";
 import { useLocation } from "wouter";
-import { useGetMe } from "@workspace/api-client-react";
-import { UserRole } from "@workspace/api-client-react/src/generated/api.schemas";
+import { useGetMe, getGetMeQueryKey } from "@workspace/api-client-react";
+import type { UserRole } from "@workspace/api-client-react";
 import { Loader2 } from "lucide-react";
-import { getGetMeQueryKey } from "@workspace/api-client-react";
 
 interface ProtectedProps {
   role?: UserRole;

@@ -100,6 +100,12 @@ export const ListInstitutionsResponseItem = zod.object({
   totalTeachers: zod.number(),
   totalStudents: zod.number(),
   unusedTeacherCodes: zod.number(),
+  teacherCodes: zod.array(
+    zod.object({
+      code: zod.string(),
+      used: zod.boolean(),
+    }),
+  ),
 });
 export const ListInstitutionsResponse = zod.array(ListInstitutionsResponseItem);
 

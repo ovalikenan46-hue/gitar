@@ -23,6 +23,11 @@ async function getInstitutionStats(id: string) {
     .select({ c: count() })
     .from(teacherCodesTable)
     .where(and(eq(teacherCodesTable.institutionId, id), isNull(teacherCodesTable.usedByUserId)));
+  const codes = await db
+    .select({ code: teacherCodesTable.code, usedByUserId: teacherCodesTable.usedByUserId })
+    .from(teacherCodesTable)
+    .where(eq(teacherCodesTable.institutionId, id))
+    .orderBy(teacherCodesTable.createdAt);
   return {
     id: inst.id,
     name: inst.name,
@@ -31,6 +36,7 @@ async function getInstitutionStats(id: string) {
     totalTeachers: teachers[0]?.c ?? 0,
     totalStudents: students[0]?.c ?? 0,
     unusedTeacherCodes: unused[0]?.c ?? 0,
+    teacherCodes: codes.map((c) => ({ code: c.code, used: c.usedByUserId !== null })),
   };
 }
 

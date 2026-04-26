@@ -7,7 +7,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Building2, Users, GraduationCap, School, Copy, LogOut, Loader2 } from "lucide-react";
+import { Building2, Users, GraduationCap, School, Copy, LogOut, Loader2, Share2, Plus, CheckCircle2, Circle } from "lucide-react";
 import { motion } from "framer-motion";
 import { pageVariants, pageTransition } from "@/lib/animations";
 import { clearToken } from "@/lib/auth";
@@ -54,13 +54,43 @@ export default function AdminDashboard() {
   const handleGenerateCode = (id: string) => {
     generateCode.mutate({ id }, {
       onSuccess: (data) => {
-        navigator.clipboard.writeText(data.code);
-        toast.success("Kod kopyalandı!", {
-          description: `Yeni Öğretmen Kodu: ${data.code}`
+        toast.success("Yeni öğretmen kodu üretildi", {
+          description: data.code,
         });
         queryClient.invalidateQueries({ queryKey: getListInstitutionsQueryKey() });
-      }
+      },
+      onError: () => {
+        toast.error("Kod üretilemedi (limit aşılmış olabilir)");
+      },
     });
+  };
+
+  const copyCode = async (code: string) => {
+    try {
+      await navigator.clipboard.writeText(code);
+      toast.success(`${code} kopyalandı`);
+    } catch {
+      toast.error("Kopyalanamadı");
+    }
+  };
+
+  const shareCode = async (instName: string, code: string) => {
+    const text = `${instName} için Gitar Öğreniyorum öğretmen kodun: ${code}`;
+    const nav = navigator as Navigator & { share?: (data: { title?: string; text?: string }) => Promise<void> };
+    if (nav.share) {
+      try {
+        await nav.share({ title: "Öğretmen Kodu", text });
+        return;
+      } catch {
+        // user cancelled or unsupported, fall back to copy
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Paylaşım metni kopyalandı");
+    } catch {
+      toast.error("Paylaşılamadı");
+    }
   };
 
   const handleLogout = () => {
@@ -148,15 +178,76 @@ export default function AdminDashboard() {
                   Öğretmen: {inst.totalTeachers}/{inst.teacherLimit} • Öğrenci: {inst.totalStudents}/{inst.studentLimit}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="flex justify-between items-center p-3 bg-muted rounded-2xl">
-                  <div className="text-sm">
-                    <span className="font-semibold">{inst.unusedTeacherCodes}</span> kullanılmamış kod
-                  </div>
-                  <Button size="sm" variant="secondary" className="rounded-xl" onClick={() => handleGenerateCode(inst.id)} disabled={generateCode.isPending}>
-                    <Copy className="w-4 h-4 mr-2" /> Kod Üret
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-muted-foreground">Öğretmen Kodları</p>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="rounded-xl h-8"
+                    onClick={() => handleGenerateCode(inst.id)}
+                    disabled={generateCode.isPending}
+                  >
+                    <Plus className="w-4 h-4 mr-1" /> Yeni Kod
                   </Button>
                 </div>
+
+                {inst.teacherCodes.length === 0 ? (
+                  <div className="p-4 bg-muted/60 rounded-2xl text-center text-sm text-muted-foreground">
+                    Henüz kod üretilmedi
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                    {inst.teacherCodes.map((tc) => (
+                      <div
+                        key={tc.code}
+                        className={`flex items-center justify-between p-3 rounded-2xl border transition-colors ${
+                          tc.used
+                            ? "bg-muted/40 border-transparent text-muted-foreground"
+                            : "bg-primary/5 border-primary/20"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          {tc.used ? (
+                            <CheckCircle2 className="w-4 h-4 shrink-0 text-green-500" />
+                          ) : (
+                            <Circle className="w-4 h-4 shrink-0 text-primary" />
+                          )}
+                          <span
+                            className={`font-mono font-bold tracking-wider truncate ${
+                              tc.used ? "line-through" : "text-foreground"
+                            }`}
+                            title={tc.code}
+                          >
+                            {tc.code}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 rounded-lg"
+                            onClick={() => copyCode(tc.code)}
+                            title="Kopyala"
+                            disabled={tc.used}
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-8 w-8 rounded-lg"
+                            onClick={() => shareCode(inst.name, tc.code)}
+                            title="Paylaş"
+                            disabled={tc.used}
+                          >
+                            <Share2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
