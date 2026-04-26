@@ -11,19 +11,19 @@ interface ProtectedProps {
 
 export function Protected({ role, children }: ProtectedProps) {
   const [, setLocation] = useLocation();
-  const { data: user, isLoading, isFetching, isError } = useGetMe({
+
+  const { data: user, isLoading } = useGetMe({
     query: {
       queryKey: getGetMeQueryKey(),
       retry: false,
-      staleTime: 0,
-      refetchOnMount: "always",
+      staleTime: 5 * 60 * 1000,
+      refetchOnWindowFocus: false,
     },
   });
 
   const notAuthorized =
     !isLoading &&
-    !isFetching &&
-    (isError || !user || (role !== undefined && user.role !== role));
+    (user === undefined || (role !== undefined && user.role !== role));
 
   useEffect(() => {
     if (notAuthorized) {
@@ -31,7 +31,7 @@ export function Protected({ role, children }: ProtectedProps) {
     }
   }, [notAuthorized, setLocation]);
 
-  if (isLoading || isFetching) {
+  if (isLoading) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
