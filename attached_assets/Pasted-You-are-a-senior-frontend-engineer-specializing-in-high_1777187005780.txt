@@ -1,0 +1,151 @@
+You are a senior frontend engineer specializing in high-end UI/UX.
+
+DO NOT EXPLAIN. BUILD DIRECTLY.
+
+----------------------------------------
+FEATURE:
+Premium Native Splash Screen (iOS / Android feel)
+
+----------------------------------------
+GOAL:
+
+Create a high-quality splash screen that feels like a real mobile app opening.
+
+- Full screen experience
+- Smooth animation
+- Real guitar sound (sample-based)
+- Seamless transition to main app
+
+----------------------------------------
+TECH:
+
+- React (Vite)
+- Framer Motion
+- Lottie React
+- Web Audio API
+
+----------------------------------------
+VISUAL DESIGN:
+
+- Background:
+  soft gradient (cream → pastel purple → soft blue)
+
+- Center:
+  Provided logo (transparent PNG)
+
+- Add:
+  soft light glow behind logo
+  floating particles (very subtle)
+
+----------------------------------------
+ANIMATION FLOW (IMPORTANT):
+
+TOTAL DURATION: ~4 seconds
+
+1) Background fade in (0 → 1 opacity)
+   duration: 0.6s
+
+2) Logo intro:
+   - scale: 0.5 → 1.15 → 1
+   - rotate: slight (0 → 3deg → 0)
+   - duration: 1.2s
+   - easing: easeOut
+
+3) Glow pulse behind logo
+   (loop subtle)
+
+4) Floating effect:
+   logo moves slowly up/down
+
+5) Lottie overlay:
+   - soft musical notes animation
+   - low opacity
+   - loop
+
+----------------------------------------
+REAL GUITAR SOUND SYSTEM (IMPORTANT):
+
+DO NOT synthesize fake tones.
+
+Use real guitar samples (mp3 files).
+
+Create folder:
+/public/sounds/
+
+FILES:
+- Em.mp3
+- Am.mp3
+- C.mp3
+
+----------------------------------------
+PLAYBACK SYSTEM:
+
+Use Web Audio API or HTMLAudioElement.
+
+SEQUENCE:
+
+- 0.7s → play Em
+- 1.7s → play Am
+- 2.7s → play C
+
+RULES:
+
+- Volume: 0.5
+- Fade out each chord slightly
+- No overlapping audio
+- Preload sounds before playback
+
+----------------------------------------
+CODE STRUCTURE:
+
+Create:
+
+/components/SplashScreen.jsx
+/hooks/useAudioPlayer.js
+
+----------------------------------------
+LOGIC:
+
+- Preload all audio on mount
+- Start animation + sound sync
+
+After 4 seconds:
+- Fade out splash (opacity 1 → 0)
+- Navigate to main app
+
+----------------------------------------
+TEXT:
+
+Optional subtitle under logo:
+"Temelden Başla, Müzikle Büyü!"
+
+- Fade in after 1s
+
+----------------------------------------
+NATIVE FEEL DETAILS:
+
+- Disable scroll during splash
+- Center everything perfectly
+- No UI flicker
+- Smooth transition (easeInOut)
+
+----------------------------------------
+PERFORMANCE:
+
+- Use requestAnimationFrame if needed
+- Avoid re-renders
+- Optimize audio loading
+
+----------------------------------------
+FINAL:
+
+Build:
+- Premium splash screen
+- Real audio system (mp3-based)
+- Smooth animation system
+- Clean reusable code
+
+Result must feel like a real App Store quality app opening.
+
+DO NOT ASK QUESTIONS.
+BUILD NOW.

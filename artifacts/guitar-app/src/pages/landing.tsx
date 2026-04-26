@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -12,6 +11,7 @@ import { setToken } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import logoImg from "@assets/ChatGPT_Image_Apr_26,_2026,_08_50_21_AM_1777187022196.png";
 
 export default function Landing() {
   const [adminOpen, setAdminOpen] = useState(false);
@@ -36,36 +36,57 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen w-full relative overflow-hidden flex items-center justify-center">
-      {/* Decorative background shapes */}
+    <div
+      className="min-h-screen w-full relative overflow-hidden flex items-center justify-center"
+      style={{
+        background: "linear-gradient(135deg, #e3f2fd 0%, #ffffff 35%, #fff9f0 65%, #e8fdf8 100%)",
+      }}
+    >
+      {/* Soft color blobs */}
       <div className="absolute inset-0 z-0 pointer-events-none">
-        <motion.div 
-          className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-primary/20 blur-[100px]"
-          animate={{ x: [0, 50, 0], y: [0, 30, 0] }}
+        <motion.div
+          className="absolute top-[-15%] left-[-10%] w-[55vw] h-[55vw] rounded-full opacity-25 blur-[110px]"
+          style={{ background: "radial-gradient(circle, #4299e1, transparent)" }}
+          animate={{ x: [0, 40, 0], y: [0, 25, 0] }}
           transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
         />
-        <motion.div 
-          className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-secondary/20 blur-[100px]"
-          animate={{ x: [0, -50, 0], y: [0, -30, 0] }}
-          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+        <motion.div
+          className="absolute bottom-[-15%] right-[-10%] w-[50vw] h-[50vw] rounded-full opacity-20 blur-[90px]"
+          style={{ background: "radial-gradient(circle, #00C2A8, transparent)" }}
+          animate={{ x: [0, -35, 0], y: [0, -20, 0] }}
+          transition={{ duration: 13, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute top-[30%] right-[-5%] w-[30vw] h-[30vw] rounded-full opacity-15 blur-[70px]"
+          style={{ background: "radial-gradient(circle, #6C63FF, transparent)" }}
+          animate={{ x: [0, -20, 0], y: [0, 20, 0] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute bottom-[20%] left-[5%] w-[25vw] h-[25vw] rounded-full opacity-15 blur-[60px]"
+          style={{ background: "radial-gradient(circle, #FFB86C, transparent)" }}
+          animate={{ x: [0, 25, 0], y: [0, -15, 0] }}
+          transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
         />
       </div>
 
-      {/* Animated background notes */}
-      <MusicBg count={16} />
+      {/* Animated music notes */}
+      <MusicBg count={14} />
 
-      {/* Sol anahtarı (treble clef) — sol üstte */}
+      {/* Treble clef — top left */}
       <motion.div
-        className="absolute top-8 left-8 text-primary/40 z-10 pointer-events-none"
+        className="absolute top-8 left-8 z-10 pointer-events-none opacity-30"
+        style={{ color: "#4299e1" }}
         animate={{ y: [-12, 12, -12], rotate: [-4, 4, -4] }}
         transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
       >
         <TrebleClef className="w-16 h-36 sm:w-20 sm:h-44" />
       </motion.div>
 
-      {/* Fa anahtarı (bass clef) — sağ üstte, admin girişi */}
+      {/* Bass clef — top right, admin trigger */}
       <motion.button
-        className="absolute top-10 right-8 text-accent/50 z-10 hover:text-accent transition-colors"
+        className="absolute top-10 right-8 z-10 opacity-40 hover:opacity-70 transition-opacity"
+        style={{ color: "#00C2A8" }}
         animate={{ y: [12, -12, 12], rotate: [4, -4, 4] }}
         transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
         onClick={() => setAdminOpen(true)}
@@ -74,32 +95,48 @@ export default function Landing() {
         <BassClef className="w-16 h-20 sm:w-20 sm:h-24" />
       </motion.button>
 
-      {/* Main Card */}
-      <Card className="relative z-20 w-[90%] max-w-lg p-8 sm:p-12 bg-white/40 backdrop-blur-2xl border-white/50 shadow-2xl rounded-[3rem] text-center border">
+      {/* Main card */}
+      <Card className="relative z-20 w-[92%] max-w-lg bg-white/50 backdrop-blur-2xl border-white/60 shadow-2xl rounded-[3rem] text-center overflow-hidden">
         <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
+          initial={{ scale: 0.85, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: "spring", bounce: 0.5 }}
+          transition={{ type: "spring", bounce: 0.45, duration: 0.9 }}
+          className="px-8 py-10 sm:px-12 sm:py-12 flex flex-col items-center"
         >
-          <div className="mx-auto w-24 h-24 bg-gradient-to-tr from-primary to-accent rounded-[2rem] rotate-12 flex items-center justify-center mb-8 shadow-xl">
-            <Music className="w-12 h-12 text-white -rotate-12" />
-          </div>
-          
-          <h1 className="text-4xl sm:text-5xl font-extrabold text-foreground mb-4 tracking-tight">
-            Gitar <span className="text-primary">Öğreniyorum</span>
-          </h1>
-          <p className="text-lg sm:text-xl text-muted-foreground mb-12 font-medium">
+          {/* Logo */}
+          <motion.div
+            animate={{ y: [0, -8, 0] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            className="mb-4"
+          >
+            <img
+              src={logoImg}
+              alt="Gitar Öğreniyorum"
+              className="w-52 h-52 sm:w-64 sm:h-64 object-contain drop-shadow-xl select-none"
+              draggable={false}
+            />
+          </motion.div>
+
+          <p className="text-base sm:text-lg text-gray-500 mb-10 font-medium">
             Eğlenceli ve interaktif gitar eğitimi
           </p>
 
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 w-full">
             <Link href="/student-login">
-              <Button size="lg" className="w-full text-xl py-8 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
+              <Button
+                size="lg"
+                className="w-full text-xl py-8 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-white font-bold"
+                style={{ background: "linear-gradient(135deg, #4299e1 0%, #6C63FF 100%)" }}
+              >
                 🎵 Öğrenci Girişi
               </Button>
             </Link>
             <Link href="/teacher-login">
-              <Button size="lg" variant="secondary" className="w-full text-xl py-8 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-1">
+              <Button
+                size="lg"
+                className="w-full text-xl py-8 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-white font-bold border-0"
+                style={{ background: "linear-gradient(135deg, #FF8C00 0%, #FFB86C 100%)" }}
+              >
                 🎓 Öğretmen Girişi
               </Button>
             </Link>
@@ -107,6 +144,7 @@ export default function Landing() {
         </motion.div>
       </Card>
 
+      {/* Admin dialog */}
       <Dialog open={adminOpen} onOpenChange={setAdminOpen}>
         <DialogContent className="sm:max-w-md rounded-3xl p-6">
           <DialogHeader>
@@ -116,9 +154,9 @@ export default function Landing() {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleAdminSubmit} className="space-y-4 mt-4">
-            <Input 
-              type="password" 
-              placeholder="Şifre" 
+            <Input
+              type="password"
+              placeholder="Şifre"
               value={adminPassword}
               onChange={(e) => setAdminPassword(e.target.value)}
               className="py-6 text-lg rounded-xl"
