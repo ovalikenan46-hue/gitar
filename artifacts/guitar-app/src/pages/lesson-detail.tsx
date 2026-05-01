@@ -15,11 +15,13 @@ import { StrumPattern } from "@/components/lessons/strum-pattern";
 import { Metronome } from "@/components/lessons/metronome";
 import { ChordDiagram } from "@/components/lessons/chord-diagram";
 import { toast } from "sonner";
+import { useSound } from "@/hooks/use-sound";
 
 export default function LessonDetail() {
   const { id } = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
+  const playIconSfx = useSound("sounds/ikon_ses_efekti_1777625648690.mp4", 0.8);
 
   /** "strum" | "metronome" | null — only one player at a time */
   const [activePlayer, setActivePlayer] = useState<"strum" | "metronome" | null>(null);
@@ -104,7 +106,7 @@ export default function LessonDetail() {
           <Button 
             size="lg" 
             className="w-full py-8 text-xl rounded-2xl shadow-xl hover:shadow-2xl transition-all hover:-translate-y-1 bg-primary text-primary-foreground"
-            onClick={handleComplete}
+            onClick={() => { playIconSfx(); handleComplete(); }}
             disabled={completeLesson.isPending || lesson.completed}
           >
             {lesson.completed ? (

@@ -23,7 +23,7 @@ export default function Landing() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const { playing, toggle: toggleMusic, resumeOnLanding, pauseOnLeave } = useBgMusic();
-  const playIconSfx = useSound("sounds/ikon_ses_efekti_1777623358028.mp4", 0.8);
+  const playIconSfx = useSound("sounds/ikon_ses_efekti_1777625648690.mp4", 0.8);
 
   // Start music when landing is visible, stop when navigating away
   useEffect(() => {

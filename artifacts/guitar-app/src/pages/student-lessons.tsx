@@ -5,9 +5,13 @@ import { motion } from "framer-motion";
 import { pageVariants, pageTransition } from "@/lib/animations";
 import { Link } from "wouter";
 import { Badge } from "@/components/ui/badge";
+import { useSound } from "@/hooks/use-sound";
+
+const ICON_SFX_SRC = "sounds/ikon_ses_efekti_1777625648690.mp4";
 
 export default function StudentLessons() {
   const { data: lessons, isLoading } = useListMyLessons({ query: { queryKey: getListMyLessonsQueryKey() } });
+  const playIconSfx = useSound(ICON_SFX_SRC, 0.8);
 
   if (isLoading) {
     return <div className="h-[60vh] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
@@ -72,7 +76,7 @@ export default function StudentLessons() {
 
                 return (
                   <Link key={lesson.id} href={`/student/lessons/${lesson.id}`}>
-                    <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+                    <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} onClick={playIconSfx}>
                       {cardContent}
                     </motion.div>
                   </Link>
