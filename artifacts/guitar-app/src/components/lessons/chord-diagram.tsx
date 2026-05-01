@@ -305,28 +305,38 @@ export function ChordDiagram({ chordCode }: { chordCode: "Em" | "Am" }) {
               transition={{ duration: 0.2 }}
               onClick={closeLightbox}
             >
-              <motion.img
-                src={handImg}
-                alt="Sol El Parmak Rehberi"
-                draggable={false}
-                className="select-none"
+              {/* wrapper handles spring animation — no transform conflict */}
+              <motion.div
                 style={{
-                  maxWidth: "min(94vw, 960px)",
-                  maxHeight: "86vh",
-                  width: "auto",
-                  height: "auto",
-                  objectFit: "contain",
-                  transform: "rotate(90deg)",
+                  /* square box: fits within viewport both axes */
+                  width: "clamp(220px, min(88vw, 82vh), 740px)",
+                  height: "clamp(220px, min(88vw, 82vh), 740px)",
                   borderRadius: 20,
+                  overflow: "hidden",
                   boxShadow: "0 8px 64px rgba(0,0,0,0.7)",
                   cursor: "zoom-out",
+                  flexShrink: 0,
                 }}
                 initial={{ scale: 0.72, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.82, opacity: 0 }}
                 transition={{ type: "spring", stiffness: 280, damping: 26 }}
                 onClick={e => e.stopPropagation()}
-              />
+              >
+                <img
+                  src={handImg}
+                  alt="Sol El Parmak Rehberi"
+                  draggable={false}
+                  className="select-none"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "contain",
+                    transform: "rotate(90deg)",
+                    display: "block",
+                  }}
+                />
+              </motion.div>
 
               <motion.button
                 className="absolute top-4 right-4 flex items-center justify-center rounded-full bg-white/15 hover:bg-white/30 backdrop-blur-sm text-white transition-colors"
