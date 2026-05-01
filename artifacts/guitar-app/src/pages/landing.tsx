@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -22,8 +22,14 @@ export default function Landing() {
   const adminLogin = useAdminLogin();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
-  const { playing, toggle: toggleMusic } = useBgMusic();
+  const { playing, toggle: toggleMusic, resumeOnLanding, pauseOnLeave } = useBgMusic();
   const playIconSfx = useSound("sounds/ikon_ses_efekti_1777623358028.mp4", 0.8);
+
+  // Start music when landing is visible, stop when navigating away
+  useEffect(() => {
+    resumeOnLanding();
+    return () => pauseOnLeave();
+  }, [resumeOnLanding, pauseOnLeave]);
 
   const handleAdminSubmit = (e: React.FormEvent) => {
     e.preventDefault();

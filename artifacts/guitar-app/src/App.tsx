@@ -27,7 +27,8 @@ import NotFound from "@/pages/not-found";
 import { SplashScreen } from "@/components/splash-screen";
 
 // Audio
-import { BgMusicProvider, useBgMusic } from "@/contexts/bg-music-context";
+import { BgMusicProvider } from "@/contexts/bg-music-provider";
+import { useBgMusic } from "@/contexts/bg-music-context";
 
 const queryClient = new QueryClient();
 
@@ -92,11 +93,11 @@ function Router() {
 
 function AppInner() {
   const [splashDone, setSplashDone] = useState(false);
-  const { startAfterSplash } = useBgMusic();
+  const { unlock } = useBgMusic();
 
   const handleSplashComplete = () => {
     setSplashDone(true);
-    startAfterSplash();
+    unlock();
   };
 
   return (
