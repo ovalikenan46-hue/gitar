@@ -31,7 +31,6 @@ import {
   Plus,
   AlertCircle,
   Monitor,
-  RefreshCw,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { pageVariants, pageTransition } from "@/lib/animations";
@@ -431,18 +430,9 @@ export default function TeacherDashboard() {
                 <div className="w-full space-y-2">
                   {cls.smartboardCode ? (
                     <div className="bg-accent/10 border border-accent/30 rounded-2xl p-3 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                          <Monitor className="w-3.5 h-3.5" /> Akıllı Tahta Kodu
-                        </span>
-                        <button
-                          className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5"
-                          onClick={() => handleGenerateSmartboardCode(cls.id)}
-                          disabled={genSmartboard.isPending}
-                        >
-                          <RefreshCw className="w-3 h-3" /> Yenile
-                        </button>
-                      </div>
+                      <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                        <Monitor className="w-3.5 h-3.5" /> Akıllı Tahta Kodu
+                      </span>
                       <div className="flex items-center gap-2">
                         <span className="font-mono font-black text-3xl tracking-[0.3em] text-accent-foreground">
                           {cls.smartboardCode}

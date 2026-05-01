@@ -230,13 +230,18 @@ router.post("/teacher/classes/:id/unlock-next", async (req, res) => {
   res.json(stats);
 });
 
-// ── Akıllı Tahta: Kod Üret ──────────────────────────────────────────────────
+// ── Akıllı Tahta: Kod Üret (sadece bir kez; mevcutsa aynen döner) ────────────
 router.post("/teacher/classes/:id/smartboard-code", async (req, res) => {
   const { auth } = req as unknown as AuthedRequest;
   const id = req.params.id;
   const [cls] = await db.select().from(classesTable).where(eq(classesTable.id, id)).limit(1);
   if (!cls || cls.teacherId !== auth.userId) {
     res.status(404).json({ error: "Sınıf bulunamadı" });
+    return;
+  }
+  // Kod zaten varsa yeniden üretme — aynı kodu döndür
+  if (cls.smartboardCode) {
+    res.json({ smartboardCode: cls.smartboardCode });
     return;
   }
   const code = await generateUniqueSmartboardCode();
