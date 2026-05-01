@@ -5,13 +5,9 @@ import { Play, Trophy, Star, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { pageVariants, pageTransition } from "@/lib/animations";
 import { Link } from "wouter";
-import { useSound } from "@/hooks/use-sound";
-
-const ICON_SFX_SRC = "sounds/ikon_ses_efekti_1777625648690.mp4";
 
 export default function StudentHome() {
   const { data: dashboard, isLoading } = useGetStudentDashboard({ query: { queryKey: getGetStudentDashboardQueryKey() } });
-  const playIconSfx = useSound(ICON_SFX_SRC, 0.8);
 
   if (isLoading) {
     return <div className="h-[60vh] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
@@ -32,7 +28,6 @@ export default function StudentHome() {
         <motion.div
           className="w-12 h-12 bg-secondary/20 text-secondary rounded-full flex items-center justify-center border-2 border-secondary cursor-pointer"
           whileTap={{ scale: 0.85 }}
-          onClick={playIconSfx}
         >
           <span className="font-bold text-lg">{dashboard.currentLevel}</span>
         </motion.div>
@@ -55,7 +50,7 @@ export default function StudentHome() {
         <div className="mt-8">
           <h2 className="text-xl font-bold mb-4">Sıradaki Ders</h2>
           <Link href={`/student/lessons/${dashboard.nextLesson.id}`}>
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="cursor-pointer" onClick={playIconSfx}>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="cursor-pointer">
               <Card className="rounded-[2.5rem] border-none shadow-xl bg-gradient-to-br from-primary to-accent text-white overflow-hidden relative">
                 {/* Decorative background circle */}
                 <div className="absolute -right-8 -top-8 w-40 h-40 bg-white/10 rounded-full blur-2xl pointer-events-none" />

@@ -13,7 +13,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Volume2, VolumeX } from "lucide-react";
 import logoImg from "@assets/ChatGPT_Image_1_May_2026_08_31_58_1777613580606.png";
-import { useSound } from "@/hooks/use-sound";
 import { useBgMusic } from "@/contexts/bg-music-context";
 
 export default function Landing() {
@@ -23,7 +22,6 @@ export default function Landing() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const { playing, toggle: toggleMusic, resumeOnLanding, pauseOnLeave } = useBgMusic();
-  const playIconSfx = useSound("sounds/ikon_ses_efekti_1777625648690.mp4", 0.8);
 
   // Start music when landing is visible, stop when navigating away
   useEffect(() => {
@@ -208,7 +206,6 @@ export default function Landing() {
             <Link href="/student-login">
               <Button
                 size="lg"
-                onClick={playIconSfx}
                 className="w-full text-xl py-8 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-white font-bold"
                 style={{ background: "linear-gradient(135deg, #4299e1 0%, #6C63FF 100%)" }}
               >
@@ -218,7 +215,6 @@ export default function Landing() {
             <Link href="/teacher-login">
               <Button
                 size="lg"
-                onClick={playIconSfx}
                 className="w-full text-xl py-8 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-white font-bold border-0"
                 style={{ background: "linear-gradient(135deg, #FF8C00 0%, #FFB86C 100%)" }}
               >

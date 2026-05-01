@@ -15,10 +15,6 @@ import { motion } from "framer-motion";
 import { pageVariants, pageTransition } from "@/lib/animations";
 import { Link } from "wouter";
 import { toast } from "sonner";
-import { useSound } from "@/hooks/use-sound";
-
-const ICON_SFX_SRC = "sounds/ikon_ses_efekti_1777625648690.mp4";
-
 const STORAGE_KEY = "guitar_student_saved";
 
 interface SavedStudent {
@@ -50,7 +46,6 @@ export default function StudentLogin() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const login = useStudentLogin();
-  const playIconSfx = useSound(ICON_SFX_SRC, 0.8);
 
   const [saved, setSaved] = useState<SavedStudent | null>(null);
 
@@ -136,7 +131,7 @@ export default function StudentLogin() {
 
                 <Button
                   className="w-full py-6 text-base rounded-2xl shadow-md"
-                  onClick={() => { playIconSfx(); onQuickLogin(); }}
+                  onClick={onQuickLogin}
                   disabled={login.isPending}
                 >
                   {login.isPending ? (
@@ -202,7 +197,6 @@ export default function StudentLogin() {
                 />
                 <Button
                   type="submit"
-                  onClick={playIconSfx}
                   className="w-full py-6 text-lg rounded-2xl shadow-md hover:shadow-lg transition-all"
                   disabled={login.isPending}
                 >
