@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { MusicBg, TrebleClef, BassClef } from "@/components/music-bg";
+import { MusicBg } from "@/components/music-bg";
 import { useAdminLogin, getGetMeQueryKey } from "@workspace/api-client-react";
 import { setToken } from "@/lib/auth";
 import { useLocation } from "wouter";
@@ -73,65 +73,85 @@ export default function Landing() {
       {/* Animated music notes & symbols */}
       <MusicBg count={18} />
 
-      {/* Sol Anahtarı (Treble Clef) — top-left, large & animated */}
-      <motion.div
-        className="absolute top-4 left-4 z-10 pointer-events-none"
-        style={{ color: "rgba(66,153,225,0.45)" }}
+      {/* Sol Anahtarı — top-left */}
+      <motion.span
+        className="absolute top-4 left-4 z-10 pointer-events-none select-none leading-none font-bold"
+        style={{
+          fontSize: 100,
+          color: "rgba(66,153,225,0.45)",
+          fontFamily: "'Times New Roman', Georgia, serif",
+        }}
         animate={{
-          y: [-16, 16, -8, 16, -16],
-          x: [0, 8, -4, 8, 0],
-          rotate: [-6, 4, -2, 4, -6],
+          y: [-14, 14, -6, 14, -14],
+          x: [0, 6, -3, 6, 0],
+          rotate: [-5, 4, -2, 4, -5],
           scale: [1, 1.06, 0.97, 1.06, 1],
         }}
         transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", times: [0, 0.25, 0.5, 0.75, 1] }}
       >
-        <TrebleClef className="w-20 h-44 sm:w-28 sm:h-60" />
-      </motion.div>
+        𝄞
+      </motion.span>
 
       {/* Sol Anahtarı — bottom-right, secondary */}
-      <motion.div
-        className="absolute bottom-6 right-12 z-10 pointer-events-none"
-        style={{ color: "rgba(108,99,255,0.30)" }}
+      <motion.span
+        className="absolute bottom-6 right-12 z-10 pointer-events-none select-none leading-none font-bold"
+        style={{
+          fontSize: 82,
+          color: "rgba(108,99,255,0.28)",
+          fontFamily: "'Times New Roman', Georgia, serif",
+        }}
         animate={{
-          y: [10, -18, 6, -18, 10],
-          rotate: [5, -3, 5, -3, 5],
+          y: [10, -16, 4, -16, 10],
+          rotate: [4, -3, 4, -3, 4],
           scale: [0.95, 1.08, 0.95, 1.08, 0.95],
         }}
         transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 1.5, times: [0, 0.25, 0.5, 0.75, 1] }}
       >
-        <TrebleClef className="w-14 h-32 sm:w-20 sm:h-44" />
-      </motion.div>
+        𝄞
+      </motion.span>
 
-      {/* Fa Anahtarı (Bass Clef) — top-right, admin trigger */}
+      {/* Fa Anahtarı — top-right, admin trigger (hidden button) */}
       <motion.button
-        className="absolute top-6 right-6 z-10 opacity-50 hover:opacity-80 transition-opacity focus:outline-none"
-        style={{ color: "#00C2A8" }}
+        className="absolute top-6 right-6 z-10 select-none leading-none font-bold opacity-45 hover:opacity-75 transition-opacity focus:outline-none"
+        style={{
+          fontSize: 100,
+          color: "#00C2A8",
+          fontFamily: "'Times New Roman', Georgia, serif",
+          background: "none",
+          border: "none",
+          padding: 0,
+          cursor: "default",
+        }}
         animate={{
-          y: [14, -14, 6, -14, 14],
-          x: [0, -6, 0, 6, 0],
-          rotate: [6, -4, 2, -4, 6],
+          y: [12, -12, 5, -12, 12],
+          x: [0, -5, 0, 5, 0],
+          rotate: [5, -4, 2, -4, 5],
           scale: [1, 1.08, 0.96, 1.08, 1],
         }}
         transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 0.5, times: [0, 0.25, 0.5, 0.75, 1] }}
         onClick={() => setAdminOpen(true)}
         aria-label="Yönetici girişi"
       >
-        <BassClef className="w-20 h-24 sm:w-28 sm:h-32" />
+        𝄢
       </motion.button>
 
       {/* Fa Anahtarı — bottom-left, secondary */}
-      <motion.div
-        className="absolute bottom-8 left-8 z-10 pointer-events-none"
-        style={{ color: "rgba(0,194,168,0.28)" }}
+      <motion.span
+        className="absolute bottom-8 left-8 z-10 pointer-events-none select-none leading-none font-bold"
+        style={{
+          fontSize: 82,
+          color: "rgba(0,194,168,0.26)",
+          fontFamily: "'Times New Roman', Georgia, serif",
+        }}
         animate={{
-          y: [-12, 14, -6, 14, -12],
-          rotate: [-5, 3, -1, 3, -5],
+          y: [-10, 12, -4, 12, -10],
+          rotate: [-4, 3, -1, 3, -4],
           scale: [1, 1.1, 0.93, 1.1, 1],
         }}
         transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2, times: [0, 0.25, 0.5, 0.75, 1] }}
       >
-        <BassClef className="w-16 h-20 sm:w-22 sm:h-26" />
-      </motion.div>
+        𝄢
+      </motion.span>
 
       {/* Main card */}
       <Card className="relative z-20 w-[92%] max-w-lg bg-white/50 backdrop-blur-2xl border-white/60 shadow-2xl rounded-[3rem] text-center overflow-hidden">
