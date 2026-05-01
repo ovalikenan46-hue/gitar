@@ -1,0 +1,148 @@
+You are a senior frontend animation engineer and educational designer.
+
+DO NOT EXPLAIN. BUILD DIRECTLY.
+
+---
+
+FEATURE:
+Guitar Holding Position Animation (Kid-Friendly)
+
+---
+
+GOAL:
+
+Create a smooth animated educational scene showing correct classical guitar holding posture.
+
+IMPORTANT:
+Do NOT use real human image.
+Create a stylized child character.
+
+---
+
+TARGET:
+
+* Age: 10–14
+* Style: friendly, modern, slightly cartoon but semi-realistic
+* Educational clarity is priority
+
+---
+
+CHARACTER DESIGN:
+
+* Gender neutral student character
+* Sitting on a simple chair
+* Relaxed posture
+* Friendly face
+
+---
+
+GUITAR POSITION (VERY IMPORTANT):
+
+* Classical guitar
+* Guitar rests on RIGHT LEG (as per project requirement)
+
+---
+
+HAND POSITIONS:
+
+RIGHT HAND:
+
+* Positioned over sound hole
+* Performing strumming motion
+* Movement: down-up rhythm (smooth loop)
+
+LEFT HAND:
+
+* Holding neck of guitar
+* Fingers curved naturally
+* Positioned as if ready to press chords
+
+---
+
+BODY POSTURE:
+
+* Back straight (not stiff)
+* Shoulders relaxed
+* Guitar slightly angled upward
+
+---
+
+ANIMATION SYSTEM:
+
+Use:
+
+* Framer Motion OR Lottie
+
+---
+
+ANIMATION LOOP:
+
+Duration: ~3 seconds loop
+
+Sequence:
+
+1. Idle position (0.5s)
+2. Right hand strum:
+   ↓ ↓ ↑ ↑ ↓ ↑
+3. Subtle left-hand finger adjustment
+4. Loop smoothly
+
+---
+
+VISUAL DETAILS:
+
+* Soft shadows
+* Slight glow around guitar
+* Clean background (light gradient)
+
+---
+
+UI OVERLAY:
+
+Add speech bubble:
+
+Text:
+"Gitarı böyle tut!"
+
+Position:
+Top-right of character
+
+---
+
+CONTROLS:
+
+* Play
+* Pause
+* Replay
+
+---
+
+PERFORMANCE:
+
+* Lightweight animation
+* No lag
+* Mobile compatible
+
+---
+
+STRUCTURE:
+
+Create:
+
+/components/GuitarHoldAnimation.jsx
+
+---
+
+FINAL:
+
+Build a clean, educational, smooth animation that clearly teaches:
+
+* Correct sitting
+* Correct hand placement
+* Basic strumming motion
+
+DO NOT USE REAL IMAGE.
+USE STYLIZED CHARACTER.
+
+DO NOT ASK QUESTIONS.
+BUILD NOW.

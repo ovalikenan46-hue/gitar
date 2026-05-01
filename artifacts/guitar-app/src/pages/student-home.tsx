@@ -5,6 +5,7 @@ import { Play, Trophy, Star, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { pageVariants, pageTransition } from "@/lib/animations";
 import { Link } from "wouter";
+import { GuitarHoldAnimation } from "@/components/guitar-hold-animation";
 
 export default function StudentHome() {
   const { data: dashboard, isLoading } = useGetStudentDashboard({ query: { queryKey: getGetStudentDashboardQueryKey() } });
@@ -42,6 +43,11 @@ export default function StudentHome() {
           <Progress value={progressPercent} className="h-4 rounded-full bg-muted" />
         </CardContent>
       </Card>
+
+      {/* Gitar Tutuş Animasyonu */}
+      <div className="mt-4">
+        <GuitarHoldAnimation />
+      </div>
 
       {dashboard.nextLesson ? (
         <div className="mt-8">
