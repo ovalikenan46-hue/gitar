@@ -78,7 +78,7 @@ export default function Landing() {
         className="absolute top-4 left-4 z-10 pointer-events-none select-none leading-none font-bold"
         style={{
           fontSize: 100,
-          color: "rgba(66,153,225,0.45)",
+          color: "rgba(66,153,225,0.30)",
           fontFamily: "'Times New Roman', Georgia, serif",
         }}
         animate={{
@@ -97,7 +97,7 @@ export default function Landing() {
         className="absolute bottom-6 right-12 z-10 pointer-events-none select-none leading-none font-bold"
         style={{
           fontSize: 82,
-          color: "rgba(108,99,255,0.28)",
+          color: "rgba(108,99,255,0.30)",
           fontFamily: "'Times New Roman', Georgia, serif",
         }}
         animate={{
@@ -112,10 +112,10 @@ export default function Landing() {
 
       {/* Fa Anahtarı — top-right, admin trigger (hidden button) */}
       <motion.button
-        className="absolute top-6 right-6 z-10 select-none leading-none font-bold opacity-45 hover:opacity-75 transition-opacity focus:outline-none"
+        className="absolute top-6 right-6 z-10 select-none leading-none font-bold focus:outline-none"
         style={{
           fontSize: 100,
-          color: "#00C2A8",
+          color: "rgba(0,194,168,0.30)",
           fontFamily: "'Times New Roman', Georgia, serif",
           background: "none",
           border: "none",
@@ -140,7 +140,7 @@ export default function Landing() {
         className="absolute bottom-8 left-8 z-10 pointer-events-none select-none leading-none font-bold"
         style={{
           fontSize: 82,
-          color: "rgba(0,194,168,0.26)",
+          color: "rgba(0,194,168,0.30)",
           fontFamily: "'Times New Roman', Georgia, serif",
         }}
         animate={{

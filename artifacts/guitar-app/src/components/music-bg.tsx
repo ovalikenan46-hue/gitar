@@ -66,13 +66,13 @@ export function BassClef(props: React.SVGProps<SVGSVGElement>) {
 const SYMBOLS = ["♩", "♪", "♫", "♬", "♭", "♯", "♮"];
 
 const COLORS = [
-  "rgba(108,99,255,0.20)",
-  "rgba(255,140,0,0.22)",
-  "rgba(0,194,168,0.20)",
-  "rgba(76,175,80,0.22)",
-  "rgba(255,107,138,0.18)",
-  "rgba(66,153,225,0.22)",
-  "rgba(255,184,108,0.20)",
+  "rgba(108,99,255,0.30)",
+  "rgba(255,140,0,0.30)",
+  "rgba(0,194,168,0.30)",
+  "rgba(76,175,80,0.30)",
+  "rgba(255,107,138,0.30)",
+  "rgba(66,153,225,0.30)",
+  "rgba(255,184,108,0.30)",
 ];
 
 type Variant = "floatUp" | "sway" | "orbit" | "pulse";
@@ -84,25 +84,25 @@ function makeAnim(v: Variant, drift: number, rot: number) {
       y:       [0, -50, -8, -50, 0],
       x:       [0, drift * 0.4, -drift * 0.2, drift * 0.4, 0],
       rotate:  [0, rot * 0.5, -rot * 0.3, rot * 0.5, 0],
-      opacity: [0.55, 1, 0.75, 1, 0.55],
+      opacity: [0.75, 1, 0.85, 1, 0.75],
     };
     case "sway": return {
       x:       [-drift, drift, -drift * 0.5, drift, -drift],
       y:       [0, -18, 0, -18, 0],
       rotate:  [-rot, rot, -rot * 0.5, rot, -rot],
-      opacity: [0.45, 0.95, 0.60, 0.95, 0.45],
+      opacity: [0.75, 1, 0.85, 1, 0.75],
     };
     case "orbit": return {
       x:       [0, drift, drift * 0.3, -drift * 0.7, 0],
       y:       [0, -22, -44, -22, 0],
       rotate:  [0, rot, rot * 0.4, -rot * 0.6, 0],
       scale:   [1, 1.14, 1.04, 0.90, 1],
-      opacity: [0.50, 0.95, 0.65, 0.90, 0.50],
+      opacity: [0.75, 1, 0.85, 1, 0.75],
     };
     case "pulse": return {
       scale:   [1, 1.28, 0.92, 1.18, 1],
       rotate:  [0, rot * 0.4, -rot * 0.3, rot * 0.2, 0],
-      opacity: [0.40, 0.92, 0.50, 0.88, 0.40],
+      opacity: [0.75, 1, 0.80, 1, 0.75],
       y:       [0, -14, 4, -10, 0],
     };
   }
