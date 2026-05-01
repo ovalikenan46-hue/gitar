@@ -8,6 +8,7 @@ import {
   useCreateClass,
   useExpandClassCapacity,
   useUnlockNextLevel,
+  useGenerateSmartboardCode,
 } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,8 @@ import {
   Circle,
   Plus,
   AlertCircle,
+  Monitor,
+  RefreshCw,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { pageVariants, pageTransition } from "@/lib/animations";
@@ -65,6 +68,7 @@ interface ClassData {
   id: string;
   name: string;
   levelUnlocked: number;
+  smartboardCode?: string | null;
   studentCount: number;
   studentCapacity: number;
   usedStudentCount: number;
@@ -83,6 +87,7 @@ export default function TeacherDashboard() {
   const createClass = useCreateClass();
   const expandClass = useExpandClassCapacity();
   const unlockLevel = useUnlockNextLevel();
+  const genSmartboard = useGenerateSmartboardCode();
 
   const [createOpen, setCreateOpen] = useState(false);
   const [expandTarget, setExpandTarget] = useState<ClassData | null>(null);
@@ -169,6 +174,23 @@ export default function TeacherDashboard() {
       await navigator.clipboard.writeText(text);
       toast.success("Paylaşım metni kopyalandı");
     } catch { toast.error("Paylaşılamadı"); }
+  };
+
+  const handleGenerateSmartboardCode = (id: string) => {
+    genSmartboard.mutate(
+      { id },
+      {
+        onSuccess: () => {
+          toast.success("Akıllı tahta kodu oluşturuldu!");
+          queryClient.invalidateQueries({ queryKey: getListMyClassesQueryKey() });
+        },
+        onError: () => toast.error("Kod oluşturulamadı"),
+      },
+    );
+  };
+
+  const openSmartboard = (code: string) => {
+    window.open(`/smartboard/${code}`, "_blank", "noopener");
   };
 
   const handleLogout = () => {
@@ -394,7 +416,8 @@ export default function TeacherDashboard() {
                   </div>
                 )}
               </CardContent>
-              <CardFooter className="bg-primary/5 border-t border-primary/10">
+              <CardFooter className="bg-primary/5 border-t border-primary/10 flex flex-col gap-3 pt-4">
+                {/* Seviye aç */}
                 <Button
                   className="w-full rounded-xl bg-primary hover:bg-primary/90 text-white shadow-sm"
                   onClick={() => handleUnlockLevel(cls.id)}
@@ -403,6 +426,51 @@ export default function TeacherDashboard() {
                   <LockOpen className="w-4 h-4 mr-2" />
                   {cls.levelUnlocked >= 2 ? "Tüm Seviyeler Açık" : `${cls.levelUnlocked + 1}. Seviyeyi Aç`}
                 </Button>
+
+                {/* Akıllı Tahta */}
+                <div className="w-full space-y-2">
+                  {cls.smartboardCode ? (
+                    <div className="bg-accent/10 border border-accent/30 rounded-2xl p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                          <Monitor className="w-3.5 h-3.5" /> Akıllı Tahta Kodu
+                        </span>
+                        <button
+                          className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-0.5"
+                          onClick={() => handleGenerateSmartboardCode(cls.id)}
+                          disabled={genSmartboard.isPending}
+                        >
+                          <RefreshCw className="w-3 h-3" /> Yenile
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-black text-3xl tracking-[0.3em] text-accent-foreground">
+                          {cls.smartboardCode}
+                        </span>
+                        <Button
+                          size="sm"
+                          className="rounded-xl bg-accent text-accent-foreground hover:bg-accent/90 ml-auto"
+                          onClick={() => openSmartboard(cls.smartboardCode!)}
+                        >
+                          <Monitor className="w-4 h-4 mr-1" /> Aç
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      className="w-full rounded-xl border-accent/40 text-accent-foreground hover:bg-accent/10"
+                      onClick={() => handleGenerateSmartboardCode(cls.id)}
+                      disabled={genSmartboard.isPending}
+                    >
+                      {genSmartboard.isPending ? (
+                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Oluşturuluyor...</>
+                      ) : (
+                        <><Monitor className="w-4 h-4 mr-2" /> Akıllı Tahta Kodu Oluştur</>
+                      )}
+                    </Button>
+                  )}
+                </div>
               </CardFooter>
             </Card>
           ))}

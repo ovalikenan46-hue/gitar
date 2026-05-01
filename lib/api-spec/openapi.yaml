@@ -359,6 +359,48 @@ paths:
               schema:
                 $ref: "#/components/schemas/ClassWithStats"
 
+  /teacher/classes/{id}/smartboard-code:
+    post:
+      operationId: generateSmartboardCode
+      tags: [teacher]
+      summary: Generate a 6-digit smartboard code for a class
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Code generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SmartboardCodeResponse"
+
+  /smartboard/{code}:
+    get:
+      operationId: getSmartboardClass
+      tags: [teacher]
+      summary: Get class info by 6-digit smartboard code (public)
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Class info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SmartboardClassInfo"
+        "404":
+          description: Code not found
+
   /student/lessons:
     get:
       operationId: listMyLessons
@@ -651,6 +693,9 @@ components:
           type: string
         levelUnlocked:
           type: integer
+        smartboardCode:
+          type: string
+          nullable: true
         studentCount:
           type: integer
         studentCapacity:
@@ -665,6 +710,46 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/StudentCodeInfo"
+
+    SmartboardCodeResponse:
+      type: object
+      required: [smartboardCode]
+      properties:
+        smartboardCode:
+          type: string
+
+    SmartboardClassInfo:
+      type: object
+      required: [classId, className, lessons]
+      properties:
+        classId:
+          type: string
+        className:
+          type: string
+        teacherName:
+          type: string
+          nullable: true
+        lessons:
+          type: array
+          items:
+            $ref: "#/components/schemas/SmartboardLesson"
+
+    SmartboardLesson:
+      type: object
+      required: [id, code, title, moduleNumber, moduleTitle, orderIndex]
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+        title:
+          type: string
+        moduleNumber:
+          type: integer
+        moduleTitle:
+          type: string
+        orderIndex:
+          type: integer
 
     LessonWithProgress:
       type: object

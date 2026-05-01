@@ -20,6 +20,7 @@ import StudentHome from "@/pages/student-home";
 import StudentLessons from "@/pages/student-lessons";
 import LessonDetail from "@/pages/lesson-detail";
 import StudentProfile from "@/pages/student-profile";
+import Smartboard from "@/pages/smartboard";
 import NotFound from "@/pages/not-found";
 
 // Splash
@@ -76,6 +77,9 @@ function Router() {
             </StudentLayout>
           </Protected>
         </Route>
+
+        {/* Akıllı Tahta — public, auth yok */}
+        <Route path="/smartboard/:code" component={Smartboard} />
 
         <Route component={NotFound} />
       </Switch>

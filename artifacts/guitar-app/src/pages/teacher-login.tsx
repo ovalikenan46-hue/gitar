@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { GraduationCap, ArrowLeft, Building2, ArrowRight, Loader2, UserCheck, RefreshCw } from "lucide-react";
+import { GraduationCap, ArrowLeft, Building2, ArrowRight, Loader2, UserCheck, RefreshCw, BookmarkCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import { pageVariants, pageTransition } from "@/lib/animations";
 import { Link } from "wouter";
@@ -54,6 +54,7 @@ export default function TeacherLogin() {
 
   const [saved, setSaved] = useState<SavedTeacher | null>(null);
   const [validatedCode, setValidatedCode] = useState<{ code: string; institutionName: string } | null>(null);
+  const [rememberMe, setRememberMe] = useState(true);
 
   useEffect(() => {
     setSaved(loadSaved());
@@ -68,12 +69,16 @@ export default function TeacherLogin() {
     defaultValues: { firstName: "", lastName: "" },
   });
 
-  const doLogin = async (code: string, firstName: string, lastName: string, institutionName: string) => {
+  const doLogin = async (code: string, firstName: string, lastName: string, institutionName: string, remember: boolean) => {
     login.mutate(
       { data: { code, firstName, lastName } },
       {
         onSuccess: async (data) => {
-          saveSaved({ code, firstName, lastName, institutionName });
+          if (remember) {
+            saveSaved({ code, firstName, lastName, institutionName });
+          } else {
+            clearSaved();
+          }
           setToken(data.token);
           await queryClient.refetchQueries({ queryKey: getGetMeQueryKey() });
           setLocation("/teacher");
@@ -87,7 +92,7 @@ export default function TeacherLogin() {
 
   const onQuickLogin = () => {
     if (!saved) return;
-    doLogin(saved.code, saved.firstName, saved.lastName, saved.institutionName);
+    doLogin(saved.code, saved.firstName, saved.lastName, saved.institutionName, true);
   };
 
   const onCheckCode = (values: z.infer<typeof codeSchema>) => {
@@ -110,7 +115,7 @@ export default function TeacherLogin() {
 
   const onLogin = (values: z.infer<typeof identitySchema>) => {
     if (!validatedCode) return;
-    doLogin(validatedCode.code, values.firstName, values.lastName, validatedCode.institutionName);
+    doLogin(validatedCode.code, values.firstName, values.lastName, validatedCode.institutionName, rememberMe);
   };
 
   return (
@@ -274,6 +279,26 @@ export default function TeacherLogin() {
                       </FormItem>
                     )}
                   />
+                  {/* Beni Hatırla */}
+                  <button
+                    type="button"
+                    className={`w-full flex items-center gap-3 p-3 rounded-2xl border transition-colors text-left ${
+                      rememberMe
+                        ? "bg-secondary/10 border-secondary/40 text-secondary-foreground"
+                        : "bg-muted/30 border-transparent text-muted-foreground"
+                    }`}
+                    onClick={() => setRememberMe((v) => !v)}
+                  >
+                    <BookmarkCheck className={`w-5 h-5 shrink-0 transition-colors ${rememberMe ? "text-secondary" : "text-muted-foreground/50"}`} />
+                    <div>
+                      <p className="text-sm font-semibold">Bu cihazda beni hatırla</p>
+                      <p className="text-xs opacity-70">Bir sonraki girişte hızlı giriş yapabilirsin</p>
+                    </div>
+                    <div className={`ml-auto w-4 h-4 rounded border-2 flex-shrink-0 transition-colors ${rememberMe ? "bg-secondary border-secondary" : "border-muted-foreground/30"}`}>
+                      {rememberMe && <svg viewBox="0 0 10 8" fill="white" className="w-full h-full p-0.5"><path d="M1 4l3 3 5-6" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                    </div>
+                  </button>
+
                   <div className="flex gap-2 pt-2">
                     <Button
                       type="button"

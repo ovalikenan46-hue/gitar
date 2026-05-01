@@ -213,6 +213,7 @@ export const ListMyClassesResponseItem = zod.object({
   id: zod.string(),
   name: zod.string(),
   levelUnlocked: zod.number(),
+  smartboardCode: zod.string().nullish(),
   studentCount: zod.number(),
   studentCapacity: zod.number(),
   usedStudentCount: zod.number(),
@@ -252,6 +253,7 @@ export const ExpandClassCapacityResponse = zod.object({
   id: zod.string(),
   name: zod.string(),
   levelUnlocked: zod.number(),
+  smartboardCode: zod.string().nullish(),
   studentCount: zod.number(),
   studentCapacity: zod.number(),
   usedStudentCount: zod.number(),
@@ -277,6 +279,7 @@ export const UnlockNextLevelResponse = zod.object({
   id: zod.string(),
   name: zod.string(),
   levelUnlocked: zod.number(),
+  smartboardCode: zod.string().nullish(),
   studentCount: zod.number(),
   studentCapacity: zod.number(),
   usedStudentCount: zod.number(),
@@ -287,6 +290,40 @@ export const UnlockNextLevelResponse = zod.object({
       code: zod.string(),
       used: zod.boolean(),
       usedByName: zod.string().nullish(),
+    }),
+  ),
+});
+
+/**
+ * @summary Generate a 6-digit smartboard code for a class
+ */
+export const GenerateSmartboardCodeParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const GenerateSmartboardCodeResponse = zod.object({
+  smartboardCode: zod.string(),
+});
+
+/**
+ * @summary Get class info by 6-digit smartboard code (public)
+ */
+export const GetSmartboardClassParams = zod.object({
+  code: zod.coerce.string(),
+});
+
+export const GetSmartboardClassResponse = zod.object({
+  classId: zod.string(),
+  className: zod.string(),
+  teacherName: zod.string().nullish(),
+  lessons: zod.array(
+    zod.object({
+      id: zod.string(),
+      code: zod.string(),
+      title: zod.string(),
+      moduleNumber: zod.number(),
+      moduleTitle: zod.string(),
+      orderIndex: zod.number(),
     }),
   ),
 });

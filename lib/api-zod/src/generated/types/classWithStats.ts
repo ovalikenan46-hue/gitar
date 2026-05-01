@@ -11,6 +11,7 @@ export interface ClassWithStats {
   id: string;
   name: string;
   levelUnlocked: number;
+  smartboardCode?: string | null;
   studentCount: number;
   studentCapacity: number;
   usedStudentCount: number;

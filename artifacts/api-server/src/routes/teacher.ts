@@ -2,7 +2,7 @@ import { Router, type IRouter } from "express";
 import { db, classesTable, usersTable, studentCodesTable, institutionsTable, teacherCodesTable } from "@workspace/db";
 import { eq, and, isNull, count } from "drizzle-orm";
 import { CreateClassBody, ExpandClassCapacityBody } from "@workspace/api-zod";
-import { requireAuth, generateInviteCode, type AuthedRequest } from "../lib/auth";
+import { requireAuth, generateStudentCode, generateSmartboardCode, type AuthedRequest } from "../lib/auth";
 
 const router: IRouter = Router();
 
@@ -44,6 +44,7 @@ async function getClassWithStats(id: string) {
     id: cls.id,
     name: cls.name,
     levelUnlocked: cls.levelUnlocked,
+    smartboardCode: cls.smartboardCode ?? null,
     studentCount,
     studentCapacity,
     usedStudentCount,
@@ -82,17 +83,29 @@ async function getInstitutionRemaining(institutionId: string) {
 }
 
 async function generateUniqueStudentCode(): Promise<string> {
-  let code = generateInviteCode();
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 10; i++) {
+    const code = generateStudentCode();
     const [existing] = await db
       .select()
       .from(studentCodesTable)
       .where(eq(studentCodesTable.code, code))
       .limit(1);
     if (!existing) return code;
-    code = generateInviteCode();
   }
-  return code;
+  return generateStudentCode();
+}
+
+async function generateUniqueSmartboardCode(): Promise<string> {
+  for (let i = 0; i < 20; i++) {
+    const code = generateSmartboardCode();
+    const [existing] = await db
+      .select()
+      .from(classesTable)
+      .where(eq(classesTable.smartboardCode, code))
+      .limit(1);
+    if (!existing) return code;
+  }
+  return generateSmartboardCode();
 }
 
 router.get("/teacher/classes", async (req, res) => {
@@ -215,6 +228,20 @@ router.post("/teacher/classes/:id/unlock-next", async (req, res) => {
   await db.update(classesTable).set({ levelUnlocked: next }).where(eq(classesTable.id, id));
   const stats = await getClassWithStats(id);
   res.json(stats);
+});
+
+// ── Akıllı Tahta: Kod Üret ──────────────────────────────────────────────────
+router.post("/teacher/classes/:id/smartboard-code", async (req, res) => {
+  const { auth } = req as unknown as AuthedRequest;
+  const id = req.params.id;
+  const [cls] = await db.select().from(classesTable).where(eq(classesTable.id, id)).limit(1);
+  if (!cls || cls.teacherId !== auth.userId) {
+    res.status(404).json({ error: "Sınıf bulunamadı" });
+    return;
+  }
+  const code = await generateUniqueSmartboardCode();
+  await db.update(classesTable).set({ smartboardCode: code }).where(eq(classesTable.id, id));
+  res.json({ smartboardCode: code });
 });
 
 export default router;

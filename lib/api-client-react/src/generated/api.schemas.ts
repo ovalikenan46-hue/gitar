@@ -142,12 +142,33 @@ export interface ClassWithStats {
   id: string;
   name: string;
   levelUnlocked: number;
+  smartboardCode?: string | null;
   studentCount: number;
   studentCapacity: number;
   usedStudentCount: number;
   remainingSlots: number;
   unusedStudentCodes: number;
   studentCodes: StudentCodeInfo[];
+}
+
+export interface SmartboardCodeResponse {
+  smartboardCode: string;
+}
+
+export interface SmartboardLesson {
+  id: string;
+  code: string;
+  title: string;
+  moduleNumber: number;
+  moduleTitle: string;
+  orderIndex: number;
+}
+
+export interface SmartboardClassInfo {
+  classId: string;
+  className: string;
+  teacherName?: string | null;
+  lessons: SmartboardLesson[];
 }
 
 export interface LessonWithProgress {

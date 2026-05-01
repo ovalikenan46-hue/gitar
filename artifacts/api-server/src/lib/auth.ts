@@ -84,3 +84,15 @@ export function generateInviteCode(): string {
   }
   return out;
 }
+
+/** 8 haneli sayısal öğrenci kodu (10000000–99999999) */
+export function generateStudentCode(): string {
+  const n = Math.floor(Math.random() * 90_000_000) + 10_000_000;
+  return String(n);
+}
+
+/** 6 haneli sayısal akıllı tahta kodu (100000–999999) */
+export function generateSmartboardCode(): string {
+  const n = Math.floor(Math.random() * 900_000) + 100_000;
+  return String(n);
+}

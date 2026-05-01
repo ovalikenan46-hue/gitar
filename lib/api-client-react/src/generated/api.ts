@@ -32,6 +32,8 @@ import type {
   InstitutionWithStats,
   InviteCode,
   LessonWithProgress,
+  SmartboardClassInfo,
+  SmartboardCodeResponse,
   StudentDashboard,
   TeacherLoginBody,
   UpdateInstitutionLimitsBody,
@@ -1352,6 +1354,178 @@ export const useUnlockNextLevel = <
 > => {
   return useMutation(getUnlockNextLevelMutationOptions(options));
 };
+
+/**
+ * @summary Generate a 6-digit smartboard code for a class
+ */
+export const getGenerateSmartboardCodeUrl = (id: string) => {
+  return `/api/teacher/classes/${id}/smartboard-code`;
+};
+
+export const generateSmartboardCode = async (
+  id: string,
+  options?: RequestInit,
+): Promise<SmartboardCodeResponse> => {
+  return customFetch<SmartboardCodeResponse>(getGenerateSmartboardCodeUrl(id), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getGenerateSmartboardCodeMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateSmartboardCode>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof generateSmartboardCode>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["generateSmartboardCode"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof generateSmartboardCode>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return generateSmartboardCode(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type GenerateSmartboardCodeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof generateSmartboardCode>>
+>;
+
+export type GenerateSmartboardCodeMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Generate a 6-digit smartboard code for a class
+ */
+export const useGenerateSmartboardCode = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateSmartboardCode>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof generateSmartboardCode>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(getGenerateSmartboardCodeMutationOptions(options));
+};
+
+/**
+ * @summary Get class info by 6-digit smartboard code (public)
+ */
+export const getGetSmartboardClassUrl = (code: string) => {
+  return `/api/smartboard/${code}`;
+};
+
+export const getSmartboardClass = async (
+  code: string,
+  options?: RequestInit,
+): Promise<SmartboardClassInfo> => {
+  return customFetch<SmartboardClassInfo>(getGetSmartboardClassUrl(code), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetSmartboardClassQueryKey = (code: string) => {
+  return [`/api/smartboard/${code}`] as const;
+};
+
+export const getGetSmartboardClassQueryOptions = <
+  TData = Awaited<ReturnType<typeof getSmartboardClass>>,
+  TError = ErrorType<void>,
+>(
+  code: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getSmartboardClass>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetSmartboardClassQueryKey(code);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getSmartboardClass>>
+  > = ({ signal }) => getSmartboardClass(code, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!code,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getSmartboardClass>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetSmartboardClassQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getSmartboardClass>>
+>;
+export type GetSmartboardClassQueryError = ErrorType<void>;
+
+/**
+ * @summary Get class info by 6-digit smartboard code (public)
+ */
+
+export function useGetSmartboardClass<
+  TData = Awaited<ReturnType<typeof getSmartboardClass>>,
+  TError = ErrorType<void>,
+>(
+  code: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getSmartboardClass>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetSmartboardClassQueryOptions(code, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * @summary List lessons with progress and lock state for the current student
