@@ -11,6 +11,7 @@ import { Link } from "wouter";
 import { GuitarPosture } from "@/components/lessons/guitar-posture";
 import { Fretboard } from "@/components/lessons/fretboard";
 import { StrumPattern } from "@/components/lessons/strum-pattern";
+import { Metronome } from "@/components/lessons/metronome";
 import { ChordDiagram } from "@/components/lessons/chord-diagram";
 import { toast } from "sonner";
 
@@ -73,10 +74,16 @@ export default function LessonDetail() {
         </div>
 
         {/* Content Area */}
-        <div className="mt-8">
+        <div className="mt-8 space-y-6">
           {lesson.code === "1A" && <GuitarPosture />}
           {lesson.code === "1B" && <Fretboard />}
-          {lesson.code === "1C" && <StrumPattern />}
+          {lesson.code === "1C" && (
+            <>
+              <StrumPattern />
+              {/* Standalone metronome — completely independent from strum pattern */}
+              <Metronome />
+            </>
+          )}
           {lesson.code === "2A" && <ChordDiagram chordCode="Em" />}
           {lesson.code === "2B" && <ChordDiagram chordCode="Am" />}
         </div>
