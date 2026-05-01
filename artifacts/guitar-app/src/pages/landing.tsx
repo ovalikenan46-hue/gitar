@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,59 @@ import { setToken } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { Volume2, VolumeX } from "lucide-react";
 import logoImg from "@assets/ChatGPT_Image_1_May_2026_08_31_58_1777613580606.png";
+import { useSound } from "@/hooks/use-sound";
+
+const BG_MUSIC_SRC = "/sounds/gitar_uygulama_alt_muzik_1777623358028.mpeg";
+const ICON_SFX_SRC = "/sounds/ikon_ses_efekti_1777623358028.mp4";
+
+function useBgMusic() {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [muted, setMuted] = useState(false);
+  const [started, setStarted] = useState(false);
+
+  useEffect(() => {
+    const audio = new Audio(BG_MUSIC_SRC);
+    audio.loop = true;
+    audio.volume = 0.45;
+    audioRef.current = audio;
+
+    const tryPlay = () => {
+      audio.play().then(() => setStarted(true)).catch(() => {});
+    };
+
+    tryPlay();
+
+    const onInteract = () => {
+      if (!started && audio.paused) {
+        audio.play().then(() => setStarted(true)).catch(() => {});
+      }
+      document.removeEventListener("pointerdown", onInteract);
+    };
+    document.addEventListener("pointerdown", onInteract);
+
+    return () => {
+      document.removeEventListener("pointerdown", onInteract);
+      audio.pause();
+      audio.src = "";
+    };
+  }, []);
+
+  const toggleMute = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (audio.paused) {
+      audio.play().then(() => setStarted(true)).catch(() => {});
+      setMuted(false);
+    } else {
+      audio.pause();
+      setMuted(true);
+    }
+  };
+
+  return { muted: muted || !started, toggleMute };
+}
 
 export default function Landing() {
   const [adminOpen, setAdminOpen] = useState(false);
@@ -19,6 +71,8 @@ export default function Landing() {
   const adminLogin = useAdminLogin();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
+  const { muted, toggleMute } = useBgMusic();
+  const playIconSfx = useSound(ICON_SFX_SRC, 0.8);
 
   const handleAdminSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,6 +126,20 @@ export default function Landing() {
 
       {/* Animated music notes & symbols */}
       <MusicBg count={18} />
+
+      {/* Mute / unmute — bottom-left */}
+      <motion.button
+        className="absolute bottom-5 left-5 z-30 w-11 h-11 rounded-full flex items-center justify-center shadow-lg border border-white/50 focus:outline-none"
+        style={{ background: "rgba(255,255,255,0.55)", backdropFilter: "blur(10px)" }}
+        onClick={toggleMute}
+        whileTap={{ scale: 0.88 }}
+        aria-label={muted ? "Müziği aç" : "Müziği kapat"}
+      >
+        {muted
+          ? <VolumeX className="w-5 h-5 text-gray-500" />
+          : <Volume2 className="w-5 h-5 text-primary" />
+        }
+      </motion.button>
 
       {/* Sol Anahtarı — top-left */}
       <motion.span
@@ -183,6 +251,7 @@ export default function Landing() {
             <Link href="/student-login">
               <Button
                 size="lg"
+                onClick={playIconSfx}
                 className="w-full text-xl py-8 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-white font-bold"
                 style={{ background: "linear-gradient(135deg, #4299e1 0%, #6C63FF 100%)" }}
               >
@@ -192,6 +261,7 @@ export default function Landing() {
             <Link href="/teacher-login">
               <Button
                 size="lg"
+                onClick={playIconSfx}
                 className="w-full text-xl py-8 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:-translate-y-1 text-white font-bold border-0"
                 style={{ background: "linear-gradient(135deg, #FF8C00 0%, #FFB86C 100%)" }}
               >

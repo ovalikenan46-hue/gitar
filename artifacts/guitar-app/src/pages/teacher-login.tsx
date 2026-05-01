@@ -15,6 +15,9 @@ import { motion } from "framer-motion";
 import { pageVariants, pageTransition } from "@/lib/animations";
 import { Link } from "wouter";
 import { toast } from "sonner";
+import { useSound } from "@/hooks/use-sound";
+
+const ICON_SFX_SRC = "/sounds/ikon_ses_efekti_1777623358028.mp4";
 
 const STORAGE_KEY = "guitar_teacher_saved";
 
@@ -51,6 +54,7 @@ export default function TeacherLogin() {
   const queryClient = useQueryClient();
   const checkCode = useCheckInviteCode();
   const login = useTeacherLogin();
+  const playIconSfx = useSound(ICON_SFX_SRC, 0.8);
 
   const [saved, setSaved] = useState<SavedTeacher | null>(null);
   const [validatedCode, setValidatedCode] = useState<{ code: string; institutionName: string } | null>(null);
@@ -171,7 +175,7 @@ export default function TeacherLogin() {
 
                 <Button
                   className="w-full py-6 text-base rounded-2xl bg-secondary text-secondary-foreground hover:bg-secondary/90 shadow-md"
-                  onClick={onQuickLogin}
+                  onClick={() => { playIconSfx(); onQuickLogin(); }}
                   disabled={login.isPending}
                 >
                   {login.isPending ? (
@@ -221,6 +225,7 @@ export default function TeacherLogin() {
                 <Button
                   type="submit"
                   variant="secondary"
+                  onClick={playIconSfx}
                   className="w-full py-6 text-lg rounded-2xl shadow-md hover:shadow-lg transition-all"
                   disabled={checkCode.isPending}
                 >
@@ -314,6 +319,7 @@ export default function TeacherLogin() {
                     <Button
                       type="submit"
                       variant="secondary"
+                      onClick={playIconSfx}
                       className="flex-1 py-6 text-lg rounded-2xl shadow-md"
                       disabled={login.isPending}
                     >
