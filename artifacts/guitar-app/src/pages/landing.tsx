@@ -11,7 +11,7 @@ import { setToken } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import logoImg from "@assets/ChatGPT_Image_Apr_26,_2026,_08_50_21_AM_1777187022196.png";
+import logoImg from "@assets/ChatGPT_Image_1_May_2026_08_31_58_1777613580606.png";
 
 export default function Landing() {
   const [adminOpen, setAdminOpen] = useState(false);
@@ -112,7 +112,7 @@ export default function Landing() {
             <img
               src={logoImg}
               alt="Gitar Öğreniyorum"
-              className="w-52 h-52 sm:w-64 sm:h-64 object-contain drop-shadow-xl select-none"
+              className="w-56 h-56 sm:w-72 sm:h-72 object-cover rounded-3xl drop-shadow-2xl select-none"
               draggable={false}
             />
           </motion.div>

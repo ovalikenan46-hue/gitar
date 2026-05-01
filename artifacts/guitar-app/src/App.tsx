@@ -27,8 +27,6 @@ import { SplashScreen } from "@/components/splash-screen";
 
 const queryClient = new QueryClient();
 
-const SPLASH_KEY = "guitar_splash_shown";
-
 function Router() {
   return (
     <AnimatePresence mode="wait">
@@ -86,20 +84,8 @@ function Router() {
 }
 
 function App() {
-  const [splashDone, setSplashDone] = useState(() => {
-    try {
-      return sessionStorage.getItem(SPLASH_KEY) === "1";
-    } catch {
-      return false;
-    }
-  });
-
-  const handleSplashComplete = () => {
-    try {
-      sessionStorage.setItem(SPLASH_KEY, "1");
-    } catch { /* ignore */ }
-    setSplashDone(true);
-  };
+  const [splashDone, setSplashDone] = useState(false);
+  const handleSplashComplete = () => setSplashDone(true);
 
   return (
     <QueryClientProvider client={queryClient}>

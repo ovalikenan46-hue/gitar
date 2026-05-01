@@ -1,38 +1,30 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import logoImg from "@assets/ChatGPT_Image_Apr_26,_2026,_08_50_21_AM_1777187022196.png";
+import logoImg from "@assets/ChatGPT_Image_1_May_2026_08_31_58_1777613580606.png";
 
 interface SplashScreenProps {
   onComplete: () => void;
 }
 
-const NOTE_POSITIONS = [
-  { x: "12%", y: "18%", delay: 0.3, size: 28, color: "#FF8C00" },
-  { x: "82%", y: "14%", delay: 0.6, size: 22, color: "#6C63FF" },
-  { x: "8%",  y: "72%", delay: 0.9, size: 20, color: "#00C2A8" },
-  { x: "88%", y: "68%", delay: 0.5, size: 26, color: "#4CAF50" },
-  { x: "20%", y: "42%", delay: 1.1, size: 18, color: "#FFD700" },
-  { x: "78%", y: "40%", delay: 0.7, size: 24, color: "#FF6B8A" },
+const NOTES = [
+  { x: "10%", y: "15%", delay: 0.4, size: 30, color: "#FF8C00" },
+  { x: "80%", y: "12%", delay: 0.7, size: 24, color: "#6C63FF" },
+  { x: "6%",  y: "70%", delay: 1.0, size: 22, color: "#00C2A8" },
+  { x: "86%", y: "65%", delay: 0.5, size: 28, color: "#4CAF50" },
+  { x: "22%", y: "80%", delay: 1.2, size: 20, color: "#FFD700" },
+  { x: "75%", y: "78%", delay: 0.9, size: 26, color: "#FF6B8A" },
+  { x: "50%", y: "8%",  delay: 0.6, size: 18, color: "#6C63FF" },
+  { x: "92%", y: "38%", delay: 1.1, size: 22, color: "#FF8C00" },
 ];
 
-function FloatingNote({ x, y, delay, size, color }: typeof NOTE_POSITIONS[0]) {
+function FloatingNote({ x, y, delay, size, color }: typeof NOTES[0]) {
   return (
     <motion.div
-      className="absolute pointer-events-none select-none opacity-70"
+      className="absolute pointer-events-none select-none"
       style={{ left: x, top: y, fontSize: size }}
-      initial={{ opacity: 0, scale: 0 }}
-      animate={{
-        opacity: [0, 0.8, 0.8, 0],
-        scale: [0, 1.2, 1, 0.8],
-        y: [0, -40, -80],
-      }}
-      transition={{
-        delay,
-        duration: 2.5,
-        repeat: Infinity,
-        repeatDelay: 1.5,
-        ease: "easeOut",
-      }}
+      initial={{ opacity: 0, scale: 0, y: 0 }}
+      animate={{ opacity: [0, 0.9, 0.9, 0], scale: [0, 1.3, 1, 0.8], y: [0, -35, -70] }}
+      transition={{ delay, duration: 2.8, repeat: Infinity, repeatDelay: 1.8, ease: "easeOut" }}
     >
       <span style={{ color }}>♪</span>
     </motion.div>
@@ -40,54 +32,47 @@ function FloatingNote({ x, y, delay, size, color }: typeof NOTE_POSITIONS[0]) {
 }
 
 export function SplashScreen({ onComplete }: SplashScreenProps) {
-  const [visible, setVisible] = useState(true);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [visible, setVisible]   = useState(true);
+  const [started, setStarted]   = useState(false); // user tapped "Başla"
+  const audioRef  = useRef<HTMLAudioElement | null>(null);
+  const timerRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const startFadeOut = () => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+  const finish = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
     setVisible(false);
-    setTimeout(onComplete, 700);
+    setTimeout(onComplete, 650);
   };
 
+  /* Only create audio once, but don't auto-play */
   useEffect(() => {
-    document.body.style.overflow = "hidden";
-
     const base = import.meta.env.BASE_URL ?? "/";
     const audio = new Audio(`${base}sounds/intro.mp3`);
-    audio.volume = 0.8;
+    audio.volume = 0.85;
     audio.preload = "auto";
     audioRef.current = audio;
-
-    const fallback = setTimeout(startFadeOut, 8000);
-    timeoutRef.current = fallback;
-
-    const onLoaded = () => {
-      audio.play().catch(() => {});
-    };
-
-    const onEnded = () => {
-      setTimeout(startFadeOut, 400);
-    };
-
-    const onError = () => {
-      startFadeOut();
-    };
-
-    audio.addEventListener("canplaythrough", onLoaded, { once: true });
-    audio.addEventListener("ended", onEnded, { once: true });
-    audio.addEventListener("error", onError, { once: true });
     audio.load();
 
     return () => {
-      clearTimeout(fallback);
       audio.pause();
-      audio.removeEventListener("canplaythrough", onLoaded);
-      audio.removeEventListener("ended", onEnded);
-      audio.removeEventListener("error", onError);
-      document.body.style.overflow = "";
+      if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, []);
+
+  /* When user presses "Başla" — play audio & set timer */
+  const handleStart = () => {
+    setStarted(true);
+    document.body.style.overflow = "hidden";
+
+    const audio = audioRef.current;
+    if (!audio) { timerRef.current = setTimeout(finish, 7000); return; }
+
+    audio.play().catch(() => {});
+    audio.addEventListener("ended", () => setTimeout(finish, 350), { once: true });
+    audio.addEventListener("error", finish, { once: true });
+
+    /* Safety fallback */
+    timerRef.current = setTimeout(finish, 12000);
+  };
 
   return (
     <AnimatePresence>
@@ -96,85 +81,99 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
           key="splash"
           className="fixed inset-0 z-[9999] flex flex-col items-center justify-center"
           style={{
-            background: "linear-gradient(135deg, #e8f4fd 0%, #ffffff 40%, #fff8f0 70%, #e8fdf8 100%)",
+            background:
+              "linear-gradient(135deg, #0f0c29 0%, #302b63 40%, #24243e 100%)",
           }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.7, ease: "easeInOut" }}
+          transition={{ duration: 0.6, ease: "easeInOut" }}
         >
-          {/* Floating particles */}
-          {NOTE_POSITIONS.map((n, i) => (
-            <FloatingNote key={i} {...n} />
-          ))}
+          {/* Floating music notes */}
+          {NOTES.map((n, i) => <FloatingNote key={i} {...n} />)}
 
-          {/* Soft blobs */}
-          <div
-            className="absolute w-[500px] h-[500px] rounded-full opacity-20 blur-[80px] pointer-events-none"
-            style={{ background: "radial-gradient(circle, #4299e1 0%, transparent 70%)", top: "-10%", left: "-10%" }}
-          />
-          <div
-            className="absolute w-[400px] h-[400px] rounded-full opacity-20 blur-[80px] pointer-events-none"
-            style={{ background: "radial-gradient(circle, #00C2A8 0%, transparent 70%)", bottom: "-10%", right: "-10%" }}
-          />
-          <div
-            className="absolute w-[300px] h-[300px] rounded-full opacity-15 blur-[60px] pointer-events-none"
-            style={{ background: "radial-gradient(circle, #6C63FF 0%, transparent 70%)", top: "30%", right: "5%" }}
-          />
+          {/* Color blobs */}
+          <div className="absolute w-[500px] h-[500px] rounded-full opacity-20 blur-[90px] pointer-events-none"
+            style={{ background: "radial-gradient(circle, #4299e1, transparent)", top: "-10%", left: "-10%" }} />
+          <div className="absolute w-[400px] h-[400px] rounded-full opacity-20 blur-[80px] pointer-events-none"
+            style={{ background: "radial-gradient(circle, #00C2A8, transparent)", bottom: "-10%", right: "-10%" }} />
+          <div className="absolute w-[300px] h-[300px] rounded-full opacity-15 blur-[60px] pointer-events-none"
+            style={{ background: "radial-gradient(circle, #6C63FF, transparent)", top: "30%", right: "5%" }} />
 
-          {/* Glow ring behind logo */}
+          {/* Glow ring */}
           <motion.div
             className="absolute rounded-full pointer-events-none"
             style={{
-              width: 320,
-              height: 320,
-              background: "radial-gradient(circle, rgba(66,153,225,0.25) 0%, rgba(66,153,225,0.08) 50%, transparent 70%)",
+              width: 340, height: 340,
+              background: "radial-gradient(circle, rgba(108,99,255,0.30) 0%, rgba(108,99,255,0.06) 55%, transparent 75%)",
             }}
-            animate={{
-              scale: [1, 1.15, 1],
-              opacity: [0.6, 1, 0.6],
-            }}
-            transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+            animate={{ scale: [1, 1.18, 1], opacity: [0.5, 1, 0.5] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
           />
 
           {/* Logo */}
           <motion.div
-            initial={{ scale: 0.4, opacity: 0, rotate: -5 }}
-            animate={{
-              scale: [0.4, 1.12, 1],
-              opacity: [0, 1, 1],
-              rotate: [-5, 3, 0],
-            }}
-            transition={{ duration: 1.2, ease: "easeOut", times: [0, 0.75, 1] }}
+            initial={{ scale: 0.35, opacity: 0, rotate: -8 }}
+            animate={{ scale: [0.35, 1.1, 1], opacity: [0, 1, 1], rotate: [-8, 4, 0] }}
+            transition={{ duration: 1.1, ease: "easeOut", times: [0, 0.75, 1] }}
           >
             <motion.img
               src={logoImg}
               alt="Gitar Öğreniyorum"
-              className="w-64 h-64 sm:w-80 sm:h-80 object-contain drop-shadow-2xl select-none"
-              animate={{ y: [0, -12, 0] }}
-              transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 1.2 }}
+              className="w-64 h-64 sm:w-80 sm:h-80 object-contain drop-shadow-2xl select-none rounded-2xl"
+              animate={started ? { y: [0, -14, 0] } : {}}
+              transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
               draggable={false}
             />
           </motion.div>
 
           {/* Subtitle */}
           <motion.p
-            className="mt-6 text-lg sm:text-xl font-bold tracking-wide"
-            style={{ color: "#1B3A6B" }}
-            initial={{ opacity: 0, y: 12 }}
+            className="mt-6 text-base sm:text-xl font-bold tracking-wide text-white/90"
+            initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.1, duration: 0.7, ease: "easeOut" }}
+            transition={{ delay: 1.0, duration: 0.7 }}
           >
             Temelden Başla, Müzikle Büyü!
           </motion.p>
 
-          {/* Tap to skip */}
+          {/* CTA — tap to start (satisfies browser autoplay policy) */}
+          <AnimatePresence>
+            {!started && (
+              <motion.button
+                key="cta"
+                onClick={handleStart}
+                className="mt-10 px-10 py-4 rounded-2xl text-lg font-extrabold text-white shadow-2xl
+                           focus:outline-none active:scale-95 transition-transform"
+                style={{
+                  background: "linear-gradient(135deg, #6C63FF 0%, #00C2A8 100%)",
+                  boxShadow: "0 0 40px rgba(108,99,255,0.55)",
+                }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{
+                  opacity: 1, y: 0,
+                  boxShadow: [
+                    "0 0 30px rgba(108,99,255,0.45)",
+                    "0 0 55px rgba(0,194,168,0.65)",
+                    "0 0 30px rgba(108,99,255,0.45)",
+                  ],
+                }}
+                exit={{ opacity: 0, scale: 0.85 }}
+                transition={{ delay: 1.1, duration: 0.5,
+                  boxShadow: { duration: 2, repeat: Infinity, ease: "easeInOut" } }}
+              >
+                🎵 Başla!
+              </motion.button>
+            )}
+          </AnimatePresence>
+
+          {/* Skip */}
           <motion.button
-            className="absolute bottom-8 text-sm text-gray-400 hover:text-gray-600 transition-colors"
+            className="absolute bottom-6 text-sm text-white/40 hover:text-white/70 transition-colors"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 2, duration: 0.5 }}
-            onClick={startFadeOut}
+            transition={{ delay: 1.8 }}
+            onClick={finish}
           >
             Geç →
           </motion.button>
