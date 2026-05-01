@@ -51,10 +51,13 @@ const BPM_LABELS: Record<BpmValue, string> = {
   115: "Çok Hızlı",
 };
 
-/* ─────────────────────────────────────────────────────────
-   Component
-───────────────────────────────────────────────────────── */
-export function Metronome() {
+interface MetronomeProps {
+  onActivate?: () => void;
+  onDeactivate?: () => void;
+  isActive?: boolean;
+}
+
+export function Metronome({ onActivate, onDeactivate, isActive = true }: MetronomeProps) {
   const [isPlaying, setIsPlaying]     = useState(false);
   const [selectedBPM, setSelectedBPM] = useState<BpmValue>(80);
   const [beat, setBeat]               = useState(0);   // 0-3 (quarter notes, 4/4)
@@ -89,6 +92,13 @@ export function Metronome() {
     void swing(nextSide);
   }, [swing]);
 
+  /* ── Stop externally when parent deactivates (other player started) ── */
+  useEffect(() => {
+    if (!isActive) {
+      setIsPlaying(false);
+    }
+  }, [isActive]);
+
   /* ── Timer management ── */
   useEffect(() => {
     if (timerRef.current) {
@@ -119,7 +129,14 @@ export function Metronome() {
     // If playing, the useEffect above will restart with new BPM
   };
 
-  const togglePlay = () => setIsPlaying((p) => !p);
+  const togglePlay = () => {
+    if (!isPlaying) {
+      onActivate?.();    // starting → tell parent to stop the other one
+    } else {
+      onDeactivate?.();  // stopping → release the lock
+    }
+    setIsPlaying((p) => !p);
+  };
 
   return (
     <div className="w-full bg-white rounded-3xl p-6 shadow-sm border border-border">

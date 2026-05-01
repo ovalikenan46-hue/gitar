@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { useListMyLessons, getListMyLessonsQueryKey, useCompleteLesson, getGetStudentDashboardQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -19,6 +20,9 @@ export default function LessonDetail() {
   const { id } = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
+
+  /** "strum" | "metronome" | null — only one player at a time */
+  const [activePlayer, setActivePlayer] = useState<"strum" | "metronome" | null>(null);
   
   const { data: lessons, isLoading } = useListMyLessons({ query: { queryKey: getListMyLessonsQueryKey() } });
   const completeLesson = useCompleteLesson();
@@ -79,9 +83,16 @@ export default function LessonDetail() {
           {lesson.code === "1B" && <Fretboard />}
           {lesson.code === "1C" && (
             <>
-              <StrumPattern />
-              {/* Standalone metronome — completely independent from strum pattern */}
-              <Metronome />
+              <StrumPattern
+                isActive={activePlayer !== "metronome"}
+                onActivate={() => setActivePlayer("strum")}
+                onDeactivate={() => setActivePlayer(null)}
+              />
+              <Metronome
+                isActive={activePlayer !== "strum"}
+                onActivate={() => setActivePlayer("metronome")}
+                onDeactivate={() => setActivePlayer(null)}
+              />
             </>
           )}
           {lesson.code === "2A" && <ChordDiagram chordCode="Em" />}

@@ -13,9 +13,23 @@ const PATTERN = [
   { dir: "up",   count: "2" },
 ];
 
-export function StrumPattern() {
+interface StrumPatternProps {
+  onActivate?: () => void;
+  onDeactivate?: () => void;
+  isActive?: boolean;
+}
+
+export function StrumPattern({ onActivate, onDeactivate, isActive = true }: StrumPatternProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentBeat, setCurrentBeat] = useState(-1);
+
+  /* If parent deactivates us (other player started), stop immediately */
+  useEffect(() => {
+    if (!isActive) {
+      setIsPlaying(false);
+      setCurrentBeat(-1);
+    }
+  }, [isActive]);
 
   useEffect(() => {
     if (!isPlaying) {
@@ -35,13 +49,28 @@ export function StrumPattern() {
     return () => clearInterval(interval);
   }, [isPlaying]);
 
+  const handlePlay = () => {
+    if (!isPlaying) {
+      onActivate?.();      // starting → tell parent to stop the other one
+    } else {
+      onDeactivate?.();    // stopping → release the lock so other one can start
+    }
+    setIsPlaying((p) => !p);
+  };
+
+  const handleReset = () => {
+    setIsPlaying(false);
+    setCurrentBeat(-1);
+    onDeactivate?.();      // manual reset → release the lock
+  };
+
   return (
     <div className="w-full bg-white rounded-3xl p-6 shadow-sm border border-border">
       <div className="flex gap-4 mb-8 justify-center">
         <Button
           size="icon"
           className="rounded-xl w-12 h-12"
-          onClick={() => setIsPlaying(!isPlaying)}
+          onClick={handlePlay}
         >
           {isPlaying ? <Square className="w-6 h-6" /> : <Play className="w-6 h-6 ml-1" />}
         </Button>
@@ -49,7 +78,7 @@ export function StrumPattern() {
           size="icon"
           variant="outline"
           className="rounded-xl w-12 h-12"
-          onClick={() => { setIsPlaying(false); setCurrentBeat(-1); }}
+          onClick={handleReset}
         >
           <RefreshCcw className="w-6 h-6" />
         </Button>
