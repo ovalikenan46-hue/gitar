@@ -20,8 +20,7 @@ const ICON_SFX_SRC = "/sounds/ikon_ses_efekti_1777623358028.mp4";
 
 function useBgMusic() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [muted, setMuted] = useState(false);
-  const [started, setStarted] = useState(false);
+  const [playing, setPlaying] = useState(false);
 
   useEffect(() => {
     const audio = new Audio(BG_MUSIC_SRC);
@@ -29,40 +28,34 @@ function useBgMusic() {
     audio.volume = 0.45;
     audioRef.current = audio;
 
-    const tryPlay = () => {
-      audio.play().then(() => setStarted(true)).catch(() => {});
-    };
-
-    tryPlay();
-
-    const onInteract = () => {
-      if (!started && audio.paused) {
-        audio.play().then(() => setStarted(true)).catch(() => {});
-      }
-      document.removeEventListener("pointerdown", onInteract);
-    };
-    document.addEventListener("pointerdown", onInteract);
+    // Try autoplay; on success mark as playing
+    audio.play().then(() => setPlaying(true)).catch(() => {
+      // Autoplay blocked — wait for first user interaction
+      const onInteract = () => {
+        audio.play().then(() => setPlaying(true)).catch(() => {});
+        document.removeEventListener("pointerdown", onInteract);
+      };
+      document.addEventListener("pointerdown", onInteract);
+    });
 
     return () => {
-      document.removeEventListener("pointerdown", onInteract);
       audio.pause();
       audio.src = "";
     };
   }, []);
 
-  const toggleMute = () => {
+  const toggle = () => {
     const audio = audioRef.current;
     if (!audio) return;
     if (audio.paused) {
-      audio.play().then(() => setStarted(true)).catch(() => {});
-      setMuted(false);
+      audio.play().then(() => setPlaying(true)).catch(() => {});
     } else {
       audio.pause();
-      setMuted(true);
+      setPlaying(false);
     }
   };
 
-  return { muted: muted || !started, toggleMute };
+  return { playing, toggle };
 }
 
 export default function Landing() {
@@ -71,7 +64,7 @@ export default function Landing() {
   const adminLogin = useAdminLogin();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
-  const { muted, toggleMute } = useBgMusic();
+  const { playing, toggle: toggleMusic } = useBgMusic();
   const playIconSfx = useSound(ICON_SFX_SRC, 0.8);
 
   const handleAdminSubmit = (e: React.FormEvent) => {
@@ -131,13 +124,13 @@ export default function Landing() {
       <motion.button
         className="absolute bottom-5 left-5 z-30 w-11 h-11 rounded-full flex items-center justify-center shadow-lg border border-white/50 focus:outline-none"
         style={{ background: "rgba(255,255,255,0.55)", backdropFilter: "blur(10px)" }}
-        onClick={toggleMute}
+        onClick={toggleMusic}
         whileTap={{ scale: 0.88 }}
-        aria-label={muted ? "Müziği aç" : "Müziği kapat"}
+        aria-label={playing ? "Müziği kapat" : "Müziği aç"}
       >
-        {muted
-          ? <VolumeX className="w-5 h-5 text-gray-500" />
-          : <Volume2 className="w-5 h-5 text-primary" />
+        {playing
+          ? <Volume2 className="w-5 h-5 text-primary" />
+          : <VolumeX className="w-5 h-5 text-gray-500" />
         }
       </motion.button>
 
