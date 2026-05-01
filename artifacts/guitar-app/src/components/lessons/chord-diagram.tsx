@@ -72,17 +72,6 @@ function fretToXPercent(fretNum: number) {
   return ((fretNum - 0.5) / 4) * 100;
 }
 
-// ── Audio helper ──────────────────────────────────────────────────────────────
-function playChordAudio(filename: string): Promise<void> {
-  return new Promise((resolve) => {
-    const src = `${import.meta.env.BASE_URL}sounds/${filename}`;
-    const audio = new Audio(src);
-    audio.onended = () => resolve();
-    audio.onerror = () => resolve(); // fail silently
-    audio.play().catch(() => resolve());
-  });
-}
-
 // ── Main component ────────────────────────────────────────────────────────────
 export function ChordDiagram({ chordCode }: { chordCode: "Em" | "Am" }) {
   const chord = CHORDS[chordCode];
@@ -110,14 +99,18 @@ export function ChordDiagram({ chordCode }: { chordCode: "Em" | "Am" }) {
     setIsPlaying(true);
     setStep(0);
 
+    // 🔊 Ses HEMEN başlasın — await öncesi, kullanıcı etkileşimi penceresi içinde
+    const audio = new Audio(`${import.meta.env.BASE_URL}sounds/${chord.audioFile}`);
+    audio.play().catch(() => {/* autoplay policy: ignore */});
+
+    // 🎸 Animasyon sesle aynı anda dönsün
     for (let i = 1; i <= chord.fingers.length; i++) {
-      await delay(420);
+      await delay(380);
       setStep(i);
     }
 
-    await delay(280);
-    await playChordAudio(chord.audioFile);
-
+    // Sesin bitmesi için bekle (~3s genelde yeterli)
+    await delay(3000);
     setIsPlaying(false);
   };
 
