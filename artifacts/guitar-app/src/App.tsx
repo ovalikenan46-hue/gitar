@@ -26,6 +26,9 @@ import NotFound from "@/pages/not-found";
 // Splash
 import { SplashScreen } from "@/components/splash-screen";
 
+// Audio
+import { BgMusicProvider, useBgMusic } from "@/contexts/bg-music-context";
+
 const queryClient = new QueryClient();
 
 function Router() {
@@ -87,17 +90,30 @@ function Router() {
   );
 }
 
-function App() {
+function AppInner() {
   const [splashDone, setSplashDone] = useState(false);
-  const handleSplashComplete = () => setSplashDone(true);
+  const { startAfterSplash } = useBgMusic();
 
+  const handleSplashComplete = () => {
+    setSplashDone(true);
+    startAfterSplash();
+  };
+
+  return (
+    <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+      {!splashDone && <SplashScreen onComplete={handleSplashComplete} />}
+      <Router />
+    </WouterRouter>
+  );
+}
+
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          {!splashDone && <SplashScreen onComplete={handleSplashComplete} />}
-          <Router />
-        </WouterRouter>
+        <BgMusicProvider>
+          <AppInner />
+        </BgMusicProvider>
         <Toaster />
         <SonnerToaster richColors position="top-center" />
       </TooltipProvider>

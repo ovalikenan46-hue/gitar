@@ -17,7 +17,7 @@ import { Link } from "wouter";
 import { toast } from "sonner";
 import { useSound } from "@/hooks/use-sound";
 
-const ICON_SFX_SRC = "/sounds/ikon_ses_efekti_1777623358028.mp4";
+const ICON_SFX_SRC = "sounds/ikon_ses_efekti_1777623358028.mp4";
 
 const STORAGE_KEY = "guitar_student_saved";
 

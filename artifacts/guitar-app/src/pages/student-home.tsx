@@ -7,7 +7,7 @@ import { pageVariants, pageTransition } from "@/lib/animations";
 import { Link } from "wouter";
 import { useSound } from "@/hooks/use-sound";
 
-const ICON_SFX_SRC = "/sounds/ikon_ses_efekti_1777623358028.mp4";
+const ICON_SFX_SRC = "sounds/ikon_ses_efekti_1777623358028.mp4";
 
 export default function StudentHome() {
   const { data: dashboard, isLoading } = useGetStudentDashboard({ query: { queryKey: getGetStudentDashboardQueryKey() } });
