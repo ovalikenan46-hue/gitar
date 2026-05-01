@@ -32,54 +32,86 @@ function FloatingNote({ x, y, delay, size, color }: typeof NOTES[0]) {
 }
 
 export function SplashScreen({ onComplete }: SplashScreenProps) {
-  const [visible, setVisible]   = useState(true);
-  const [started, setStarted]   = useState(false); // user tapped "Başla"
+  const [visible, setVisible]       = useState(true);
+  const [needsTap, setNeedsTap]     = useState(false); // true if autoplay was blocked
   const audioRef  = useRef<HTMLAudioElement | null>(null);
   const timerRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const playingRef = useRef(false);
 
   const finish = () => {
     if (timerRef.current) clearTimeout(timerRef.current);
+    if (audioRef.current) { audioRef.current.pause(); }
+    document.body.style.overflow = "";
     setVisible(false);
     setTimeout(onComplete, 650);
   };
 
-  /* Only create audio once, but don't auto-play */
+  const startAudio = () => {
+    const audio = audioRef.current;
+    if (!audio || playingRef.current) return;
+    playingRef.current = true;
+    setNeedsTap(false);
+
+    audio.play().catch(() => {
+      /* Still blocked – use fallback timer only */
+      playingRef.current = false;
+    });
+  };
+
+  /* Handle tap-anywhere if autoplay was blocked */
+  const handleTap = () => {
+    if (needsTap) startAudio();
+  };
+
   useEffect(() => {
+    document.body.style.overflow = "hidden";
+
     const base = import.meta.env.BASE_URL ?? "/";
     const audio = new Audio(`${base}sounds/intro.mp3`);
     audio.volume = 0.85;
     audio.preload = "auto";
     audioRef.current = audio;
+
+    audio.addEventListener("ended", () => setTimeout(finish, 350), { once: true });
+    audio.addEventListener("error",  () => {
+      /* Audio failed to load — fallback timer */
+      timerRef.current = setTimeout(finish, 7000);
+    }, { once: true });
+
+    /* Try autoplay as soon as canplaythrough fires */
+    audio.addEventListener("canplaythrough", () => {
+      audio.play()
+        .then(() => {
+          playingRef.current = true;
+          setNeedsTap(false);
+        })
+        .catch(() => {
+          /* Autoplay blocked → show subtle tap hint */
+          setNeedsTap(true);
+        });
+    }, { once: true });
+
     audio.load();
 
+    /* Hard fallback — transition after 14 s no matter what */
+    timerRef.current = setTimeout(finish, 14000);
+
     return () => {
+      clearTimeout(timerRef.current!);
       audio.pause();
-      if (timerRef.current) clearTimeout(timerRef.current);
+      audio.removeEventListener("ended", finish);
+      audio.removeEventListener("error",  finish);
+      document.body.style.overflow = "";
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  /* When user presses "Başla" — play audio & set timer */
-  const handleStart = () => {
-    setStarted(true);
-    document.body.style.overflow = "hidden";
-
-    const audio = audioRef.current;
-    if (!audio) { timerRef.current = setTimeout(finish, 7000); return; }
-
-    audio.play().catch(() => {});
-    audio.addEventListener("ended", () => setTimeout(finish, 350), { once: true });
-    audio.addEventListener("error", finish, { once: true });
-
-    /* Safety fallback */
-    timerRef.current = setTimeout(finish, 12000);
-  };
 
   return (
     <AnimatePresence>
       {visible && (
         <motion.div
           key="splash"
-          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center"
+          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center cursor-pointer select-none"
           style={{
             background:
               "linear-gradient(135deg, #0f0c29 0%, #302b63 40%, #24243e 100%)",
@@ -88,6 +120,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.6, ease: "easeInOut" }}
+          onClick={handleTap}
         >
           {/* Floating music notes */}
           {NOTES.map((n, i) => <FloatingNote key={i} {...n} />)}
@@ -105,7 +138,8 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
             className="absolute rounded-full pointer-events-none"
             style={{
               width: 340, height: 340,
-              background: "radial-gradient(circle, rgba(108,99,255,0.30) 0%, rgba(108,99,255,0.06) 55%, transparent 75%)",
+              background:
+                "radial-gradient(circle, rgba(108,99,255,0.30) 0%, rgba(108,99,255,0.06) 55%, transparent 75%)",
             }}
             animate={{ scale: [1, 1.18, 1], opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
@@ -120,9 +154,9 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
             <motion.img
               src={logoImg}
               alt="Gitar Öğreniyorum"
-              className="w-64 h-64 sm:w-80 sm:h-80 object-contain drop-shadow-2xl select-none rounded-2xl"
-              animate={started ? { y: [0, -14, 0] } : {}}
-              transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
+              className="w-64 h-64 sm:w-80 sm:h-80 object-contain drop-shadow-2xl select-none"
+              animate={{ y: [0, -14, 0] }}
+              transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut", delay: 1.2 }}
               draggable={false}
             />
           </motion.div>
@@ -137,43 +171,29 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
             Temelden Başla, Müzikle Büyü!
           </motion.p>
 
-          {/* CTA — tap to start (satisfies browser autoplay policy) */}
+          {/* Tap hint — only shown if autoplay was blocked */}
           <AnimatePresence>
-            {!started && (
-              <motion.button
-                key="cta"
-                onClick={handleStart}
-                className="mt-10 px-10 py-4 rounded-2xl text-lg font-extrabold text-white shadow-2xl
-                           focus:outline-none active:scale-95 transition-transform"
-                style={{
-                  background: "linear-gradient(135deg, #6C63FF 0%, #00C2A8 100%)",
-                  boxShadow: "0 0 40px rgba(108,99,255,0.55)",
-                }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{
-                  opacity: 1, y: 0,
-                  boxShadow: [
-                    "0 0 30px rgba(108,99,255,0.45)",
-                    "0 0 55px rgba(0,194,168,0.65)",
-                    "0 0 30px rgba(108,99,255,0.45)",
-                  ],
-                }}
-                exit={{ opacity: 0, scale: 0.85 }}
-                transition={{ delay: 1.1, duration: 0.5,
-                  boxShadow: { duration: 2, repeat: Infinity, ease: "easeInOut" } }}
+            {needsTap && (
+              <motion.p
+                key="hint"
+                className="mt-6 text-sm text-white/55 tracking-wide"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: [0.4, 0.9, 0.4] }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
               >
-                🎵 Başla!
-              </motion.button>
+                🔊 Sesi açmak için ekrana dokun
+              </motion.p>
             )}
           </AnimatePresence>
 
-          {/* Skip */}
+          {/* Skip — bottom */}
           <motion.button
-            className="absolute bottom-6 text-sm text-white/40 hover:text-white/70 transition-colors"
+            className="absolute bottom-6 text-sm text-white/35 hover:text-white/65 transition-colors pointer-events-auto"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 1.8 }}
-            onClick={finish}
+            transition={{ delay: 2.5 }}
+            onClick={(e) => { e.stopPropagation(); finish(); }}
           >
             Geç →
           </motion.button>
