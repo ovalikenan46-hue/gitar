@@ -1,0 +1,115 @@
+You are a senior frontend developer and audio interaction engineer.
+
+TASK:
+Enhance the existing RIGHT HAND RHYTHM & COORDINATION module by extending the metronome system WITHOUT breaking the current structure.
+
+IMPORTANT RULES:
+
+* DO NOT rewrite the existing system.
+* DO NOT remove or change current working logic.
+* ONLY extend and integrate cleanly.
+* Keep everything backward compatible.
+
+---
+
+FEATURE TO ADD:
+Selectable Metronome Speeds
+
+Add the following BPM options:
+
+* 65 BPM
+* 80 BPM
+* 95 BPM
+* 115 BPM
+
+---
+
+UI REQUIREMENTS:
+
+1. Add a small, clean selector component near the existing metronome control:
+
+   * Could be buttons OR dropdown
+   * Label: "Tempo (BPM)"
+   * Default should remain current system value (do not override unless user selects)
+
+2. When user selects a BPM:
+
+   * Update metronome speed instantly
+   * Maintain synchronization with current rhythm/animation system
+
+3. Active BPM should be visually highlighted
+
+---
+
+AUDIO ENGINE LOGIC:
+
+* Reuse existing metronome/timer system
+
+* Replace hardcoded BPM with dynamic BPM state
+
+* Calculate interval using:
+  interval = 60000 / BPM
+
+* Ensure:
+
+  * No audio overlap
+  * No delay on switching BPM
+  * Smooth transition if possible (no harsh cut)
+
+---
+
+INTEGRATION WITH RHYTHM SYSTEM:
+
+* Metronome must stay in sync with:
+
+  * Right-hand animation
+  * Rhythm exercises
+  * Any visual beat indicators
+
+* If there is a loop:
+
+  * Restart timing cycle safely when BPM changes
+
+---
+
+STATE MANAGEMENT:
+
+* Add a new state:
+  selectedBPM
+
+* Default:
+  Use existing BPM value
+
+* On change:
+  Update:
+
+  * Metronome interval
+  * Any dependent animation timing
+
+---
+
+PERFORMANCE:
+
+* Must work on low-end mobile devices
+* Avoid unnecessary re-renders
+* Use lightweight logic
+
+---
+
+OPTIONAL (IF EASY):
+
+* Add subtle tick accent for first beat (strong beat)
+* Keep minimal CPU usage
+
+---
+
+OUTPUT:
+
+Return ONLY the updated code blocks:
+
+* UI component
+* Metronome logic update
+* State integration
+
+Do NOT explain.
+Do NOT include comments unless necessary.

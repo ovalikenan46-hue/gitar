@@ -1,93 +1,68 @@
 import { motion } from "framer-motion";
 import { useMemo } from "react";
 
-/* ══════════════════════════════════════════════════════
-   SOL ANAHTARI (Treble / G Clef)
-   Stroke-based: top curl → vertical spine → G-loop → bottom curl
-═══════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════
+   SOL ANAHTARI — Unicode G-clef character (𝄞 U+1D11E)
+   Rendered via SVG <text> so it always looks 100% correct in
+   every modern browser (Chrome / Firefox / Safari / Edge).
+   Inherits "currentColor" for easy color control.
+══════════════════════════════════════════════════════════════ */
 export function TrebleClef(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
-      viewBox="0 0 54 188"
-      fill="none"
+      viewBox="1 -10 44 140"
       xmlns="http://www.w3.org/2000/svg"
+      fill="currentColor"
       {...props}
     >
-      {/* ─ Top spiral (clockwise, wrapping right then down-left) */}
-      <path
-        d="M27 44
-           C 18 34, 12 20, 18 10
-           C 24 0,  36 2,  40 12
-           C 44 22, 40 34, 30 40"
-        stroke="currentColor" strokeWidth="3.8" strokeLinecap="round" strokeLinejoin="round"
-      />
-
-      {/* ─ Vertical spine (top of spiral → bottom curl) */}
-      <line x1="27" y1="44" x2="25" y2="152"
-        stroke="currentColor" strokeWidth="3.8" strokeLinecap="round"
-      />
-
-      {/* ─ G-loop (the defining oval/circle of the G-clef) */}
-      <ellipse
-        cx="27" cy="106" rx="20" ry="26"
-        stroke="currentColor" strokeWidth="3.8"
-      />
-
-      {/* ─ Short connector from spine into the right side of G-loop */}
-      <path
-        d="M27 80 L40 90"
-        stroke="currentColor" strokeWidth="3.8" strokeLinecap="round"
-      />
-
-      {/* ─ Bottom curl (tail below staff) */}
-      <path
-        d="M25 152
-           C 25 164, 18 172, 10 168
-           C 3  164, 3  154, 10 150"
-        stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round"
-      />
+      <text
+        x="0"
+        y="120"
+        fontSize="130"
+        fontFamily="'Times New Roman', 'Georgia', 'FreeSerif', 'Noto Serif', serif"
+        fill="currentColor"
+        dominantBaseline="auto"
+        textAnchor="start"
+      >
+        𝄞
+      </text>
     </svg>
   );
 }
 
-/* ══════════════════════════════════════════════════════
-   FA ANAHTARI (Bass / F Clef)
-   Backwards thick C + serif + two dots
-═══════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════
+   FA ANAHTARI — Unicode F-clef character (𝄢 U+1D122)
+   Same approach: SVG <text> with serif font renders the true
+   bass-clef glyph including its two dots.
+══════════════════════════════════════════════════════════════ */
 export function BassClef(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg
-      viewBox="0 0 82 82"
-      fill="none"
+      viewBox="-2 30 70 85"
       xmlns="http://www.w3.org/2000/svg"
+      fill="currentColor"
       {...props}
     >
-      {/* ─ Main backwards-C curve */}
-      <path
-        d="M46 6
-           C 28 6,  8 18,  8 42
-           C  8 66, 28 78, 46 78"
-        stroke="currentColor" strokeWidth="8" strokeLinecap="round" fill="none"
-      />
-
-      {/* ─ Serif tick at top of C */}
-      <path
-        d="M30 8 C 22 4, 14 2, 10 10"
-        stroke="currentColor" strokeWidth="5.5" strokeLinecap="round"
-      />
-
-      {/* ─ Two dots (defining feature of the F-clef) */}
-      <circle cx="66" cy="26" r="7.5" fill="currentColor" />
-      <circle cx="66" cy="50" r="7.5" fill="currentColor" />
+      <text
+        x="0"
+        y="115"
+        fontSize="120"
+        fontFamily="'Times New Roman', 'Georgia', 'FreeSerif', 'Noto Serif', serif"
+        fill="currentColor"
+        dominantBaseline="auto"
+        textAnchor="start"
+      >
+        𝄢
+      </text>
     </svg>
   );
 }
 
-/* ══════════════════════════════════════════════════════
-   LARGE FLOATING BACKGROUND SYMBOLS
-   Symbols: ♩ ♪ ♫ ♬ ♭ ♯ ♮ — each 70-130 px
-   4 distinct animation patterns: floatUp | sway | orbit | pulse
-═══════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════
+   LARGE FLOATING BACKGROUND SYMBOLS  (74 – 128 px)
+   Symbols: ♩ ♪ ♫ ♬ ♭ ♯ ♮
+   4 distinct animation patterns per symbol
+══════════════════════════════════════════════════════════════ */
 const SYMBOLS = ["♩", "♪", "♫", "♬", "♭", "♯", "♮"];
 
 const COLORS = [
@@ -156,10 +131,10 @@ export function MusicBg({ count = 18 }: { count?: number }) {
         glyph:    SYMBOLS[i % SYMBOLS.length],
         left:     5 + col * 16 + (Math.random() - 0.5) * 9,
         top:      6 + row * 30 + (Math.random() - 0.5) * 12,
-        size:     74 + Math.random() * 54,          // 74–128 px
+        size:     74 + Math.random() * 54,
         color:    COLORS[i % COLORS.length],
         variant:  VARIANTS[i % VARIANTS.length],
-        duration: 5.5 + Math.random() * 6.5,        // 5.5–12 s
+        duration: 5.5 + Math.random() * 6.5,
         delay:    Math.random() * 6,
         drift:    20 + Math.random() * 32,
         rot:      10 + Math.random() * 20,
