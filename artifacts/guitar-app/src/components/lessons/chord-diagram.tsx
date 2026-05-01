@@ -131,18 +131,17 @@ export function ChordDiagram({ chordCode }: { chordCode: "Em" | "Am" }) {
             onClick={() => setLightboxOpen(true)}
             aria-label="Parmak rehberini büyüt"
             className="relative rounded-xl overflow-hidden border border-gray-100 bg-gray-50 shadow-sm cursor-zoom-in focus:outline-none hover:border-primary/30 transition-colors"
-            style={{ width: 110, height: 110 }}
+            style={{ width: 168, height: 139 }}
           >
             <img
               src={handImg}
               alt="Sol El Parmak Rehberi"
               draggable={false}
               style={{
-                width: 110,
-                height: 110,
-                objectFit: "contain",
-                transform: "rotate(90deg)",
-                transformOrigin: "center center",
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                display: "block",
               }}
             />
             {/* Zoom hint overlay */}
@@ -298,17 +297,18 @@ export function ChordDiagram({ chordCode }: { chordCode: "Em" | "Am" }) {
               transition={{ duration: 0.2 }}
               onClick={closeLightbox}
             >
-              {/* wrapper handles spring animation — no transform conflict */}
+              {/* landscape container: görsel 1377×1142 oranında */}
               <motion.div
                 style={{
-                  /* square box: fits within viewport both axes */
-                  width: "clamp(220px, min(88vw, 82vh), 740px)",
-                  height: "clamp(220px, min(88vw, 82vh), 740px)",
+                  /* landscape: en fazla 90vw veya 80vh×1.206 (görsel oranı), max 900px */
+                  width: "min(90vw, calc(78vh * 1.206), 900px)",
+                  height: "min(74vh, calc(90vw / 1.206), 745px)",
                   borderRadius: 20,
                   overflow: "hidden",
                   boxShadow: "0 8px 64px rgba(0,0,0,0.7)",
                   cursor: "zoom-out",
                   flexShrink: 0,
+                  background: "#f8f8f4",
                 }}
                 initial={{ scale: 0.72, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -325,7 +325,6 @@ export function ChordDiagram({ chordCode }: { chordCode: "Em" | "Am" }) {
                     width: "100%",
                     height: "100%",
                     objectFit: "contain",
-                    transform: "rotate(90deg)",
                     display: "block",
                   }}
                 />
