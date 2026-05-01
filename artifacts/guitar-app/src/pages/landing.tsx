@@ -70,30 +70,68 @@ export default function Landing() {
         />
       </div>
 
-      {/* Animated music notes */}
-      <MusicBg count={14} />
+      {/* Animated music notes & symbols */}
+      <MusicBg count={18} />
 
-      {/* Treble clef — top left */}
+      {/* Sol Anahtarı (Treble Clef) — top-left, large & animated */}
       <motion.div
-        className="absolute top-8 left-8 z-10 pointer-events-none opacity-30"
-        style={{ color: "#4299e1" }}
-        animate={{ y: [-12, 12, -12], rotate: [-4, 4, -4] }}
-        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute top-4 left-4 z-10 pointer-events-none"
+        style={{ color: "rgba(66,153,225,0.45)" }}
+        animate={{
+          y: [-16, 16, -8, 16, -16],
+          x: [0, 8, -4, 8, 0],
+          rotate: [-6, 4, -2, 4, -6],
+          scale: [1, 1.06, 0.97, 1.06, 1],
+        }}
+        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", times: [0, 0.25, 0.5, 0.75, 1] }}
       >
-        <TrebleClef className="w-16 h-36 sm:w-20 sm:h-44" />
+        <TrebleClef className="w-20 h-44 sm:w-28 sm:h-60" />
       </motion.div>
 
-      {/* Bass clef — top right, admin trigger */}
+      {/* Sol Anahtarı — bottom-right, secondary */}
+      <motion.div
+        className="absolute bottom-6 right-12 z-10 pointer-events-none"
+        style={{ color: "rgba(108,99,255,0.30)" }}
+        animate={{
+          y: [10, -18, 6, -18, 10],
+          rotate: [5, -3, 5, -3, 5],
+          scale: [0.95, 1.08, 0.95, 1.08, 0.95],
+        }}
+        transition={{ duration: 9, repeat: Infinity, ease: "easeInOut", delay: 1.5, times: [0, 0.25, 0.5, 0.75, 1] }}
+      >
+        <TrebleClef className="w-14 h-32 sm:w-20 sm:h-44" />
+      </motion.div>
+
+      {/* Fa Anahtarı (Bass Clef) — top-right, admin trigger */}
       <motion.button
-        className="absolute top-10 right-8 z-10 opacity-40 hover:opacity-70 transition-opacity"
+        className="absolute top-6 right-6 z-10 opacity-50 hover:opacity-80 transition-opacity focus:outline-none"
         style={{ color: "#00C2A8" }}
-        animate={{ y: [12, -12, 12], rotate: [4, -4, 4] }}
-        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
+        animate={{
+          y: [14, -14, 6, -14, 14],
+          x: [0, -6, 0, 6, 0],
+          rotate: [6, -4, 2, -4, 6],
+          scale: [1, 1.08, 0.96, 1.08, 1],
+        }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 0.5, times: [0, 0.25, 0.5, 0.75, 1] }}
         onClick={() => setAdminOpen(true)}
         aria-label="Yönetici girişi"
       >
-        <BassClef className="w-16 h-20 sm:w-20 sm:h-24" />
+        <BassClef className="w-20 h-24 sm:w-28 sm:h-32" />
       </motion.button>
+
+      {/* Fa Anahtarı — bottom-left, secondary */}
+      <motion.div
+        className="absolute bottom-8 left-8 z-10 pointer-events-none"
+        style={{ color: "rgba(0,194,168,0.28)" }}
+        animate={{
+          y: [-12, 14, -6, 14, -12],
+          rotate: [-5, 3, -1, 3, -5],
+          scale: [1, 1.1, 0.93, 1.1, 1],
+        }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2, times: [0, 0.25, 0.5, 0.75, 1] }}
+      >
+        <BassClef className="w-16 h-20 sm:w-22 sm:h-26" />
+      </motion.div>
 
       {/* Main card */}
       <Card className="relative z-20 w-[92%] max-w-lg bg-white/50 backdrop-blur-2xl border-white/60 shadow-2xl rounded-[3rem] text-center overflow-hidden">
