@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { useParams } from "wouter";
+import { useParams, useLocation } from "wouter";
 import { useGetSmartboardClass, getGetSmartboardClassQueryKey } from "@workspace/api-client-react";
-import { Monitor, Loader2, Music2, Guitar } from "lucide-react";
+import { Monitor, Loader2, Music2, Guitar, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Lesson content components — aynı bileşenler, seviye kısıtı yok
@@ -71,6 +71,7 @@ function LessonContent({ lessonCode, onBack }: { lessonCode: string; onBack: () 
 
 export default function Smartboard() {
   const { code } = useParams<{ code: string }>();
+  const [, setLocation] = useLocation();
   const [selectedLesson, setSelectedLesson] = useState<SmartboardLesson | null>(null);
 
   const { data, isLoading, isError } = useGetSmartboardClass(code ?? "", {
@@ -132,9 +133,18 @@ export default function Smartboard() {
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2 bg-primary/5 rounded-full px-4 py-1.5">
-          <Guitar className="w-4 h-4 text-primary" />
-          <span className="text-sm font-bold text-primary tracking-widest font-mono">{code}</span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 bg-primary/5 rounded-full px-4 py-1.5">
+            <Guitar className="w-4 h-4 text-primary" />
+            <span className="text-sm font-bold text-primary tracking-widest font-mono">{code}</span>
+          </div>
+          <button
+            onClick={() => setLocation("/student-login")}
+            className="w-9 h-9 flex items-center justify-center rounded-full bg-muted hover:bg-red-100 hover:text-red-600 text-muted-foreground transition-colors"
+            title="Çıkış"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
       </header>
 
