@@ -16,6 +16,7 @@ import { Metronome } from "@/components/lessons/metronome";
 import { ChordDiagram } from "@/components/lessons/chord-diagram";
 import { ChordTransition } from "@/components/lessons/chord-transition";
 import { ChordReference } from "@/components/lessons/chord-reference";
+import { ChordPractice } from "@/components/lessons/chord-practice";
 import { toast } from "sonner";
 
 export default function LessonDetail() {
@@ -103,7 +104,10 @@ export default function LessonDetail() {
           {lesson.code === "3A" && <ChordTransition transitionCode="3A" />}
           {lesson.code === "3B" && <ChordTransition transitionCode="3B" />}
           {lesson.code === "3C" && <ChordTransition transitionCode="3C" />}
-          {lesson.code === "4A" && <ChordReference />}
+          {lesson.code === "4A" && <ChordPractice chords={["Em", "Am", "C"]} />}
+          {lesson.code === "4B" && <ChordPractice chords={["Am", "C", "D"]} />}
+          {lesson.code === "4C" && <ChordPractice chords={["Em", "D", "Am"]} />}
+          {lesson.code === "4D" && <ChordPractice chords={["C", "D", "Em"]} />}
         </div>
 
         {/* Action */}
