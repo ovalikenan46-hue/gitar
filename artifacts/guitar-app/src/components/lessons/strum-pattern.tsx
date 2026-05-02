@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Play, Square, RefreshCcw } from "lucide-react";
 import { playNote } from "@/lib/audio";
-import { chordImages } from "@/utils/chordImages";
 
 const PATTERN = [
   { dir: "down", count: "1" },
