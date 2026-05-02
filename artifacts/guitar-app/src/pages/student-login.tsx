@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Music, ArrowLeft, UserCheck, RefreshCw, Loader2 } from "lucide-react";
+import { Music, ArrowLeft, UserCheck, RefreshCw, Loader2, Monitor } from "lucide-react";
 import { motion } from "framer-motion";
 import { pageVariants, pageTransition } from "@/lib/animations";
 import { Link } from "wouter";
@@ -48,10 +48,20 @@ export default function StudentLogin() {
   const login = useStudentLogin();
 
   const [saved, setSaved] = useState<SavedStudent | null>(null);
+  const [smartboardCode, setSmartboardCode] = useState("");
 
   useEffect(() => {
     setSaved(loadSaved());
   }, []);
+
+  const handleOpenSmartboard = () => {
+    const code = smartboardCode.trim();
+    if (code.length !== 6) {
+      toast.error("Lütfen 6 haneli kodu eksiksiz girin.");
+      return;
+    }
+    setLocation(`/smartboard/${code}`);
+  };
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -97,7 +107,9 @@ export default function StudentLogin() {
         <ArrowLeft className="w-6 h-6" />
       </Link>
 
-      <Card className="w-full max-w-md shadow-xl border-white/50 bg-white/80 backdrop-blur-xl rounded-3xl overflow-hidden">
+      <div className="w-full max-w-md space-y-4">
+
+      <Card className="w-full shadow-xl border-white/50 bg-white/80 backdrop-blur-xl rounded-3xl overflow-hidden">
         <CardHeader className="text-center pb-2">
           <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4 text-primary">
             <Music className="w-8 h-8" />
@@ -211,6 +223,37 @@ export default function StudentLogin() {
           )}
         </CardContent>
       </Card>
+
+      {/* ── AKILLI TAHTA BÖLÜMÜ ── */}
+      <Card className="w-full shadow-md border-white/50 bg-white/70 backdrop-blur-xl rounded-3xl overflow-hidden">
+        <CardContent className="p-5 space-y-3">
+          <div className="flex items-center gap-2 text-accent-foreground font-semibold">
+            <Monitor className="w-5 h-5" />
+            <span>Akıllı Tahtayı Aç</span>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Öğretmeninin gösterdiği 6 haneli kodu girerek akıllı tahtayı açabilirsin.
+          </p>
+          <div className="flex gap-2">
+            <Input
+              value={smartboardCode}
+              onChange={(e) => setSmartboardCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              placeholder="6 haneli kod"
+              maxLength={6}
+              className="font-mono tracking-[0.4em] text-xl py-6 rounded-2xl bg-white/60 text-center"
+              onKeyDown={(e) => e.key === "Enter" && handleOpenSmartboard()}
+            />
+            <Button
+              onClick={handleOpenSmartboard}
+              className="rounded-2xl px-5 bg-accent text-accent-foreground hover:bg-accent/90 shrink-0"
+            >
+              <Monitor className="w-4 h-4" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      </div>
     </motion.div>
   );
 }
