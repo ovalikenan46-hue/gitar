@@ -14,6 +14,7 @@ import { Fretboard } from "@/components/lessons/fretboard";
 import { StrumPattern } from "@/components/lessons/strum-pattern";
 import { Metronome } from "@/components/lessons/metronome";
 import { ChordDiagram } from "@/components/lessons/chord-diagram";
+import { ChordTransition } from "@/components/lessons/chord-transition";
 import { toast } from "sonner";
 
 export default function LessonDetail() {
@@ -98,6 +99,9 @@ export default function LessonDetail() {
           {lesson.code === "2B" && <ChordDiagram chordCode="Am" />}
           {lesson.code === "2C" && <ChordDiagram chordCode="C" />}
           {lesson.code === "2D" && <ChordDiagram chordCode="D" />}
+          {lesson.code === "3A" && <ChordTransition transitionCode="3A" />}
+          {lesson.code === "3B" && <ChordTransition transitionCode="3B" />}
+          {lesson.code === "3C" && <ChordTransition transitionCode="3C" />}
         </div>
 
         {/* Action */}

@@ -77,6 +77,36 @@ const lessons = [
     level: 3,
     orderIndex: 7,
   },
+  {
+    id: "lesson-3a",
+    code: "3A",
+    moduleNumber: 3,
+    moduleTitle: "Modül 3 — Akord Geçişleri",
+    title: "Em → Am Geçişi",
+    description: "Parmakları kaydırarak Em'den Am'a geç.",
+    level: 4,
+    orderIndex: 8,
+  },
+  {
+    id: "lesson-3b",
+    code: "3B",
+    moduleNumber: 3,
+    moduleTitle: "Modül 3 — Akord Geçişleri",
+    title: "Am → C Geçişi",
+    description: "İşaret ve orta parmak yerinde, sadece yüzük taşınıyor.",
+    level: 5,
+    orderIndex: 9,
+  },
+  {
+    id: "lesson-3c",
+    code: "3C",
+    moduleNumber: 3,
+    moduleTitle: "Modül 3 — Akord Geçişleri",
+    title: "C → D Geçişi",
+    description: "3 parmağın da taşındığı en zorlu geçiş — adım adım öğren.",
+    level: 6,
+    orderIndex: 10,
+  },
 ];
 
 async function main() {

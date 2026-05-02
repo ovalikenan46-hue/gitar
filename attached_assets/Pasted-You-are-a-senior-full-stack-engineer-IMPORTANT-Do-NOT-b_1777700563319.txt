@@ -1,0 +1,245 @@
+You are a senior full-stack engineer.
+
+IMPORTANT:
+Do NOT break existing modules, chords, or progression system.
+ONLY EXTEND current structure.
+
+---
+
+GOAL:
+
+Add:
+
+1. Teacher approval AFTER D Major completion
+2. Chord Transition Exercises (3 sections)
+3. Fully teacher-controlled unlock system
+
+---
+
+PART 1:
+POST D MAJOR APPROVAL
+
+After student completes:
+
+Module 2 → Section B (C, D)
+
+DO:
+
+* Lock next content
+* Send completion status to teacher panel
+
+Teacher must approve:
+
+→ "Approve After D Major"
+
+Only then:
+
+→ Transition Exercises become available
+
+---
+
+PART 2:
+CHORD TRANSITION MODULE (NEW)
+
+Create new module:
+
+Module 3 → "Chord Transitions"
+
+---
+
+STRUCTURE:
+
+Module 3 includes 3 sections:
+
+---
+
+SECTION A:
+Em → Am Transition
+
+LOGIC:
+
+* Start from Em (2nd fret A & D strings)
+* Move fingers one string down
+* Add index finger:
+
+→ 1st fret, 2nd string
+
+RESULT:
+Am chord
+
+---
+
+SECTION B:
+Am → C Transition
+
+LOGIC:
+
+* Start from Am
+* Lift 3rd finger
+* Move it to:
+
+→ 3rd fret, 5th string
+
+RESULT:
+C chord
+
+---
+
+SECTION C:
+C → D Transition
+
+LOGIC (IMPORTANT):
+
+From C chord:
+
+* Move 2nd finger:
+  → same fret → 1st string
+
+* Move 1st finger:
+  → 2nd fret → 3rd string
+
+* Move 3rd finger:
+  → 3rd fret → 2nd string
+
+IMPORTANT FOCUS:
+
+→ Prioritize moving 2nd finger to 1st string first
+
+---
+
+PART 3:
+UI SYSTEM
+
+For each section:
+
+* Show step-by-step animation
+* Show finger movement path (visual lines/arrows)
+* Show before → after chord
+
+---
+
+ANIMATION:
+
+* Step-by-step transitions
+* Finger highlight (1,2,3)
+* Smooth motion between positions
+
+---
+
+AUDIO:
+
+Use existing audio system
+
+Trigger:
+
+* Start chord
+* End chord
+
+DO NOT generate audio
+(teacher will upload files)
+
+---
+
+PART 4:
+LOCK SYSTEM (CRITICAL)
+
+Each section MUST be locked.
+
+STRUCTURE:
+
+* Section A (Em → Am) → unlocked first (after teacher approval)
+* Section B (Am → C) → LOCKED
+* Section C (C → D) → LOCKED
+
+---
+
+UNLOCK RULE:
+
+ONLY teacher can unlock each section.
+
+---
+
+TEACHER PANEL UPDATE:
+
+Inside class dashboard:
+
+ADD:
+
+* "Unlock Transition A"
+* "Unlock Transition B"
+* "Unlock Transition C"
+
+Each button unlocks corresponding section.
+
+---
+
+STUDENT VIEW:
+
+* Locked sections show 🔒
+* Message:
+
+"Öğretmenin bu bölümü henüz açmadı"
+
+---
+
+PART 5:
+COMPLETION SYSTEM
+
+Each section has:
+
+* Practice complete state
+* Mini quiz
+
+After completion:
+
+→ Send status to teacher
+
+---
+
+DATABASE UPDATE:
+
+Extend progress:
+
+* moduleId: 3
+* sectionId: A / B / C
+* completed: true/false
+* teacherApproved: true/false
+
+---
+
+BACKEND RULES:
+
+* Prevent manual access to locked sections
+* Validate teacher unlock
+
+---
+
+FRONTEND RULES:
+
+* Hide locked content
+* Show progress clearly
+
+---
+
+IMPORTANT:
+
+* DO NOT change existing chord modules
+* DO NOT break progression
+* ONLY add new module cleanly
+
+---
+
+FINAL:
+
+Add:
+
+* Teacher approval after D chord
+* New Module 3 (Chord Transitions)
+* 3 transition exercises (Em-Am, Am-C, C-D)
+* Step-based animations
+* Full teacher-controlled unlocking system
+
+All must integrate seamlessly.
+
+DO NOT ASK QUESTIONS.
+BUILD SAFELY.
