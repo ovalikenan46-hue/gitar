@@ -42,6 +42,8 @@ function LessonContent({ lessonCode, onBack }: { lessonCode: string; onBack: () 
     );
     if (lessonCode === "2A") return <ChordDiagram chordCode="Em" />;
     if (lessonCode === "2B") return <ChordDiagram chordCode="Am" />;
+    if (lessonCode === "2C") return <ChordDiagram chordCode="C" />;
+    if (lessonCode === "2D") return <ChordDiagram chordCode="D" />;
     return (
       <div className="text-center py-12 text-muted-foreground">
         Bu ders için içerik hazırlanıyor.

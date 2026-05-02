@@ -38,6 +38,24 @@ const CHORDS: Record<string, ChordDef> = {
     ],
     audioFile: "am-chord.mp4",
   },
+  C: {
+    name: "Do Majör (C)",
+    fingers: [
+      { string: 1, fret: 1, finger: 1, name: "İşaret" },
+      { string: 3, fret: 2, finger: 2, name: "Orta"   },
+      { string: 4, fret: 3, finger: 3, name: "Yüzük"  },
+    ],
+    audioFile: "chords/C.mp4",
+  },
+  D: {
+    name: "Re Majör (D)",
+    fingers: [
+      { string: 2, fret: 2, finger: 1, name: "İşaret" },
+      { string: 0, fret: 2, finger: 2, name: "Orta"   },
+      { string: 1, fret: 3, finger: 3, name: "Yüzük"  },
+    ],
+    audioFile: "chords/D.mp4",
+  },
 };
 
 // ── Visual constants ──────────────────────────────────────────────────────────
@@ -73,7 +91,7 @@ function fretToXPercent(fretNum: number) {
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-export function ChordDiagram({ chordCode }: { chordCode: "Em" | "Am" }) {
+export function ChordDiagram({ chordCode }: { chordCode: "Em" | "Am" | "C" | "D" }) {
   const chord = CHORDS[chordCode];
   const [step, setStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);

@@ -57,6 +57,26 @@ const lessons = [
     level: 2,
     orderIndex: 5,
   },
+  {
+    id: "lesson-2c",
+    code: "2C",
+    moduleNumber: 2,
+    moduleTitle: "Modül 2 — Akorlar",
+    title: "C Akoru (Do Majör)",
+    description: "İşaret → orta → yüzük parmağıyla Do Majör akorunu öğren.",
+    level: 3,
+    orderIndex: 6,
+  },
+  {
+    id: "lesson-2d",
+    code: "2D",
+    moduleNumber: 2,
+    moduleTitle: "Modül 2 — Akorlar",
+    title: "D Akoru (Re Majör)",
+    description: "İşaret → orta → yüzük parmağıyla Re Majör akorunu öğren.",
+    level: 3,
+    orderIndex: 7,
+  },
 ];
 
 async function main() {

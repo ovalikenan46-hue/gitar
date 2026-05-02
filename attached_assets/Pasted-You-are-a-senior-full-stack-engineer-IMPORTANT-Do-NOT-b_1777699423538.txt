@@ -1,0 +1,190 @@
+You are a senior full-stack engineer.
+
+IMPORTANT:
+Do NOT break existing chord system (Module 1: Em, Am).
+ONLY extend it.
+
+---
+
+GOAL:
+
+Add Module 2 with new chords:
+
+* C Major (Do Majör)
+* D Major (Re Majör)
+
+With:
+
+* Same chord diagram system
+* Same animation structure
+* Teacher-controlled progression unlock
+
+---
+
+STRUCTURE UPDATE:
+
+Existing:
+Module 2 → Section A (Em, Am)
+
+ADD:
+
+Module 2 → Section B (NEW)
+
+---
+
+CHORD DEFINITIONS (VERY IMPORTANT)
+
+C MAJOR (C):
+
+* 1st finger → 1st fret, 2nd string
+* 2nd finger → 2nd fret, 4th string
+* 3rd finger → 3rd fret, 5th string
+
+---
+
+D MAJOR (D):
+
+* 1st finger → 2nd fret, 3rd string
+* 2nd finger → 2nd fret, 1st string
+* 3rd finger → 3rd fret, 2nd string
+
+---
+
+UI REQUIREMENTS:
+
+For each chord:
+
+* Show chord diagram (same style as Module 1)
+* Show finger numbers (1, 2, 3)
+* Highlight strings + frets
+* Add label (C / D)
+
+---
+
+AUDIO (IMPORTANT):
+
+DO NOT generate sounds.
+
+Use externally uploaded audio files:
+
+Example:
+
+/public/sounds/chords/C.mp3
+/public/sounds/chords/D.mp3
+
+Trigger:
+
+AudioEngine.playChord("C")
+AudioEngine.playChord("D")
+
+---
+
+ANIMATION:
+
+Reuse existing chord animation system.
+
+* Finger placement animation
+* Step-by-step finger placement (1 → 2 → 3)
+* Loop + Play/Pause controls
+
+---
+
+QUIZ SYSTEM:
+
+After completing Section B:
+
+* Show quiz (same logic as Module 1)
+
+Quiz includes:
+
+* Identify chord
+* Finger placement questions
+
+---
+
+PROGRESSION LOGIC (CRITICAL)
+
+1. Student completes Module 2 - Section A (Em, Am)
+   → WAIT for teacher approval
+
+2. Teacher unlocks Section B (C, D)
+
+3. Student completes Section B + quiz
+
+4. System sends completion status to teacher panel
+
+---
+
+TEACHER PANEL UPDATE:
+
+Inside class card:
+
+ADD:
+
+* "Section B Completed" indicator
+* "Unlock Next Module" button
+
+---
+
+UNLOCK RULE:
+
+Teacher must click:
+
+→ "Unlock Next Module"
+
+Then:
+
+Student can access:
+→ Module 3 (or next section)
+
+---
+
+DATABASE UPDATE:
+
+Extend progress table:
+
+* moduleId
+* sectionId (A / B)
+* completed (boolean)
+* quizScore
+
+---
+
+FRONTEND RULE:
+
+* Lock Section B until teacher approval
+* Show lock icon 🔒
+* Show message:
+
+"Öğretmeninin onayını bekliyorsun"
+
+---
+
+BACKEND RULE:
+
+* Validate teacher approval before access
+* Prevent bypass
+
+---
+
+IMPORTANT:
+
+* DO NOT modify Module 1 logic
+* DO NOT break existing chord system
+* ONLY extend safely
+
+---
+
+FINAL:
+
+Add:
+
+* C and D chord lessons
+* Same UI/animation/audio system
+* Teacher-controlled unlock system
+* Quiz + completion tracking
+
+All must integrate seamlessly with existing system.
+
+DO NOT ASK QUESTIONS.
+BUILD SAFELY.

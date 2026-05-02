@@ -96,6 +96,8 @@ export default function LessonDetail() {
           )}
           {lesson.code === "2A" && <ChordDiagram chordCode="Em" />}
           {lesson.code === "2B" && <ChordDiagram chordCode="Am" />}
+          {lesson.code === "2C" && <ChordDiagram chordCode="C" />}
+          {lesson.code === "2D" && <ChordDiagram chordCode="D" />}
         </div>
 
         {/* Action */}
