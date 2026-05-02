@@ -1,0 +1,181 @@
+You are a senior full-stack engineer.
+
+IMPORTANT (CRITICAL RULE):
+
+DO NOT generate, draw, or simulate any chord diagrams.
+
+ONLY use user-provided chord images.
+
+This rule is mandatory.
+
+---
+
+GOAL:
+
+Update entire chord system to use ONLY externally provided chord images.
+
+---
+
+IMAGE SOURCE:
+
+User will upload images manually.
+
+Example structure:
+
+/public/chords/
+Em.png
+Am.png
+C.png
+D.png
+
+---
+
+RULES (STRICT):
+
+* DO NOT create chord diagrams
+* DO NOT render SVG fretboards
+* DO NOT use any generated visuals
+* ONLY display provided images
+
+---
+
+DISPLAY SYSTEM:
+
+For each chord:
+
+* Load image dynamically
+* Show chord name (Em, Am, C, D)
+* Place image inside lesson card
+
+---
+
+IMAGE ORDER:
+
+Must match lesson order EXACTLY:
+
+Module 1 → Em, Am
+Module 2 → C, D
+Module 3 → transitions
+
+---
+
+FALLBACK:
+
+If image is missing:
+
+* Show placeholder:
+  "Akor görseli yüklenmedi"
+
+---
+
+ANIMATION RULE:
+
+* DO NOT animate chord shape itself
+* Only animate:
+
+  * transitions between images
+  * highlight current chord
+
+---
+
+TRANSITION SYSTEM:
+
+Example:
+
+Em → Am → C
+
+Flow:
+
+* Show Em image
+* Fade out
+* Show Am image
+* Fade out
+* Show C image
+
+---
+
+RHYTHM + METRONOME:
+
+Keep existing system:
+
+* Metronome (65, 80, 95, 115 BPM)
+* Volume control
+* Beat indicator
+
+---
+
+SYNC:
+
+* Each chord image stays visible for one rhythm cycle
+
+---
+
+TEACHER CONTROL (UNCHANGED):
+
+* All lessons locked by default
+* Teacher unlocks sections
+
+---
+
+DATABASE:
+
+No change required
+
+---
+
+PERFORMANCE:
+
+* Preload images
+* Avoid re-fetching
+* Use lazy loading if needed
+
+---
+
+STRUCTURE:
+
+Create helper:
+
+/utils/chordImages.js
+
+Example:
+
+export const chordImages = {
+Em: "/chords/Em.png",
+Am: "/chords/Am.png",
+C: "/chords/C.png",
+D: "/chords/D.png"
+};
+
+---
+
+USAGE:
+
+<img src={chordImages["Em"]} />
+
+---
+
+IMPORTANT:
+
+* DO NOT break existing lessons
+* DO NOT change progression logic
+* ONLY replace visual source
+
+---
+
+FINAL:
+
+Convert entire chord visualization system to:
+
+→ image-based only (user provided)
+
+Keep:
+
+* metronome
+* rhythm system
+* teacher control
+* lesson flow
+
+Everything must work seamlessly.
+
+DO NOT ASK QUESTIONS.
+BUILD SAFELY.

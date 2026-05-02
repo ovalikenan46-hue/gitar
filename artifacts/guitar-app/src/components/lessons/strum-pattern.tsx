@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Play, Square, RefreshCcw } from "lucide-react";
 import { playNote } from "@/lib/audio";
+import { chordImages } from "@/utils/chordImages";
 
 const PATTERN = [
   { dir: "down", count: "1" },
@@ -66,6 +67,18 @@ export function StrumPattern({ onActivate, onDeactivate, isActive = true }: Stru
 
   return (
     <div className="w-full bg-white rounded-3xl p-6 shadow-sm border border-border">
+
+      {/* Ritim görseli */}
+      <div className="mb-6 rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
+        <img
+          src={chordImages.ritim}
+          alt="Ritim Kalıbı — 2 Aşağı, 2 Yukarı, 1 Aşağı, 1 Yukarı"
+          draggable={false}
+          className="w-full object-contain"
+          style={{ maxHeight: 180 }}
+        />
+      </div>
+
       <div className="flex gap-4 mb-8 justify-center">
         <Button
           size="icon"
