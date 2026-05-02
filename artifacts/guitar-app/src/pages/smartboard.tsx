@@ -11,6 +11,7 @@ import { StrumPattern } from "@/components/lessons/strum-pattern";
 import { Metronome } from "@/components/lessons/metronome";
 import { ChordDiagram } from "@/components/lessons/chord-diagram";
 import { ChordTransition } from "@/components/lessons/chord-transition";
+import { ChordReference } from "@/components/lessons/chord-reference";
 
 interface SmartboardLesson {
   id: string;
@@ -48,6 +49,7 @@ function LessonContent({ lessonCode, onBack }: { lessonCode: string; onBack: () 
     if (lessonCode === "3A") return <ChordTransition transitionCode="3A" />;
     if (lessonCode === "3B") return <ChordTransition transitionCode="3B" />;
     if (lessonCode === "3C") return <ChordTransition transitionCode="3C" />;
+    if (lessonCode === "4A") return <ChordReference />;
     return (
       <div className="text-center py-12 text-muted-foreground">
         Bu ders için içerik hazırlanıyor.

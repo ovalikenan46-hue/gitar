@@ -107,6 +107,16 @@ const lessons = [
     level: 6,
     orderIndex: 10,
   },
+  {
+    id: "lesson-4a",
+    code: "4A",
+    moduleNumber: 4,
+    moduleTitle: "Modül 4 — Akor Görselleri",
+    title: "Akor Fotoğraf Rehberi",
+    description: "Em, Am, C ve D akorlarının fotoğraflı rehberi ile ritim kalıbı.",
+    level: 7,
+    orderIndex: 11,
+  },
 ];
 
 async function main() {

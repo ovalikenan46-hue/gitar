@@ -416,15 +416,16 @@ export default function TeacherDashboard() {
                 <Button
                   className="w-full rounded-xl bg-primary hover:bg-primary/90 text-white shadow-sm"
                   onClick={() => handleUnlockLevel(cls.id)}
-                  disabled={unlockLevel.isPending || cls.levelUnlocked >= 6}
+                  disabled={unlockLevel.isPending || cls.levelUnlocked >= 7}
                 >
                   <LockOpen className="w-4 h-4 mr-2" />
-                  {cls.levelUnlocked >= 6 ? "Tüm Seviyeler Açık"
+                  {cls.levelUnlocked >= 7 ? "Tüm Seviyeler Açık"
                     : cls.levelUnlocked === 1 ? "C/D Akorlarını Aç"
                     : cls.levelUnlocked === 2 ? "Modül 3'ü Aç"
                     : cls.levelUnlocked === 3 ? "Geçiş A — Em→Am'ı Aç"
                     : cls.levelUnlocked === 4 ? "Geçiş B — Am→C'yi Aç"
-                    : "Geçiş C — C→D'yi Aç"}
+                    : cls.levelUnlocked === 5 ? "Geçiş C — C→D'yi Aç"
+                    : "Modül 4 — Akor Görsellerini Aç"}
                 </Button>
 
                 {/* Akıllı Tahta */}
