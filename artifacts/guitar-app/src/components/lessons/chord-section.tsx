@@ -9,12 +9,12 @@ import { chordImages } from "@/utils/chordImages";
 type ChordCode = "E" | "A" | "Dm" | "G" | "F" | "B7";
 
 const CHORD_META: Record<ChordCode, { label: string; sub: string; audio: string }> = {
-  E:  { label: "Mi Majör",         sub: "E Major",  audio: "chords/E.mp4"  },
-  A:  { label: "La Majör",         sub: "A Major",  audio: "chords/A.mp4"  },
-  Dm: { label: "Re Minör",         sub: "D Minor",  audio: "chords/Dm.mp4" },
-  G:  { label: "Sol Majör",        sub: "G Major",  audio: "chords/G.mp4"  },
-  F:  { label: "Fa Majör (Barre)", sub: "F Major",  audio: "chords/F.mp4"  },
-  B7: { label: "Si 7",             sub: "B7",       audio: "chords/B7.mp4" },
+  E:  { label: "Mi Majör",         sub: "E Major",  audio: "chords/E.m4a"  },
+  A:  { label: "La Majör",         sub: "A Major",  audio: "chords/A.m4a"  },
+  Dm: { label: "Re Minör",         sub: "D Minor",  audio: "chords/Dm.m4a" },
+  G:  { label: "Sol Majör",        sub: "G Major",  audio: "chords/G.m4a"  },
+  F:  { label: "Fa Majör (Barre)", sub: "F Major",  audio: "chords/F.m4a"  },
+  B7: { label: "Si 7",             sub: "B7",       audio: "chords/B7.m4a" },
 };
 
 // ── Lightbox ──────────────────────────────────────────────────────────────────
