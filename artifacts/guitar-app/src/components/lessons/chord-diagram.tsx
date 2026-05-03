@@ -20,6 +20,7 @@ interface ChordDef {
 }
 
 // ── Chord definitions ─────────────────────────────────────────────────────────
+// string: 0 = high e (1st), 1 = B (2nd), 2 = G (3rd), 3 = D (4th), 4 = A (5th), 5 = low E (6th)
 const CHORDS: Record<string, ChordDef> = {
   Em: {
     name: "Mi Minör (Em)",
@@ -56,6 +57,63 @@ const CHORDS: Record<string, ChordDef> = {
     ],
     audioFile: "chords/D.mp4",
   },
+  // ── Modül 5 ──────────────────────────────────────────────────────────────────
+  E: {
+    name: "Mi Majör (E)",
+    fingers: [
+      { string: 2, fret: 1, finger: 1, name: "İşaret" },
+      { string: 4, fret: 2, finger: 2, name: "Orta"   },
+      { string: 3, fret: 2, finger: 3, name: "Yüzük"  },
+    ],
+    audioFile: "chords/E.m4a",
+  },
+  A: {
+    name: "La Majör (A)",
+    fingers: [
+      { string: 3, fret: 2, finger: 2, name: "Orta"   },
+      { string: 2, fret: 2, finger: 3, name: "Yüzük"  },
+      { string: 1, fret: 2, finger: 4, name: "Serçe"  },
+    ],
+    audioFile: "chords/A.m4a",
+  },
+  Dm: {
+    name: "Re Minör (Dm)",
+    fingers: [
+      { string: 0, fret: 1, finger: 1, name: "İşaret" },
+      { string: 2, fret: 2, finger: 2, name: "Orta"   },
+      { string: 1, fret: 3, finger: 3, name: "Yüzük"  },
+    ],
+    audioFile: "chords/Dm.m4a",
+  },
+  G: {
+    name: "Sol Majör (G)",
+    fingers: [
+      { string: 4, fret: 2, finger: 1, name: "İşaret" },
+      { string: 5, fret: 3, finger: 2, name: "Orta"   },
+      { string: 0, fret: 3, finger: 4, name: "Serçe"  },
+    ],
+    audioFile: "chords/G.m4a",
+  },
+  F: {
+    name: "Fa Majör Barre (F)",
+    fingers: [
+      { string: 0, fret: 1, finger: 1, name: "İşaret (Barre)" },
+      { string: 2, fret: 2, finger: 2, name: "Orta"            },
+      { string: 4, fret: 3, finger: 3, name: "Yüzük"           },
+      { string: 3, fret: 3, finger: 4, name: "Serçe"           },
+    ],
+    audioFile: "chords/F.m4a",
+  },
+  B7: {
+    name: "Si 7 (B7)",
+    fingers: [
+      { string: 3, fret: 1, finger: 1, name: "İşaret" },
+      { string: 4, fret: 2, finger: 2, name: "Orta"   },
+      { string: 2, fret: 2, finger: 3, name: "Yüzük"  },
+      { string: 0, fret: 2, finger: 4, name: "Serçe"  },
+    ],
+    audioFile: "chords/B7.m4a",
+  },
 };
 
 // ── Visual constants ──────────────────────────────────────────────────────────
@@ -87,7 +145,9 @@ function fretToXPercent(fretNum: number) {
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-export function ChordDiagram({ chordCode }: { chordCode: "Em" | "Am" | "C" | "D" }) {
+export type ChordCode = "Em" | "Am" | "C" | "D" | "E" | "A" | "Dm" | "G" | "F" | "B7";
+
+export function ChordDiagram({ chordCode }: { chordCode: ChordCode }) {
   const chord = CHORDS[chordCode];
   const [step, setStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
