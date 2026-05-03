@@ -147,6 +147,36 @@ const lessons = [
     level: 10,
     orderIndex: 14,
   },
+  {
+    id: "lesson-5a",
+    code: "5A",
+    moduleNumber: 5,
+    moduleTitle: "Modül 5 — Yeni Akorlar",
+    title: "Mi Majör (E) ve La Majör (A)",
+    description: "E ve A majör akorlarını öğren — güçlü, dolgun sesler!",
+    level: 11,
+    orderIndex: 15,
+  },
+  {
+    id: "lesson-5b",
+    code: "5B",
+    moduleNumber: 5,
+    moduleTitle: "Modül 5 — Yeni Akorlar",
+    title: "Re Minör (Dm) ve Sol Majör (G)",
+    description: "Dm ve G akorlarını keşfet — yeni tonlar, yeni hisler.",
+    level: 12,
+    orderIndex: 16,
+  },
+  {
+    id: "lesson-5c",
+    code: "5C",
+    moduleNumber: 5,
+    moduleTitle: "Modül 5 — Yeni Akorlar",
+    title: "Fa Majör Barre (F) ve Si 7 (B7)",
+    description: "F barre akorunu ve B7'yi öğren — bunlar gerçek bir gitaristin silahı!",
+    level: 13,
+    orderIndex: 17,
+  },
 ];
 
 async function main() {

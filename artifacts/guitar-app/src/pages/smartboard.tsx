@@ -13,6 +13,7 @@ import { ChordDiagram } from "@/components/lessons/chord-diagram";
 import { ChordTransition } from "@/components/lessons/chord-transition";
 import { ChordReference } from "@/components/lessons/chord-reference";
 import { ChordPractice } from "@/components/lessons/chord-practice";
+import { ChordSection } from "@/components/lessons/chord-section";
 
 interface SmartboardLesson {
   id: string;
@@ -54,6 +55,9 @@ function LessonContent({ lessonCode, onBack }: { lessonCode: string; onBack: () 
     if (lessonCode === "4B") return <ChordPractice chords={["Am", "C", "D"]} />;
     if (lessonCode === "4C") return <ChordPractice chords={["Em", "D", "Am"]} />;
     if (lessonCode === "4D") return <ChordPractice chords={["C", "D", "Em"]} />;
+    if (lessonCode === "5A") return <ChordSection chords={["E", "A"]} />;
+    if (lessonCode === "5B") return <ChordSection chords={["Dm", "G"]} />;
+    if (lessonCode === "5C") return <ChordSection chords={["F", "B7"]} />;
     return (
       <div className="text-center py-12 text-muted-foreground">
         Bu ders için içerik hazırlanıyor.

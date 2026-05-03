@@ -416,19 +416,22 @@ export default function TeacherDashboard() {
                 <Button
                   className="w-full rounded-xl bg-primary hover:bg-primary/90 text-white shadow-sm"
                   onClick={() => handleUnlockLevel(cls.id)}
-                  disabled={unlockLevel.isPending || cls.levelUnlocked >= 10}
+                  disabled={unlockLevel.isPending || cls.levelUnlocked >= 13}
                 >
                   <LockOpen className="w-4 h-4 mr-2" />
-                  {cls.levelUnlocked >= 10 ? "Tüm Seviyeler Açık"
-                    : cls.levelUnlocked === 1 ? "C/D Akorlarını Aç"
-                    : cls.levelUnlocked === 2 ? "Modül 3'ü Aç"
-                    : cls.levelUnlocked === 3 ? "Geçiş A — Em→Am'ı Aç"
-                    : cls.levelUnlocked === 4 ? "Geçiş B — Am→C'yi Aç"
-                    : cls.levelUnlocked === 5 ? "Geçiş C — C→D'yi Aç"
-                    : cls.levelUnlocked === 6 ? "Modül 4A — Em→Am→C'yi Aç"
-                    : cls.levelUnlocked === 7 ? "Modül 4B — Am→C→D'yi Aç"
-                    : cls.levelUnlocked === 8 ? "Modül 4C — Em→D→Am'ı Aç"
-                    : "Modül 4D — C→D→Em'i Aç"}
+                  {cls.levelUnlocked >= 13 ? "Tüm Seviyeler Açık"
+                    : cls.levelUnlocked === 1  ? "C/D Akorlarını Aç"
+                    : cls.levelUnlocked === 2  ? "Modül 3'ü Aç"
+                    : cls.levelUnlocked === 3  ? "Geçiş A — Em→Am'ı Aç"
+                    : cls.levelUnlocked === 4  ? "Geçiş B — Am→C'yi Aç"
+                    : cls.levelUnlocked === 5  ? "Geçiş C — C→D'yi Aç"
+                    : cls.levelUnlocked === 6  ? "Modül 4A — Em→Am→C'yi Aç"
+                    : cls.levelUnlocked === 7  ? "Modül 4B — Am→C→D'yi Aç"
+                    : cls.levelUnlocked === 8  ? "Modül 4C — Em→D→Am'ı Aç"
+                    : cls.levelUnlocked === 9  ? "Modül 4D — C→D→Em'i Aç"
+                    : cls.levelUnlocked === 10 ? "Modül 5A — E & A'yı Aç"
+                    : cls.levelUnlocked === 11 ? "Modül 5B — Dm & G'yi Aç"
+                    : "Modül 5C — F & B7'yi Aç"}
                 </Button>
 
                 {/* Akıllı Tahta */}

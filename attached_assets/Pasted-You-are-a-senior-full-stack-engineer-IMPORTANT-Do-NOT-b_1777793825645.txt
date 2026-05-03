@@ -1,0 +1,260 @@
+You are a senior full-stack engineer.
+
+IMPORTANT:
+Do NOT break existing modules or chord system.
+Follow same UI/UX as Module 2.
+ONLY extend system.
+
+---
+
+GOAL:
+
+Create Module 5 with new chords:
+
+Group 1:
+
+* E Major (E)
+* A Major (A)
+
+Group 2:
+
+* D Minor (Dm)
+* G Major (G)
+
+Group 3:
+
+* F Major (F - Barre)
+* B7
+
+Each group must be teacher-controlled.
+
+---
+
+CRITICAL VISUAL RULE:
+
+DO NOT generate chord diagrams.
+
+ONLY use user-provided images.
+
+---
+
+IMAGE STRUCTURE:
+
+/public/chords/
+E.png
+A.png
+Dm.png
+G.png
+F.png
+B7.png
+
+---
+
+PART 1:
+CHORD DEFINITIONS (REFERENCE ONLY)
+
+E Major:
+
+* 1 → 1st fret, 3rd string
+* 2 → 2nd fret, 5th string
+* 3 → 2nd fret, 4th string
+
+---
+
+A Major:
+
+* 2 → 2nd fret, 4th string
+* 3 → 2nd fret, 3rd string
+* 4 → 2nd fret, 2nd string
+
+---
+
+D Minor (Dm):
+
+* 1 → 1st fret, 1st string
+* 2 → 2nd fret, 3rd string
+* 3 → 3rd fret, 2nd string
+
+---
+
+G Major:
+
+* 1 → 2nd fret, 5th string
+* 2 → 3rd fret, 6th string
+* 4 → 3rd fret, 1st string
+
+---
+
+F Major (Barre):
+
+* 1 → Barre (all strings, 1st fret)
+* 2 → 2nd fret, 3rd string
+* 3 → 3rd fret, 5th string
+* 4 → 3rd fret, 4th string
+
+---
+
+B7:
+
+* 1 → 1st fret, 4th string
+* 2 → 2nd fret, 5th string
+* 3 → 2nd fret, 3rd string
+* 4 → 2nd fret, 1st string
+
+---
+
+PART 2:
+MODULE STRUCTURE
+
+Module 5 contains 3 sections:
+
+---
+
+Section A:
+E Major + A Major
+
+---
+
+Section B:
+Dm + G
+
+---
+
+Section C:
+F + B7
+
+---
+
+PART 3:
+UI SYSTEM
+
+Use EXACT same design as Module 2:
+
+For each chord:
+
+* Show chord image
+* Show chord name
+* Add play button (audio)
+
+---
+
+AUDIO:
+
+Use AudioEngine
+
+Files provided by user.
+
+Example:
+
+AudioEngine.playChord("E")
+
+---
+
+PART 4:
+TEACHER CONTROL SYSTEM (CRITICAL)
+
+Each section LOCKED initially.
+
+---
+
+FLOW:
+
+Section A → unlocked by teacher
+
+After student completes:
+→ WAIT teacher approval
+
+---
+
+Section B:
+Locked until teacher unlocks
+
+---
+
+Section C:
+Locked until teacher unlocks
+
+---
+
+TEACHER PANEL:
+
+Add buttons:
+
+* Unlock Section A
+* Unlock Section B
+* Unlock Section C
+
+---
+
+PART 5:
+STUDENT VIEW
+
+Locked sections:
+
+* Show 🔒 icon
+* Show message:
+
+"Öğretmenin bu bölümü henüz açmadı"
+
+---
+
+PART 6:
+COMPLETION SYSTEM
+
+Each section includes:
+
+* Practice
+* Quiz
+
+After completion:
+
+→ Send progress to teacher
+
+---
+
+PART 7:
+DATABASE UPDATE
+
+Extend:
+
+* moduleId: 5
+* sectionId: A / B / C
+* completed: true/false
+* teacherApproved: true/false
+
+---
+
+PART 8:
+PERFORMANCE RULES
+
+* Use existing optimized DB system
+* Do NOT write every action
+* Only save:
+
+  * quiz complete
+  * section complete
+
+---
+
+IMPORTANT:
+
+* DO NOT generate visuals
+* ONLY use uploaded chord images
+* DO NOT change previous modules
+* KEEP system stable
+
+---
+
+FINAL:
+
+Add Module 5 with:
+
+* 6 new chords
+* 3 teacher-controlled sections
+* Image-based chord display
+* Quiz + progression system
+
+Everything must integrate seamlessly.
+
+DO NOT ASK QUESTIONS.
+BUILD SAFELY.

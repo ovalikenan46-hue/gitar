@@ -17,6 +17,7 @@ import { ChordDiagram } from "@/components/lessons/chord-diagram";
 import { ChordTransition } from "@/components/lessons/chord-transition";
 import { ChordReference } from "@/components/lessons/chord-reference";
 import { ChordPractice } from "@/components/lessons/chord-practice";
+import { ChordSection } from "@/components/lessons/chord-section";
 import { toast } from "sonner";
 
 export default function LessonDetail() {
@@ -108,6 +109,9 @@ export default function LessonDetail() {
           {lesson.code === "4B" && <ChordPractice chords={["Am", "C", "D"]} />}
           {lesson.code === "4C" && <ChordPractice chords={["Em", "D", "Am"]} />}
           {lesson.code === "4D" && <ChordPractice chords={["C", "D", "Em"]} />}
+          {lesson.code === "5A" && <ChordSection chords={["E", "A"]} />}
+          {lesson.code === "5B" && <ChordSection chords={["Dm", "G"]} />}
+          {lesson.code === "5C" && <ChordSection chords={["F", "B7"]} />}
         </div>
 
         {/* Action */}
