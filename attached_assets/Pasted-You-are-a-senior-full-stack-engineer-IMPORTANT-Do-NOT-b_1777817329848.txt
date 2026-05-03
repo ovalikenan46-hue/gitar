@@ -1,0 +1,280 @@
+You are a senior full-stack engineer.
+
+IMPORTANT:
+Do NOT break any existing modules or systems.
+ONLY extend the system safely.
+
+---
+
+GOAL:
+
+Create Module 6:
+
+"Advanced Chord Transitions"
+
+Focus:
+
+* Step-by-step finger movement logic
+* Educational clarity
+* Teacher-controlled progression
+
+---
+
+CRITICAL VISUAL RULE:
+
+* DO NOT generate chord diagrams
+* ONLY use user-provided chord images
+
+---
+
+PART 1:
+MODULE STRUCTURE
+
+Module 6 includes 4 sections:
+
+---
+
+SECTION A:
+
+Transitions:
+
+1. Em → E
+
+* Add:
+  1st finger → 1st fret, 3rd string
+
+---
+
+2. E → Am
+
+* Move:
+  1st finger → 1st fret, 2nd string
+  2nd + 3rd fingers → move down one string together
+
+---
+
+3. Am → A
+
+* Remove:
+  1st finger
+
+* Add:
+  4th finger → 2nd fret, 2nd string
+
+* Keep:
+  2nd + 3rd fingers stable
+
+---
+
+END:
+→ Teacher approval required
+
+---
+
+SECTION B:
+
+1. Dm → C
+
+* Move:
+  1st finger → string 1 → string 2 (same fret)
+  2nd finger → string 3 → string 4
+  3rd finger → string 2 → string 5
+
+---
+
+2. C → G
+
+* Move:
+  1st finger → 1st fret string 2 → 2nd fret string 5
+  2nd finger → 2nd fret string 4 → 3rd fret string 6
+  REMOVE 3rd finger
+  ADD 4th finger → 3rd fret string 1
+
+---
+
+END:
+→ Teacher approval required
+
+---
+
+SECTION C:
+
+1. C → F (BARRE)
+
+* Change:
+  1st finger → full barre (all strings, 1st fret)
+
+* Move:
+  2nd finger → string 4 → string 3
+  3rd finger stays on string 5
+  ADD 4th finger → 3rd fret string 4
+
+---
+
+2. F → Em
+
+* Move:
+  2nd finger → string 3 → string 5
+  3rd finger → string 5 → string 4
+
+* Remove:
+  1st finger (barre)
+  4th finger
+
+---
+
+END:
+→ Teacher approval required
+
+---
+
+SECTION D:
+
+1. Em → B7
+
+* Keep:
+  2nd finger stable
+
+* Move:
+  3rd finger → 2nd fret string 3
+  1st finger → 1st fret string 4
+  4th finger → 2nd fret string 1
+
+---
+
+2. B7 → C
+
+* Move:
+  1st finger → string 4 → string 2
+  2nd finger → string 5 → string 4
+  3rd finger → string 3 → string 5
+
+---
+
+3. C → D
+
+* Move:
+  2nd finger → string 4 → string 1
+  1st finger → string 2 → string 3 (2nd fret)
+  3rd finger → string 5 → string 2
+
+---
+
+END:
+→ Teacher approval required
+
+---
+
+PART 2:
+UI SYSTEM
+
+For each transition:
+
+* Show BEFORE chord image
+* Show AFTER chord image
+
+---
+
+ADD:
+
+* Finger movement hints (text-based)
+* Step-by-step guidance
+
+---
+
+PART 3:
+ANIMATION SYSTEM
+
+* DO NOT animate chord diagrams
+* ONLY animate:
+
+  * finger movement highlights
+  * transition steps (text + timing)
+
+---
+
+PART 4:
+TEACHER CONTROL (CRITICAL)
+
+Each section LOCKED initially
+
+---
+
+Teacher Panel:
+
+* Unlock Section A
+* Unlock Section B
+* Unlock Section C
+* Unlock Section D
+
+---
+
+STUDENT VIEW:
+
+* Locked → 🔒
+* Message:
+
+"Öğretmenin bu bölümü henüz açmadı"
+
+---
+
+PART 5:
+COMPLETION SYSTEM
+
+Each section includes:
+
+* Practice mode
+* Mini quiz
+
+---
+
+After completion:
+
+→ Send to teacher panel
+
+---
+
+PART 6:
+DATABASE UPDATE
+
+Extend:
+
+* moduleId: 6
+* sectionId: A / B / C / D
+* completed: true/false
+* teacherApproved: true/false
+
+---
+
+PART 7:
+PERFORMANCE RULES
+
+* Use optimized DB system
+* Save only:
+
+  * section complete
+  * quiz result
+
+---
+
+IMPORTANT:
+
+* DO NOT change previous modules
+* DO NOT break chord system
+* DO NOT generate visuals
+
+---
+
+FINAL:
+
+Add Module 6 with:
+
+* Advanced transition system
+* Step-based logic
+* Teacher-controlled unlock
+* Image-based chord system
+
+Everything must integrate seamlessly.
+
+DO NOT ASK QUESTIONS.
+BUILD SAFELY.
