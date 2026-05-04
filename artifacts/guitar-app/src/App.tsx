@@ -30,7 +30,16 @@ import { SplashScreen } from "@/components/splash-screen";
 import { BgMusicProvider } from "@/contexts/bg-music-provider";
 import { useBgMusic } from "@/contexts/bg-music-context";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 2 * 60 * 1000,  // 2 dakika — gereksiz yeniden çekimleri engeller
+      gcTime:    5 * 60 * 1000,  // 5 dakika bellekte tut
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function Router() {
   return (

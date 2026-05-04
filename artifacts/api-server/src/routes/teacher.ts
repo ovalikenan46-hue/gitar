@@ -1,20 +1,128 @@
 import { Router, type IRouter } from "express";
-import { db, classesTable, usersTable, studentCodesTable, institutionsTable, teacherCodesTable } from "@workspace/db";
-import { eq, and, isNull, count } from "drizzle-orm";
+import {
+  db,
+  classesTable,
+  usersTable,
+  studentCodesTable,
+  institutionsTable,
+  teacherCodesTable,
+} from "@workspace/db";
+import { eq, and, isNull, count, inArray } from "drizzle-orm";
 import { CreateClassBody, ExpandClassCapacityBody } from "@workspace/api-zod";
-import { requireAuth, generateStudentCode, generateSmartboardCode, type AuthedRequest } from "../lib/auth";
+import {
+  requireAuth,
+  generateStudentCode,
+  generateSmartboardCode,
+  type AuthedRequest,
+} from "../lib/auth";
+import { teacherDashboardCache } from "../lib/cache";
 
 const router: IRouter = Router();
+const CACHE_TTL = 2 * 60 * 1000; // 2 dakika
 
 router.use("/teacher", requireAuth(["teacher"]));
 
-async function getClassWithStats(id: string) {
+// ── Optimized bulk loader ──────────────────────────────────────────────────────
+// Tüm sınıfları 4 sorguda yükler (N sınıf için N*4 yerine sabit 4 sorgu)
+async function getAllClassesWithStats(teacherId: string) {
+  const cached = teacherDashboardCache.get(teacherId);
+  if (cached) return cached;
+
+  // 1) Öğretmenin sınıfları
+  const classes = await db
+    .select()
+    .from(classesTable)
+    .where(eq(classesTable.teacherId, teacherId))
+    .orderBy(classesTable.createdAt);
+
+  if (classes.length === 0) {
+    teacherDashboardCache.set(teacherId, [], CACHE_TTL);
+    return [];
+  }
+
+  const classIds = classes.map((c) => c.id);
+
+  // 2) Tüm sınıfların öğrenci sayısı — tek sorgu
+  const studentCounts = await db
+    .select({ classId: usersTable.classId, c: count() })
+    .from(usersTable)
+    .where(and(inArray(usersTable.classId, classIds), eq(usersTable.role, "student")))
+    .groupBy(usersTable.classId);
+
+  const countMap = new Map<string, number>(
+    studentCounts.map((r) => [r.classId ?? "", Number(r.c)])
+  );
+
+  // 3) Tüm öğrenci kodları — tek sorgu
+  const allCodes = await db
+    .select({
+      code: studentCodesTable.code,
+      classId: studentCodesTable.classId,
+      usedByUserId: studentCodesTable.usedByUserId,
+    })
+    .from(studentCodesTable)
+    .where(inArray(studentCodesTable.classId, classIds))
+    .orderBy(studentCodesTable.createdAt);
+
+  // 4) Kodu kullanan kullanıcı adları — tek sorgu (sadece gerekenler)
+  const usedIds = allCodes
+    .map((c) => c.usedByUserId)
+    .filter((v): v is string => v !== null);
+
+  const userMap = new Map<string, string>();
+  if (usedIds.length > 0) {
+    const users = await db
+      .select({ id: usersTable.id, name: usersTable.name })
+      .from(usersTable)
+      .where(inArray(usersTable.id, usedIds));
+    for (const u of users) userMap.set(u.id, u.name);
+  }
+
+  // Kodları sınıfa göre grupla
+  const codesByClass = new Map<string, typeof allCodes>(
+    classIds.map((id) => [id, []])
+  );
+  for (const code of allCodes) {
+    codesByClass.get(code.classId)?.push(code);
+  }
+
+  const result = classes.map((cls) => {
+    const codes = codesByClass.get(cls.id) ?? [];
+    const usedStudentCount = codes.filter((c) => c.usedByUserId !== null).length;
+    const studentCapacity = cls.studentCapacity ?? 0;
+
+    return {
+      id: cls.id,
+      name: cls.name,
+      levelUnlocked: cls.levelUnlocked,
+      smartboardCode: cls.smartboardCode ?? null,
+      studentCount: countMap.get(cls.id) ?? 0,
+      studentCapacity,
+      usedStudentCount,
+      remainingSlots: Math.max(0, studentCapacity - usedStudentCount),
+      unusedStudentCodes: codes.length - usedStudentCount,
+      studentCodes: codes.map((c) => ({
+        code: c.code,
+        used: c.usedByUserId !== null,
+        usedByName: c.usedByUserId ? (userMap.get(c.usedByUserId) ?? null) : null,
+      })),
+    };
+  });
+
+  teacherDashboardCache.set(teacherId, result, CACHE_TTL);
+  return result;
+}
+
+// ── Tek sınıf için (yazma sonrası yenileme) ───────────────────────────────────
+async function getOneClassWithStats(id: string) {
   const [cls] = await db.select().from(classesTable).where(eq(classesTable.id, id)).limit(1);
   if (!cls) return null;
-  const [students] = await db
+
+  const [studentRow] = await db
     .select({ c: count() })
     .from(usersTable)
     .where(and(eq(usersTable.classId, id), eq(usersTable.role, "student")));
+
   const codes = await db
     .select({
       code: studentCodesTable.code,
@@ -24,36 +132,33 @@ async function getClassWithStats(id: string) {
     .where(eq(studentCodesTable.classId, id))
     .orderBy(studentCodesTable.createdAt);
 
-  // Look up names of users who consumed codes
   const usedIds = codes.map((c) => c.usedByUserId).filter((v): v is string => v !== null);
   const userMap = new Map<string, string>();
   if (usedIds.length > 0) {
-    const users = await db.select().from(usersTable);
-    for (const u of users) {
-      if (usedIds.includes(u.id)) userMap.set(u.id, u.name);
-    }
+    const users = await db
+      .select({ id: usersTable.id, name: usersTable.name })
+      .from(usersTable)
+      .where(inArray(usersTable.id, usedIds));
+    for (const u of users) userMap.set(u.id, u.name);
   }
 
-  const studentCount = students?.c ?? 0;
   const usedStudentCount = codes.filter((c) => c.usedByUserId !== null).length;
-  const unusedStudentCodes = codes.length - usedStudentCount;
   const studentCapacity = cls.studentCapacity ?? 0;
-  const remainingSlots = Math.max(0, studentCapacity - usedStudentCount);
 
   return {
     id: cls.id,
     name: cls.name,
     levelUnlocked: cls.levelUnlocked,
     smartboardCode: cls.smartboardCode ?? null,
-    studentCount,
+    studentCount: studentRow?.c ?? 0,
     studentCapacity,
     usedStudentCount,
-    remainingSlots,
-    unusedStudentCodes,
+    remainingSlots: Math.max(0, studentCapacity - usedStudentCount),
+    unusedStudentCodes: codes.length - usedStudentCount,
     studentCodes: codes.map((c) => ({
       code: c.code,
       used: c.usedByUserId !== null,
-      usedByName: c.usedByUserId ? userMap.get(c.usedByUserId) ?? null : null,
+      usedByName: c.usedByUserId ? (userMap.get(c.usedByUserId) ?? null) : null,
     })),
   };
 }
@@ -108,15 +213,12 @@ async function generateUniqueSmartboardCode(): Promise<string> {
   return generateSmartboardCode();
 }
 
+// ── Routes ─────────────────────────────────────────────────────────────────────
+
 router.get("/teacher/classes", async (req, res) => {
   const { auth } = req as unknown as AuthedRequest;
-  const rows = await db
-    .select()
-    .from(classesTable)
-    .where(eq(classesTable.teacherId, auth.userId))
-    .orderBy(classesTable.createdAt);
-  const result = await Promise.all(rows.map((r) => getClassWithStats(r.id)));
-  res.json(result.filter(Boolean));
+  const result = await getAllClassesWithStats(auth.userId);
+  res.json(result);
 });
 
 router.post("/teacher/classes", async (req, res) => {
@@ -168,7 +270,8 @@ router.post("/teacher/classes", async (req, res) => {
     return cls;
   });
 
-  const stats = await getClassWithStats(newClass.id);
+  teacherDashboardCache.invalidate(auth.userId);
+  const stats = await getOneClassWithStats(newClass.id);
   res.status(201).json(stats);
 });
 
@@ -212,7 +315,8 @@ router.post("/teacher/classes/:id/expand", async (req, res) => {
     }
   });
 
-  const stats = await getClassWithStats(id);
+  teacherDashboardCache.invalidate(auth.userId);
+  const stats = await getOneClassWithStats(id);
   res.json(stats);
 });
 
@@ -226,11 +330,11 @@ router.post("/teacher/classes/:id/unlock-next", async (req, res) => {
   }
   const next = Math.min(cls.levelUnlocked + 1, 18);
   await db.update(classesTable).set({ levelUnlocked: next }).where(eq(classesTable.id, id));
-  const stats = await getClassWithStats(id);
+  teacherDashboardCache.invalidate(auth.userId);
+  const stats = await getOneClassWithStats(id);
   res.json(stats);
 });
 
-// ── Akıllı Tahta: Kod Üret (sadece bir kez; mevcutsa aynen döner) ────────────
 router.post("/teacher/classes/:id/smartboard-code", async (req, res) => {
   const { auth } = req as unknown as AuthedRequest;
   const id = req.params.id;
@@ -239,18 +343,17 @@ router.post("/teacher/classes/:id/smartboard-code", async (req, res) => {
     res.status(404).json({ error: "Sınıf bulunamadı" });
     return;
   }
-  // Kod zaten varsa yeniden üretme — aynı kodu döndür
   if (cls.smartboardCode) {
     res.json({ smartboardCode: cls.smartboardCode });
     return;
   }
   const code = await generateUniqueSmartboardCode();
   await db.update(classesTable).set({ smartboardCode: code }).where(eq(classesTable.id, id));
+  teacherDashboardCache.invalidate(auth.userId);
   res.json({ smartboardCode: code });
 });
 
 export default router;
 
-// Silence unused import warning for teacherCodesTable (kept for future use)
 void teacherCodesTable;
 void isNull;

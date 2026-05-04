@@ -1,0 +1,225 @@
+You are a senior backend architect.
+
+IMPORTANT:
+Do NOT rewrite existing system.
+ONLY integrate optimized Neon database usage.
+
+---
+
+GOAL:
+
+Use Neon PostgreSQL as lightweight database.
+
+Store ONLY critical data.
+
+Avoid overload and crashes.
+
+---
+
+PART 1:
+DATA STRATEGY (CRITICAL)
+
+ONLY STORE:
+
+* Admin credentials
+* Teacher codes
+* Student codes
+* Smart board class codes
+* Student completion status (simple)
+
+DO NOT STORE:
+
+* Every click
+* Animation usage
+* Metronome usage
+* Temporary progress
+
+---
+
+PART 2:
+DATABASE MODELS
+
+---
+
+Admins:
+
+* id
+* password (hashed)
+
+---
+
+Teachers:
+
+* id
+* code (unique)
+* institutionId
+* firstName
+* lastName
+
+---
+
+Students:
+
+* id
+* code (8 digit, unique)
+* classId
+* firstName
+* lastName
+
+---
+
+Classes:
+
+* id
+* teacherId
+* classCode (6 digit)
+* name
+
+---
+
+Progress (VERY LIGHT):
+
+* id
+* studentId
+* moduleId
+* sectionId
+* completed (boolean)
+* updatedAt
+
+---
+
+PART 3:
+STUDENT COMPLETION LOGIC
+
+When student clicks:
+
+"Bu bölümü öğrendim"
+
+DO:
+
+* Send ONE request
+* Save:
+
+completed = true
+
+---
+
+IMPORTANT:
+
+DO NOT track partial progress.
+
+---
+
+PART 4:
+API OPTIMIZATION
+
+Create SINGLE endpoint:
+
+POST /progress/complete
+
+Payload:
+
+{
+studentId,
+moduleId,
+sectionId
+}
+
+---
+
+PART 5:
+TEACHER PANEL
+
+When teacher views class:
+
+SHOW:
+
+* student name
+* student code
+* module progress
+
+---
+
+QUERY RULE:
+
+* Fetch ALL progress in ONE query
+* Avoid multiple API calls
+
+---
+
+PART 6:
+CACHE SYSTEM (IMPORTANT)
+
+Backend:
+
+* Cache teacher dashboard data (2 min)
+
+Frontend:
+
+* Store session data
+* Do NOT refetch repeatedly
+
+---
+
+PART 7:
+CODE GENERATION RULES
+
+Teacher Code:
+
+* Unique
+* Stored once
+
+Student Code:
+
+* 8 digit unique
+
+Class Code (Smart Board):
+
+* 6 digit unique
+
+---
+
+PART 8:
+SECURITY
+
+* Hash admin password
+* Validate all inputs
+* Prevent duplicate codes
+
+---
+
+PART 9:
+PERFORMANCE RULES
+
+* Write ONLY when:
+  → student completes section
+
+* NEVER write:
+  → during lesson
+  → during animation
+
+---
+
+PART 10:
+SCALABILITY
+
+System must handle:
+
+* 5000 students
+* Low DB load
+* Fast response
+
+---
+
+FINAL:
+
+Integrate Neon as:
+
+* Lightweight storage
+* Minimal writes
+* Fast reads
+
+System must remain stable and efficient.
+
+DO NOT ASK QUESTIONS.
+BUILD SAFELY.
