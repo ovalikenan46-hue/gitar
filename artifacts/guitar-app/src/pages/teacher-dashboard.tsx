@@ -429,14 +429,15 @@ export default function TeacherDashboard() {
                     : cls.levelUnlocked === 7  ? "Modül 4B — Am→C→D'yi Aç"
                     : cls.levelUnlocked === 8  ? "Modül 4C — Em→D→Am'ı Aç"
                     : cls.levelUnlocked === 9  ? "Modül 4D — C→D→Em'i Aç"
-                    : cls.levelUnlocked === 10 ? "Modül 5A — E & A'yı Aç"
-                    : cls.levelUnlocked === 11 ? "Modül 5B — Dm & G'yi Aç"
-                    : cls.levelUnlocked === 12 ? "Modül 5C — F & B7'yi Aç"
-                    : cls.levelUnlocked === 13 ? "Modül 6A — Em→E→Am→A'yı Aç"
-                    : cls.levelUnlocked === 14 ? "Modül 6B — Dm→C→G'yi Aç"
-                    : cls.levelUnlocked === 15 ? "Modül 6C — C→F→Em'i Aç"
-                    : cls.levelUnlocked === 16 ? "Modül 6D — Em→B7→C→D'yi Aç"
-                    : "Şarkı Modunu Aç"}
+                    : cls.levelUnlocked === 10 ? "Şarkı Modunu Aç"
+                    : cls.levelUnlocked === 11 ? "Modül 5A — E & A'yı Aç"
+                    : cls.levelUnlocked === 12 ? "Modül 5B — Dm & G'yi Aç"
+                    : cls.levelUnlocked === 13 ? "Modül 5C — F & B7'yi Aç"
+                    : cls.levelUnlocked === 14 ? "Modül 6A — Em→E→Am→A'yı Aç"
+                    : cls.levelUnlocked === 15 ? "Modül 6B — Dm→C→G'yi Aç"
+                    : cls.levelUnlocked === 16 ? "Modül 6C — C→F→Em'i Aç"
+                    : cls.levelUnlocked === 17 ? "Modül 6D — Em→B7→C→D'yi Aç"
+                    : "Tüm Seviyeler Açık"}
                 </Button>
 
                 {/* Akıllı Tahta */}
