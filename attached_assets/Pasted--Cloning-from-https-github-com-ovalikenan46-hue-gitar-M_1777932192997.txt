@@ -1,0 +1,65 @@
+==> Cloning from https://github.com/ovalikenan46-hue/gitar
+Menu
+==> Checking out commit ff22ac5a5455d2340f08b4cffa0732d3e4ef2527 in branch main
+==> Using Node.js version 24.14.1 (default)
+==> Docs on specifying a Node.js version: https://render.com/docs/node-version
+==> Running build command 'npm install --frozen-lockfile; pnpm run build'...
+> workspace@0.0.0 preinstall
+> sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+Use pnpm instead
+npm error code 1
+npm error path /opt/render/project/src
+npm error command failed
+npm error command sh -c sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+npm error A complete log of this run can be found in: /opt/render/.cache/_logs/2026-05-04T22_02_02_186Z-debug-0.log
+> workspace@0.0.0 build /opt/render/project/src
+> pnpm run typecheck && pnpm -r --if-present run build
+> workspace@0.0.0 typecheck /opt/render/project/src
+> pnpm run typecheck:libs && pnpm -r --filter "./artifacts/**" --filter "./scripts" --if-present run typecheck
+> workspace@0.0.0 typecheck:libs /opt/render/project/src
+> tsc --build
+error TS2688: Cannot find type definition file for 'node'.
+  The file is in the program because:
+    Entry point of type library 'node' specified in compilerOptions
+lib/db/src/id.ts(1,29): error TS2307: Cannot find module 'node:crypto' or its corresponding type declarations.
+lib/db/src/index.ts(1,25): error TS2307: Cannot find module 'drizzle-orm/node-postgres' or its corresponding type declarations.
+lib/db/src/index.ts(2,16): error TS2307: Cannot find module 'pg' or its corresponding type declarations.
+lib/db/src/index.ts(7,6): error TS2591: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
+lib/db/src/index.ts(13,50): error TS2591: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node` and then add 'node' to the types field in your tsconfig.
+lib/db/src/schema/classes.ts(1,51): error TS2307: Cannot find module 'drizzle-orm/pg-core' or its corresponding type declarations.
+lib/db/src/schema/institutions.ts(1,51): error TS2307: Cannot find module 'drizzle-orm/pg-core' or its corresponding type declarations.
+lib/db/src/schema/lessonProgress.ts(1,54): error TS2307: Cannot find module 'drizzle-orm/pg-core' or its corresponding type declarations.
+lib/db/src/schema/lessonProgress.ts(10,4): error TS7006: Parameter 't' implicitly has an 'any' type.
+lib/db/src/schema/lessons.ts(1,40): error TS2307: Cannot find module 'drizzle-orm/pg-core' or its corresponding type declarations.
+lib/db/src/schema/studentCodes.ts(1,42): error TS2307: Cannot find module 'drizzle-orm/pg-core' or its corresponding type declarations.
+lib/db/src/schema/teacherCodes.ts(1,42): error TS2307: Cannot find module 'drizzle-orm/pg-core' or its corresponding type declarations.
+lib/db/src/schema/users.ts(1,42): error TS2307: Cannot find module 'drizzle-orm/pg-core' or its corresponding type declarations.
+lib/api-client-react/src/generated/api.ts(8,39): error TS2307: Cannot find module '@tanstack/react-query' or its corresponding type declarations.
+lib/api-client-react/src/generated/api.ts(17,8): error TS2307: Cannot find module '@tanstack/react-query' or its corresponding type declarations.
+lib/api-client-react/src/generated/api.ts(88,5): error TS7031: Binding element 'signal' implicitly has an 'any' type.
+lib/api-client-react/src/generated/api.ts(175,8): error TS7006: Parameter 'props' implicitly has an 'any' type.
+lib/api-client-react/src/generated/api.ts(261,8): error TS7006: Parameter 'props' implicitly has an 'any' type.
+lib/api-client-react/src/generated/api.ts(347,8): error TS7006: Parameter 'props' implicitly has an 'any' type.
+lib/api-client-react/src/generated/api.ts(433,8): error TS7006: Parameter 'props' implicitly has an 'any' type.
+lib/api-client-react/src/generated/api.ts(501,5): error TS7031: Binding element 'signal' implicitly has an 'any' type.
+lib/api-client-react/src/generated/api.ts(571,10): error TS7031: Binding element 'signal' implicitly has an 'any' type.
+lib/api-client-react/src/generated/api.ts(657,8): error TS7006: Parameter 'props' implicitly has an 'any' type.
+lib/api-client-react/src/generated/api.ts(741,8): error TS7006: Parameter 'props' implicitly has an 'any' type.
+lib/api-client-react/src/generated/api.ts(828,8): error TS7006: Parameter 'props' implicitly has an 'any' type.
+lib/api-client-react/src/generated/api.ts(913,8): error TS7006: Parameter 'props' implicitly has an 'any' type.
+lib/api-client-react/src/generated/api.ts(987,5): error TS7031: Binding element 'signal' implicitly has an 'any' type.
+lib/api-client-react/src/generated/api.ts(1062,5): error TS7031: Binding element 'signal' implicitly has an 'any' type.
+lib/api-client-react/src/generated/api.ts(1149,8): error TS7006: Parameter 'props' implicitly has an 'any' type.
+lib/api-client-react/src/generated/api.ts(1236,8): error TS7006: Parameter 'props' implicitly has an 'any' type.
+lib/api-client-react/src/generated/api.ts(1320,8): error TS7006: Parameter 'props' implicitly has an 'any' type.
+lib/api-client-react/src/generated/api.ts(1404,8): error TS7006: Parameter 'props' implicitly has an 'any' type.
+lib/api-client-react/src/generated/api.ts(1484,10): error TS7031: Binding element 'signal' implicitly has an 'any' type.
+lib/api-client-react/src/generated/api.ts(1566,5): error TS7031: Binding element 'signal' implicitly has an 'any' type.
+lib/api-client-react/src/generated/api.ts(1651,8): error TS7006: Parameter 'props' implicitly has an 'any' type.
+lib/api-client-react/src/generated/api.ts(1726,10): error TS7031: Binding element 'signal' implicitly has an 'any' type.
+lib/api-zod/src/generated/api.ts(8,22): error TS2307: Cannot find module 'zod' or its corresponding type declarations.
+ ELIFECYCLE  Command failed with exit code 1.
+ ELIFECYCLE  Command failed with exit code 1.
+ ELIFECYCLE  Command failed with exit code 1.
+==> Build failed 😞
+==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
