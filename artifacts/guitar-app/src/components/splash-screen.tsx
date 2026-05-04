@@ -32,7 +32,8 @@ function FloatingNote({ x, y, delay, size, color }: typeof NOTES[0]) {
 }
 
 export function SplashScreen({ onComplete }: SplashScreenProps) {
-  const [visible, setVisible] = useState(true);
+  const [visible, setVisible]           = useState(true);
+  const [showTapHint, setShowTapHint]   = useState(false);
   const audioRef   = useRef<HTMLAudioElement | null>(null);
   const timerRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
   const playingRef = useRef(false);
@@ -45,12 +46,14 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
     setTimeout(onComplete, 650);
   };
 
-  /* Kullanıcı ekrana dokunursa / tıklarsa ses çal (autoplay engelliyse) */
-  const tryPlay = () => {
+  const startAudio = () => {
     const audio = audioRef.current;
     if (!audio || playingRef.current) return;
     audio.play()
-      .then(() => { playingRef.current = true; })
+      .then(() => {
+        playingRef.current = true;
+        setShowTapHint(false);
+      })
       .catch(() => {});
   };
 
@@ -63,28 +66,22 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
     audio.preload = "auto";
     audioRef.current = audio;
 
-    /* Ses bitince geç */
     audio.addEventListener("ended", () => setTimeout(finish, 350), { once: true });
+    audio.addEventListener("error",  () => { timerRef.current = setTimeout(finish, 5000); }, { once: true });
 
-    /* Yüklenemezse 5 sn sonra geç */
-    audio.addEventListener("error", () => {
-      timerRef.current = setTimeout(finish, 5000);
-    }, { once: true });
-
-    /* Yüklenince otomatik çalmayı dene */
     audio.addEventListener("canplaythrough", () => {
       audio.play()
         .then(() => { playingRef.current = true; })
         .catch(() => {
-          /* Autoplay engellendi — animasyon devam eder, kullanıcı "Geç →" ile çıkar
-             ya da ekrana dokunursa tryPlay() sesi başlatır. Kendi kendine kapanmaz. */
+          /* Autoplay engellendi — 1.2 sn sonra "ses" ipucu balonunu göster */
+          setTimeout(() => setShowTapHint(true), 1200);
         });
     }, { once: true });
 
     audio.load();
 
-    /* Güvenlik: her durumda 14 sn sonra geç */
-    timerRef.current = setTimeout(finish, 14000);
+    /* Güvenlik: her durumda 60 sn sonra geç (kullanıcı bekliyorsa beklesin) */
+    timerRef.current = setTimeout(finish, 60000);
 
     return () => {
       clearTimeout(timerRef.current!);
@@ -99,13 +96,13 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
       {visible && (
         <motion.div
           key="splash"
-          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center cursor-pointer select-none"
+          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center select-none"
           style={{ background: "linear-gradient(135deg, #0f0c29 0%, #302b63 40%, #24243e 100%)" }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.6, ease: "easeInOut" }}
-          onClick={tryPlay}
+          onClick={startAudio}
         >
           {NOTES.map((n, i) => <FloatingNote key={i} {...n} />)}
 
@@ -150,6 +147,29 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
             Temelden Başla, Müzikle Büyü!
           </motion.p>
 
+          {/* Ses ipucu balonu — sadece autoplay engellendiğinde çıkar */}
+          <AnimatePresence>
+            {showTapHint && (
+              <motion.button
+                key="tap-hint"
+                className="absolute top-6 right-6 flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold text-white pointer-events-auto cursor-pointer"
+                style={{
+                  background: "rgba(108,99,255,0.75)",
+                  backdropFilter: "blur(8px)",
+                  boxShadow: "0 0 20px rgba(108,99,255,0.5)",
+                }}
+                initial={{ opacity: 0, scale: 0.7, y: -10 }}
+                animate={{ opacity: 1, scale: [1, 1.05, 1], y: 0 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.4, scale: { duration: 1.4, repeat: Infinity } }}
+                onClick={(e) => { e.stopPropagation(); startAudio(); }}
+              >
+                🎵 Müziği aç
+              </motion.button>
+            )}
+          </AnimatePresence>
+
+          {/* Geç butonu */}
           <motion.button
             className="absolute bottom-6 text-sm text-white/35 hover:text-white/65 transition-colors pointer-events-auto"
             initial={{ opacity: 0 }}
