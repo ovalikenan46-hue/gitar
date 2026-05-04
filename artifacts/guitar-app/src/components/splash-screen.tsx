@@ -45,6 +45,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
     setTimeout(onComplete, 650);
   };
 
+  /* Kullanıcı ekrana dokunursa / tıklarsa ses çal (autoplay engelliyse) */
   const tryPlay = () => {
     const audio = audioRef.current;
     if (!audio || playingRef.current) return;
@@ -62,21 +63,27 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
     audio.preload = "auto";
     audioRef.current = audio;
 
+    /* Ses bitince geç */
     audio.addEventListener("ended", () => setTimeout(finish, 350), { once: true });
-    audio.addEventListener("error",  () => { timerRef.current = setTimeout(finish, 5000); }, { once: true });
 
+    /* Yüklenemezse 5 sn sonra geç */
+    audio.addEventListener("error", () => {
+      timerRef.current = setTimeout(finish, 5000);
+    }, { once: true });
+
+    /* Yüklenince otomatik çalmayı dene */
     audio.addEventListener("canplaythrough", () => {
       audio.play()
         .then(() => { playingRef.current = true; })
         .catch(() => {
-          /* Autoplay engellendi — kullanıcı ekrana dokunursa tryPlay() çalar */
+          /* Autoplay engellendi — ses çalmadan animasyon devam eder, 5 sn sonra geçer */
           timerRef.current = setTimeout(finish, 5000);
         });
     }, { once: true });
 
     audio.load();
 
-    /* Güvenlik: 14 sn sonra her durumda geç */
+    /* Güvenlik: her durumda 14 sn sonra geç */
     timerRef.current = setTimeout(finish, 14000);
 
     return () => {
@@ -93,20 +100,15 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
         <motion.div
           key="splash"
           className="fixed inset-0 z-[9999] flex flex-col items-center justify-center cursor-pointer select-none"
-          style={{
-            background:
-              "linear-gradient(135deg, #0f0c29 0%, #302b63 40%, #24243e 100%)",
-          }}
+          style={{ background: "linear-gradient(135deg, #0f0c29 0%, #302b63 40%, #24243e 100%)" }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.6, ease: "easeInOut" }}
           onClick={tryPlay}
         >
-          {/* Floating music notes */}
           {NOTES.map((n, i) => <FloatingNote key={i} {...n} />)}
 
-          {/* Color blobs */}
           <div className="absolute w-[500px] h-[500px] rounded-full opacity-20 blur-[90px] pointer-events-none"
             style={{ background: "radial-gradient(circle, #4299e1, transparent)", top: "-10%", left: "-10%" }} />
           <div className="absolute w-[400px] h-[400px] rounded-full opacity-20 blur-[80px] pointer-events-none"
@@ -114,19 +116,16 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
           <div className="absolute w-[300px] h-[300px] rounded-full opacity-15 blur-[60px] pointer-events-none"
             style={{ background: "radial-gradient(circle, #6C63FF, transparent)", top: "30%", right: "5%" }} />
 
-          {/* Glow ring */}
           <motion.div
             className="absolute rounded-full pointer-events-none"
             style={{
               width: 340, height: 340,
-              background:
-                "radial-gradient(circle, rgba(108,99,255,0.30) 0%, rgba(108,99,255,0.06) 55%, transparent 75%)",
+              background: "radial-gradient(circle, rgba(108,99,255,0.30) 0%, rgba(108,99,255,0.06) 55%, transparent 75%)",
             }}
             animate={{ scale: [1, 1.18, 1], opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
           />
 
-          {/* Logo */}
           <motion.div
             initial={{ scale: 0.35, opacity: 0, rotate: -8 }}
             animate={{ scale: [0.35, 1.1, 1], opacity: [0, 1, 1], rotate: [-8, 4, 0] }}
@@ -142,7 +141,6 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
             />
           </motion.div>
 
-          {/* Subtitle */}
           <motion.p
             className="mt-6 text-base sm:text-xl font-bold tracking-wide text-white/90"
             initial={{ opacity: 0, y: 14 }}
@@ -152,7 +150,6 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
             Temelden Başla, Müzikle Büyü!
           </motion.p>
 
-          {/* Skip — bottom */}
           <motion.button
             className="absolute bottom-6 text-sm text-white/35 hover:text-white/65 transition-colors pointer-events-auto"
             initial={{ opacity: 0 }}

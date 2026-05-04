@@ -12,7 +12,7 @@ interface ProtectedProps {
 export function Protected({ role, children }: ProtectedProps) {
   const [, setLocation] = useLocation();
 
-  const { data: user, isLoading } = useGetMe({
+  const { data: user, status } = useGetMe({
     query: {
       queryKey: getGetMeQueryKey(),
       retry: false,
@@ -21,9 +21,16 @@ export function Protected({ role, children }: ProtectedProps) {
     },
   });
 
+  /*
+   * status === "pending"  → veri yok, henüz yükleniyor  → bekle (spinner)
+   * status === "error"    → 401 veya ağ hatası          → giriş sayfasına gönder
+   * status === "success"  → kullanıcı geldi             → rol kontrolü yap
+   */
+  const isLoading    = status === "pending";
   const notAuthorized =
-    !isLoading &&
-    (user === undefined || (role !== undefined && user.role !== role));
+    status === "error" ||
+    (status === "success" &&
+      (user === undefined || (role !== undefined && user.role !== role)));
 
   useEffect(() => {
     if (notAuthorized) {
