@@ -76,8 +76,8 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
       audio.play()
         .then(() => { playingRef.current = true; })
         .catch(() => {
-          /* Autoplay engellendi — ses çalmadan animasyon devam eder, 5 sn sonra geçer */
-          timerRef.current = setTimeout(finish, 5000);
+          /* Autoplay engellendi — animasyon devam eder, kullanıcı "Geç →" ile çıkar
+             ya da ekrana dokunursa tryPlay() sesi başlatır. Kendi kendine kapanmaz. */
         });
     }, { once: true });
 
