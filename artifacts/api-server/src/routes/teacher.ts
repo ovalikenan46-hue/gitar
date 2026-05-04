@@ -224,7 +224,7 @@ router.post("/teacher/classes/:id/unlock-next", async (req, res) => {
     res.status(404).json({ error: "Sınıf bulunamadı" });
     return;
   }
-  const next = Math.min(cls.levelUnlocked + 1, 17);
+  const next = Math.min(cls.levelUnlocked + 1, 18);
   await db.update(classesTable).set({ levelUnlocked: next }).where(eq(classesTable.id, id));
   const stats = await getClassWithStats(id);
   res.json(stats);

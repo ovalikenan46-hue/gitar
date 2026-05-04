@@ -1,0 +1,183 @@
+You are a senior full-stack engineer.
+
+IMPORTANT:
+Do NOT break existing Module 4 structure.
+ONLY extend it by adding a new item.
+
+---
+
+GOAL:
+
+Add a new item:
+
+Module 4 → Item 5 → "Song Mode"
+
+---
+
+CRITICAL RULE:
+
+DO NOT generate any audio or image.
+
+ONLY use user-provided files.
+
+---
+
+FILES (USER PROVIDED):
+
+/public/song/
+song.mp3
+song-image.png
+
+---
+
+PART 1:
+UI DESIGN
+
+Create a new card:
+
+* Title: Şarkı ile Çal
+* Display song image (full width)
+* Add play button (▶)
+
+---
+
+PART 2:
+AUDIO PLAYER
+
+Use HTML5 Audio OR existing AudioEngine
+
+FEATURES:
+
+* Play / Pause
+* Progress bar
+* Current time / total time
+
+---
+
+PART 3:
+CHORD DISPLAY (SYNC SYSTEM)
+
+Display chord progression over time.
+
+Example:
+
+Em → Am → C → D
+
+---
+
+IMPORTANT:
+
+* Chord sequence must be timed manually (array)
+
+Example:
+
+[
+{ time: 0, chord: "Em" },
+{ time: 4, chord: "Am" },
+{ time: 8, chord: "C" }
+]
+
+---
+
+DISPLAY:
+
+* Show current chord LARGE
+* Highlight active chord
+* Auto update based on song time
+
+---
+
+PART 4:
+VISUAL RULE
+
+* Use ONLY uploaded chord images
+* DO NOT generate diagrams
+
+---
+
+PART 5:
+METRONOME SYNC (OPTIONAL)
+
+* Allow user to enable metronome
+* Sync BPM with song if possible
+
+---
+
+PART 6:
+TEACHER CONTROL
+
+Item 5 must be LOCKED initially
+
+Teacher panel:
+
+* Add button:
+
+"Şarkı Modunu Aç"
+
+---
+
+STUDENT VIEW:
+
+If locked:
+
+* Show 🔒
+* Message:
+
+"Öğretmenin bu bölümü henüz açmadı"
+
+---
+
+PART 7:
+COMPLETION SYSTEM
+
+Add button:
+
+"Şarkıyı Tamamladım"
+
+When clicked:
+
+→ Send completion to DB
+
+---
+
+PART 8:
+DATABASE
+
+Extend:
+
+* moduleId: 4
+* sectionId: 5
+* completed: true/false
+
+---
+
+PART 9:
+PERFORMANCE RULES
+
+* Preload audio
+* Do NOT re-fetch
+* Use lightweight state
+
+---
+
+IMPORTANT:
+
+* DO NOT change existing items
+* DO NOT break module flow
+* ONLY add new feature
+
+---
+
+FINAL:
+
+Add:
+
+* Song player
+* Custom image display
+* Chord sync system
+* Teacher-controlled access
+
+Everything must integrate smoothly.
+
+DO NOT ASK QUESTIONS.
+BUILD SAFELY.

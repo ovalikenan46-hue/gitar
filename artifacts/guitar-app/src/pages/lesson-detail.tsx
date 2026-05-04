@@ -19,6 +19,7 @@ import { ChordReference } from "@/components/lessons/chord-reference";
 import { ChordPractice } from "@/components/lessons/chord-practice";
 import { ChordSection } from "@/components/lessons/chord-section";
 import { ChordTransitionSection } from "@/components/lessons/chord-transition-section";
+import { SongPlayer } from "@/components/lessons/song-player";
 import { toast } from "sonner";
 
 export default function LessonDetail() {
@@ -117,6 +118,7 @@ export default function LessonDetail() {
           {lesson.code === "6B" && <ChordTransitionSection sectionCode="6B" />}
           {lesson.code === "6C" && <ChordTransitionSection sectionCode="6C" />}
           {lesson.code === "6D" && <ChordTransitionSection sectionCode="6D" />}
+          {lesson.code === "SONG" && <SongPlayer />}
         </div>
 
         {/* Action */}

@@ -217,6 +217,16 @@ const lessons = [
     level: 17,
     orderIndex: 21,
   },
+  {
+    id: "lesson-song",
+    code: "SONG",
+    moduleNumber: 4,
+    moduleTitle: "Modül 4 — Pratik",
+    title: "Şarkı ile Çal",
+    description: "Öğrendiğin Em, Am, C ve D akorlarını gerçek bir şarkıyla çal!",
+    level: 18,
+    orderIndex: 22,
+  },
 ];
 
 async function main() {
