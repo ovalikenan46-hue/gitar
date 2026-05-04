@@ -33,15 +33,24 @@ function FloatingNote({ x, y, delay, size, color }: typeof NOTES[0]) {
 
 export function SplashScreen({ onComplete }: SplashScreenProps) {
   const [visible, setVisible] = useState(true);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const audioRef   = useRef<HTMLAudioElement | null>(null);
+  const timerRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const playingRef = useRef(false);
 
   const finish = () => {
     if (timerRef.current) clearTimeout(timerRef.current);
-    if (audioRef.current) { audioRef.current.pause(); }
+    if (audioRef.current) audioRef.current.pause();
     document.body.style.overflow = "";
     setVisible(false);
     setTimeout(onComplete, 650);
+  };
+
+  const tryPlay = () => {
+    const audio = audioRef.current;
+    if (!audio || playingRef.current) return;
+    audio.play()
+      .then(() => { playingRef.current = true; })
+      .catch(() => {});
   };
 
   useEffect(() => {
@@ -53,24 +62,21 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
     audio.preload = "auto";
     audioRef.current = audio;
 
-    /* Ses bitince geç */
     audio.addEventListener("ended", () => setTimeout(finish, 350), { once: true });
-
-    /* Ses yüklenemezse veya autoplay engellendiyse — 5 saniye sonra geç */
-    audio.addEventListener("error", () => {
-      timerRef.current = setTimeout(finish, 5000);
-    }, { once: true });
+    audio.addEventListener("error",  () => { timerRef.current = setTimeout(finish, 5000); }, { once: true });
 
     audio.addEventListener("canplaythrough", () => {
-      audio.play().catch(() => {
-        /* Autoplay engellendi — tap istemeden, 5 sn sonra otomatik geç */
-        timerRef.current = setTimeout(finish, 5000);
-      });
+      audio.play()
+        .then(() => { playingRef.current = true; })
+        .catch(() => {
+          /* Autoplay engellendi — kullanıcı ekrana dokunursa tryPlay() çalar */
+          timerRef.current = setTimeout(finish, 5000);
+        });
     }, { once: true });
 
     audio.load();
 
-    /* Mutlak güvenlik: 14 sn sonra her durumda geç */
+    /* Güvenlik: 14 sn sonra her durumda geç */
     timerRef.current = setTimeout(finish, 14000);
 
     return () => {
@@ -95,6 +101,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.6, ease: "easeInOut" }}
+          onClick={tryPlay}
         >
           {/* Floating music notes */}
           {NOTES.map((n, i) => <FloatingNote key={i} {...n} />)}

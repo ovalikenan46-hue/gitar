@@ -75,7 +75,8 @@ export default function StudentLogin() {
         onSuccess: async (data) => {
           saveSaved({ code, name });
           setToken(data.token);
-          await queryClient.refetchQueries({ queryKey: getGetMeQueryKey() });
+          // Önce cache'i sıfırla, Protected yeniden fetch ederken loading gösterir
+          await queryClient.resetQueries({ queryKey: getGetMeQueryKey() });
           setLocation("/student");
         },
         onError: () => {
