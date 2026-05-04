@@ -32,11 +32,9 @@ function FloatingNote({ x, y, delay, size, color }: typeof NOTES[0]) {
 }
 
 export function SplashScreen({ onComplete }: SplashScreenProps) {
-  const [visible, setVisible]       = useState(true);
-  const [needsTap, setNeedsTap]     = useState(false); // true if autoplay was blocked
-  const audioRef  = useRef<HTMLAudioElement | null>(null);
-  const timerRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const playingRef = useRef(false);
+  const [visible, setVisible] = useState(true);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const finish = () => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -44,23 +42,6 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
     document.body.style.overflow = "";
     setVisible(false);
     setTimeout(onComplete, 650);
-  };
-
-  const startAudio = () => {
-    const audio = audioRef.current;
-    if (!audio || playingRef.current) return;
-    playingRef.current = true;
-    setNeedsTap(false);
-
-    audio.play().catch(() => {
-      /* Still blocked – use fallback timer only */
-      playingRef.current = false;
-    });
-  };
-
-  /* Handle tap-anywhere if autoplay was blocked */
-  const handleTap = () => {
-    if (needsTap) startAudio();
   };
 
   useEffect(() => {
@@ -72,35 +53,29 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
     audio.preload = "auto";
     audioRef.current = audio;
 
+    /* Ses bitince geç */
     audio.addEventListener("ended", () => setTimeout(finish, 350), { once: true });
-    audio.addEventListener("error",  () => {
-      /* Audio failed to load — fallback timer */
-      timerRef.current = setTimeout(finish, 7000);
+
+    /* Ses yüklenemezse veya autoplay engellendiyse — 5 saniye sonra geç */
+    audio.addEventListener("error", () => {
+      timerRef.current = setTimeout(finish, 5000);
     }, { once: true });
 
-    /* Try autoplay as soon as canplaythrough fires */
     audio.addEventListener("canplaythrough", () => {
-      audio.play()
-        .then(() => {
-          playingRef.current = true;
-          setNeedsTap(false);
-        })
-        .catch(() => {
-          /* Autoplay blocked → show subtle tap hint */
-          setNeedsTap(true);
-        });
+      audio.play().catch(() => {
+        /* Autoplay engellendi — tap istemeden, 5 sn sonra otomatik geç */
+        timerRef.current = setTimeout(finish, 5000);
+      });
     }, { once: true });
 
     audio.load();
 
-    /* Hard fallback — transition after 14 s no matter what */
+    /* Mutlak güvenlik: 14 sn sonra her durumda geç */
     timerRef.current = setTimeout(finish, 14000);
 
     return () => {
       clearTimeout(timerRef.current!);
       audio.pause();
-      audio.removeEventListener("ended", finish);
-      audio.removeEventListener("error",  finish);
       document.body.style.overflow = "";
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -120,7 +95,6 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.6, ease: "easeInOut" }}
-          onClick={handleTap}
         >
           {/* Floating music notes */}
           {NOTES.map((n, i) => <FloatingNote key={i} {...n} />)}
@@ -170,22 +144,6 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
           >
             Temelden Başla, Müzikle Büyü!
           </motion.p>
-
-          {/* Tap hint — only shown if autoplay was blocked */}
-          <AnimatePresence>
-            {needsTap && (
-              <motion.p
-                key="hint"
-                className="mt-6 text-sm text-white/55 tracking-wide"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: [0.4, 0.9, 0.4] }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              >
-                🔊 Sesi açmak için ekrana dokun
-              </motion.p>
-            )}
-          </AnimatePresence>
 
           {/* Skip — bottom */}
           <motion.button
