@@ -21,5 +21,7 @@ app.listen(port, (err) => {
     process.exit(1);
   }
 
-  logger.info({ port }, "Server listening");
+  const commit = process.env["RENDER_GIT_COMMIT"] || "unknown";
+  console.log("APP_VERSION_COMMIT:", commit);
+  logger.info({ port, commit }, "Server listening");
 });
