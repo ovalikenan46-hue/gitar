@@ -31,6 +31,7 @@ import type {
   HealthStatus,
   InstitutionWithStats,
   InviteCode,
+  LearningRequest,
   LessonWithProgress,
   SmartboardClassInfo,
   SmartboardCodeResponse,
@@ -1438,6 +1439,82 @@ export const useGenerateSmartboardCode = <
 > => {
   return useMutation(getGenerateSmartboardCodeMutationOptions(options));
 };
+
+/**
+ * @summary List pending learning requests from the teacher's students
+ */
+export const getGetTeacherLearningRequestsUrl = () => {
+  return `/api/teacher/learning-requests`;
+};
+
+export const getTeacherLearningRequests = async (
+  options?: RequestInit,
+): Promise<LearningRequest[]> => {
+  return customFetch<LearningRequest[]>(getGetTeacherLearningRequestsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetTeacherLearningRequestsQueryKey = () => {
+  return [`/api/teacher/learning-requests`] as const;
+};
+
+export const getGetTeacherLearningRequestsQueryOptions = <
+  TData = Awaited<ReturnType<typeof getTeacherLearningRequests>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getTeacherLearningRequests>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetTeacherLearningRequestsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getTeacherLearningRequests>>
+  > = ({ signal }) => getTeacherLearningRequests({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getTeacherLearningRequests>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetTeacherLearningRequestsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getTeacherLearningRequests>>
+>;
+export type GetTeacherLearningRequestsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List pending learning requests from the teacher's students
+ */
+
+export function useGetTeacherLearningRequests<
+  TData = Awaited<ReturnType<typeof getTeacherLearningRequests>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getTeacherLearningRequests>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetTeacherLearningRequestsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * @summary Get class info by 6-digit smartboard code (public)

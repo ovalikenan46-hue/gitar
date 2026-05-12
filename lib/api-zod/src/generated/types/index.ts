@@ -21,6 +21,8 @@ export * from "./expandClassBody";
 export * from "./healthStatus";
 export * from "./institutionWithStats";
 export * from "./inviteCode";
+export * from "./learningRequest";
+export * from "./learningRequestStatus";
 export * from "./lessonWithProgress";
 export * from "./smartboardClassInfo";
 export * from "./smartboardCodeResponse";

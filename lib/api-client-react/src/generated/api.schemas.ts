@@ -151,6 +151,27 @@ export interface ClassWithStats {
   studentCodes: StudentCodeInfo[];
 }
 
+export type LearningRequestStatus =
+  (typeof LearningRequestStatus)[keyof typeof LearningRequestStatus];
+
+export const LearningRequestStatus = {
+  pending: "pending",
+} as const;
+
+export interface LearningRequest {
+  id: string;
+  teacherId: string;
+  classId: string;
+  className: string;
+  studentId: string;
+  studentName: string;
+  lessonId: string;
+  lessonTitle: string;
+  lessonCode: string;
+  status: LearningRequestStatus;
+  createdAt: string;
+}
+
 export interface SmartboardCodeResponse {
   smartboardCode: string;
 }

@@ -380,6 +380,23 @@ paths:
               schema:
                 $ref: "#/components/schemas/SmartboardCodeResponse"
 
+  /teacher/learning-requests:
+    get:
+      operationId: getTeacherLearningRequests
+      tags: [teacher]
+      summary: List pending learning requests from the teacher's students
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of pending requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LearningRequest"
+
   /smartboard/{code}:
     get:
       operationId: getSmartboardClass
@@ -710,6 +727,35 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/StudentCodeInfo"
+
+    LearningRequest:
+      type: object
+      required: [id, teacherId, classId, className, studentId, studentName, lessonId, lessonTitle, lessonCode, status, createdAt]
+      properties:
+        id:
+          type: string
+        teacherId:
+          type: string
+        classId:
+          type: string
+        className:
+          type: string
+        studentId:
+          type: string
+        studentName:
+          type: string
+        lessonId:
+          type: string
+        lessonTitle:
+          type: string
+        lessonCode:
+          type: string
+        status:
+          type: string
+          enum: [pending]
+        createdAt:
+          type: string
+          format: date-time
 
     SmartboardCodeResponse:
       type: object

@@ -5,3 +5,4 @@ export * from "./teacherCodes";
 export * from "./studentCodes";
 export * from "./lessons";
 export * from "./lessonProgress";
+export * from "./learningRequests";

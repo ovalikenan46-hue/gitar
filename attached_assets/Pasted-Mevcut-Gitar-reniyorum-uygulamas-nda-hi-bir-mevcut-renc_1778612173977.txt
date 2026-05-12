@@ -1,0 +1,65 @@
+Mevcut Gitar Öğreniyorum uygulamasında hiçbir mevcut öğrenci akışını, modül akışını, “Ben öğrendim” butonlarının çalışma mantığını, sınıf kartı modül sistemini ve mevcut veritabanı yapısını bozma.
+
+Sadece öğretmen paneline yeni bir görüntüleme/takip alanı ekle.
+
+Amaç:
+Öğrenci mevcut sistemde “Ben öğrendim” butonuna bastığında bu bilgi öğretmen panelinde görünmüyor. Bu isteği öğretmenin görebileceği bir kontrol alanı oluştur.
+
+İstenen yapı:
+- Öğretmenin oluşturduğu öğrenci kodlarının içinde her öğrenci için “Öğrenme İstekleri / Kontrol Bekleyenler” alanı olsun.
+- Bu alan sadece o öğretmenin oluşturduğu öğrenci kodlarına bağlı öğrencileri göstersin.
+- Her öğrencinin yanında, öğrencinin bastığı “Ben öğrendim” istekleri listelensin.
+- Mevcut sistemde hangi modül veya etkinlik için “Ben öğrendim” bilgisi tutuluyorsa onu kullan.
+- Eğer mevcut sistemde bu bilgi local state/localStorage gibi geçici tutuluyorsa, bunu bozmadan sadece öğretmen panelinde okunabilecek kalıcı kayıt oluştur.
+- Mevcut buton davranışını değiştirme; sadece butona basıldığında öğretmen panelinde görünmesini sağlayacak kayıt/okuma bağlantısını ekle.
+
+Öğretmen panelinde gösterilecek bilgiler:
+- Öğrenci adı veya öğrenci kodu
+- Sınıf adı
+- Hangi modül / etkinlik için “Ben öğrendim” dediği
+- İstek tarihi
+- Durum: Kontrol bekliyor
+
+UI:
+- Öğretmen panelinde öğrenci kodları veya öğrenci detay alanı içinde küçük bir bölüm ekle.
+- Başlık: “Öğrenme İstekleri”
+- Bekleyen istek varsa sarı renkte göster.
+- İstek yoksa “Bekleyen öğrenme isteği yok” yazsın.
+- Mevcut tasarımı bozma.
+
+Çok önemli:
+- Öğrenci panelindeki mevcut ilerleme sistemi değişmesin.
+- Öğrenci yine aynı şekilde “Ben öğrendim” butonuna bassın.
+- Mevcut modül açma/kapatma sistemi değişmesin.
+- Sınıf kartındaki aktif modül yapısı aynen kalsın.
+- Öğretmen şu aşamada sadece görsün; onaylama, reddetme, kilitleme veya ilerleme değiştirme ekleme.
+- Sadece görüntüleme/takip paneli eklenecek.
+- Öğretmenin görmesi gereken veriler sadece kendi oluşturduğu öğrenci kodlarıyla sınırlı olsun.
+- Başka öğretmenin öğrencileri görünmesin.
+
+Backend:
+- Gerekirse minimum yeni tablo veya mevcut tabloya minimum alan ekle.
+- Önerilen tablo adı: student_learning_requests
+- Alanlar:
+  - id
+  - teacher_id
+  - class_id
+  - student_id
+  - student_code
+  - module_key
+  - activity_key
+  - created_at
+  - status default: pending
+
+API:
+- Öğrenci “Ben öğrendim” butonuna bastığında mevcut sistemi bozmadan bu tabloya pending kayıt ekle.
+- Aynı öğrenci aynı etkinlik için tekrar tekrar basarsa duplicate kayıt oluşturma.
+- Öğretmen paneli için sadece kendi öğrencilerine ait pending kayıtları getiren endpoint oluştur.
+
+Performans:
+- Gereksiz ağır sorgu yapma.
+- Öğretmen panelinde sadece ilgili öğretmenin öğrencilerine ait kayıtlar gelsin.
+- 5000-10000 öğrenci ölçeğinde çalışacak şekilde hafif sorgular kullan.
+- Gerekirse teacher_id, student_id, class_id ve status alanlarına index ekle.
+
+Lütfen önce mevcut kod yapısını analiz et, sonra sadece bu takip panelini minimum değişiklikle entegre et. Mevcut çalışan hiçbir özellik bozulmasın.

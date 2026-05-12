@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, lessonsTable, lessonProgressTable, classesTable, usersTable } from "@workspace/db";
+import { db, lessonsTable, lessonProgressTable, classesTable, usersTable, studentLearningRequestsTable } from "@workspace/db";
 import { eq, and, asc } from "drizzle-orm";
 import { requireAuth, type AuthedRequest } from "../lib/auth";
 
@@ -77,6 +77,22 @@ router.post("/student/lessons/:id/complete", async (req, res) => {
       .values({ userId: auth.userId, lessonId })
       .onConflictDoNothing();
   }
+
+  // Öğretmen paneli için öğrenme isteği kaydet (duplicate'i engelle)
+  await db
+    .insert(studentLearningRequestsTable)
+    .values({
+      teacherId: data.class.teacherId,
+      classId: data.class.id,
+      studentId: auth.userId,
+      studentName: data.student.name,
+      lessonId,
+      lessonTitle: lesson.title,
+      lessonCode: lesson.code,
+      className: data.class.name,
+      status: "pending",
+    })
+    .onConflictDoNothing();
   const refreshed = await getLessonsForStudent(auth.userId);
   const updated = refreshed?.lessons.find((l) => l.id === lessonId);
   res.json(updated ?? lesson);

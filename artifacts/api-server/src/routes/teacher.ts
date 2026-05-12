@@ -6,8 +6,9 @@ import {
   studentCodesTable,
   institutionsTable,
   teacherCodesTable,
+  studentLearningRequestsTable,
 } from "@workspace/db";
-import { eq, and, isNull, count, inArray } from "drizzle-orm";
+import { eq, and, isNull, count, inArray, desc } from "drizzle-orm";
 import { CreateClassBody, ExpandClassCapacityBody } from "@workspace/api-zod";
 import {
   requireAuth,
@@ -351,6 +352,25 @@ router.post("/teacher/classes/:id/smartboard-code", async (req, res) => {
   await db.update(classesTable).set({ smartboardCode: code }).where(eq(classesTable.id, id));
   teacherDashboardCache.invalidate(auth.userId);
   res.json({ smartboardCode: code });
+});
+
+router.get("/teacher/learning-requests", async (req, res) => {
+  const { auth } = req as unknown as AuthedRequest;
+
+  // Sadece bu öğretmenin sınıflarına ait pending istekler
+  const requests = await db
+    .select()
+    .from(studentLearningRequestsTable)
+    .where(
+      and(
+        eq(studentLearningRequestsTable.teacherId, auth.userId),
+        eq(studentLearningRequestsTable.status, "pending"),
+      ),
+    )
+    .orderBy(desc(studentLearningRequestsTable.createdAt))
+    .limit(500);
+
+  res.json(requests);
 });
 
 export default router;

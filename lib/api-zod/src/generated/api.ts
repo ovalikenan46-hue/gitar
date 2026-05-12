@@ -306,6 +306,26 @@ export const GenerateSmartboardCodeResponse = zod.object({
 });
 
 /**
+ * @summary List pending learning requests from the teacher's students
+ */
+export const GetTeacherLearningRequestsResponseItem = zod.object({
+  id: zod.string(),
+  teacherId: zod.string(),
+  classId: zod.string(),
+  className: zod.string(),
+  studentId: zod.string(),
+  studentName: zod.string(),
+  lessonId: zod.string(),
+  lessonTitle: zod.string(),
+  lessonCode: zod.string(),
+  status: zod.enum(["pending"]),
+  createdAt: zod.coerce.date(),
+});
+export const GetTeacherLearningRequestsResponse = zod.array(
+  GetTeacherLearningRequestsResponseItem,
+);
+
+/**
  * @summary Get class info by 6-digit smartboard code (public)
  */
 export const GetSmartboardClassParams = zod.object({

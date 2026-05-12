@@ -9,6 +9,9 @@ import {
   useExpandClassCapacity,
   useUnlockNextLevel,
   useGenerateSmartboardCode,
+  useGetTeacherLearningRequests,
+  getGetTeacherLearningRequestsQueryKey,
+  type LearningRequest,
 } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,6 +34,8 @@ import {
   Plus,
   AlertCircle,
   Monitor,
+  BookOpenCheck,
+  Clock,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { pageVariants, pageTransition } from "@/lib/animations";
@@ -82,6 +87,21 @@ export default function TeacherDashboard() {
 
   const { data: me } = useGetMe({ query: { queryKey: getGetMeQueryKey() } });
   const { data: classes, isLoading } = useListMyClasses({ query: { queryKey: getListMyClassesQueryKey() } });
+  const { data: learningRequests } = useGetTeacherLearningRequests({
+    query: {
+      queryKey: getGetTeacherLearningRequestsQueryKey(),
+      refetchInterval: 60 * 1000, // 1 dakikada bir otomatik yenile
+    },
+  });
+
+  // classId → istekler haritası
+  const requestsByClass = (learningRequests ?? []).reduce<Record<string, LearningRequest[]>>(
+    (acc, r) => {
+      (acc[r.classId] ??= []).push(r);
+      return acc;
+    },
+    {},
+  );
 
   const createClass = useCreateClass();
   const expandClass = useExpandClassCapacity();
@@ -410,6 +430,53 @@ export default function TeacherDashboard() {
                     ))}
                   </div>
                 )}
+                {/* ── Öğrenme İstekleri ── */}
+                {(() => {
+                  const reqs = requestsByClass[cls.id] ?? [];
+                  return (
+                    <div className="space-y-2 pt-2 border-t border-border">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold text-muted-foreground flex items-center gap-1.5">
+                          <BookOpenCheck className="w-4 h-4" /> Öğrenme İstekleri
+                        </p>
+                        {reqs.length > 0 && (
+                          <span className="text-xs font-bold bg-amber-100 text-amber-700 border border-amber-300 rounded-full px-2 py-0.5">
+                            {reqs.length} bekliyor
+                          </span>
+                        )}
+                      </div>
+                      {reqs.length === 0 ? (
+                        <p className="text-xs text-muted-foreground py-2 text-center">
+                          Bekleyen öğrenme isteği yok
+                        </p>
+                      ) : (
+                        <div className="space-y-1.5 max-h-44 overflow-y-auto pr-0.5">
+                          {reqs.map((r) => (
+                            <div
+                              key={r.id}
+                              className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2"
+                            >
+                              <Clock className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-semibold text-foreground truncate">{r.studentName}</p>
+                                <p className="text-xs text-muted-foreground truncate">{r.lessonTitle}</p>
+                                <p className="text-[10px] text-muted-foreground/70 mt-0.5">
+                                  {new Date(r.createdAt).toLocaleString("tr-TR", {
+                                    day: "2-digit", month: "2-digit",
+                                    hour: "2-digit", minute: "2-digit",
+                                  })}
+                                </p>
+                              </div>
+                              <span className="shrink-0 text-[10px] font-bold bg-amber-200 text-amber-800 rounded px-1.5 py-0.5">
+                                Kontrol Bekliyor
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </CardContent>
               <CardFooter className="bg-primary/5 border-t border-primary/10 flex flex-col gap-3 pt-4">
                 {/* Seviye aç */}
