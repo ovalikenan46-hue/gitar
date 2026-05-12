@@ -4,6 +4,7 @@ import {
   useUnlockNextLevel,
   useGenerateSmartboardCode,
   useExpandClassCapacity,
+  useDeleteClass,
   useGetClassStudentCodesProgress,
   useGetStudentLearningProgress,
   getListMyClassesQueryKey,
@@ -33,6 +34,7 @@ import {
   ChevronDown,
   ChevronUp,
   BookOpen,
+  Trash2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -230,6 +232,20 @@ export function ClassCard({
 }) {
   const queryClient = useQueryClient();
   const [expandOpen, setExpandOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
+  const deleteClass = useDeleteClass();
+
+  const handleDelete = () => {
+    deleteClass.mutate({ id: cls.id }, {
+      onSuccess: () => {
+        toast.success(`"${cls.name}" sınıfı silindi`);
+        queryClient.invalidateQueries({ queryKey: getListMyClassesQueryKey() });
+        setDeleteOpen(false);
+      },
+      onError: () => toast.error("Sınıf silinemedi"),
+    });
+  };
 
   const { data: codesProgress } = useGetClassStudentCodesProgress(cls.id, {
     query: {
@@ -294,9 +310,20 @@ export function ClassCard({
         <CardHeader className="bg-gradient-to-br from-primary/5 to-transparent pb-4">
           <div className="flex justify-between items-start">
             <CardTitle className="text-xl font-bold">{cls.name}</CardTitle>
-            <Badge variant="outline" className="bg-white rounded-full">
-              Seviye {cls.levelUnlocked}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="bg-white rounded-full">
+                Seviye {cls.levelUnlocked}
+              </Badge>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8 rounded-xl text-destructive hover:bg-destructive/10 hover:text-destructive"
+                onClick={() => setDeleteOpen(true)}
+                title="Sınıfı Sil"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
           <CardDescription className="flex items-center mt-2 text-foreground font-medium">
             <Users className="w-4 h-4 mr-2 text-primary" /> {cls.studentCount} kayıtlı öğrenci
@@ -461,6 +488,54 @@ export function ClassCard({
               </DialogFooter>
             </form>
           </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Sınıf silme onay dialog */}
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent className="sm:max-w-sm rounded-3xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="w-5 h-5" /> Sınıfı Sil
+            </DialogTitle>
+            <DialogDescription asChild>
+              <div className="space-y-3 mt-1">
+                <p className="text-foreground">
+                  <strong>"{cls.name}"</strong> sınıfını silmek istediğinizden emin misiniz?
+                </p>
+                <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl p-3 text-red-800 text-sm">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>
+                    Bu işlem geri alınamaz. Sınıfa ait tüm öğrenci kodları ve öğrenme kayıtları kalıcı olarak silinecek.
+                  </span>
+                </div>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              className="rounded-xl"
+              onClick={() => setDeleteOpen(false)}
+              disabled={deleteClass.isPending}
+            >
+              İptal
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              className="rounded-xl flex-1"
+              onClick={handleDelete}
+              disabled={deleteClass.isPending}
+            >
+              {deleteClass.isPending ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Siliniyor...</>
+              ) : (
+                <><Trash2 className="w-4 h-4 mr-2" /> Evet, Sil</>
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>

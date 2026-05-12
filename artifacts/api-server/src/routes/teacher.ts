@@ -213,6 +213,45 @@ async function generateUniqueSmartboardCode(): Promise<string> {
 
 // ── Routes ─────────────────────────────────────────────────────────────────────
 
+router.delete("/teacher/classes/:id", async (req, res) => {
+  const { auth } = req as unknown as AuthedRequest;
+  const { id } = req.params;
+
+  const [cls] = await db
+    .select()
+    .from(classesTable)
+    .where(and(eq(classesTable.id, id), eq(classesTable.teacherId, auth.userId)))
+    .limit(1);
+
+  if (!cls) {
+    res.status(404).json({ error: "Sınıf bulunamadı" });
+    return;
+  }
+
+  // Cascade: student codes, learning requests, then class
+  const codes = await db
+    .select({ id: studentCodesTable.id })
+    .from(studentCodesTable)
+    .where(eq(studentCodesTable.classId, id));
+
+  if (codes.length > 0) {
+    const codeIds = codes.map((c) => c.id);
+    await db
+      .delete(studentLearningRequestsTable)
+      .where(inArray(studentLearningRequestsTable.studentId, codeIds));
+    await db
+      .delete(studentCodesTable)
+      .where(eq(studentCodesTable.classId, id));
+  }
+
+  await db.delete(classesTable).where(eq(classesTable.id, id));
+
+  // Flush RAM cache for the teacher
+  teacherDashboardCache.invalidate(auth.userId);
+
+  res.status(204).end();
+});
+
 router.get("/teacher/classes", async (req, res) => {
   const { auth } = req as unknown as AuthedRequest;
   const result = await getAllClassesWithStats(auth.userId);

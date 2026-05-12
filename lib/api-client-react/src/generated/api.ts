@@ -1187,6 +1187,90 @@ export const useCreateClass = <
 };
 
 /**
+ * @summary Delete a class and all its student codes
+ */
+export const getDeleteClassUrl = (id: string) => {
+  return `/api/teacher/classes/${id}`;
+};
+
+export const deleteClass = async (
+  id: string,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteClassUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteClassMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteClass>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteClass>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["deleteClass"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteClass>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteClass(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteClassMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteClass>>
+>;
+
+export type DeleteClassMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Delete a class and all its student codes
+ */
+export const useDeleteClass = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteClass>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteClass>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(getDeleteClassMutationOptions(options));
+};
+
+/**
  * @summary Add additional student slots (and codes) to an existing class
  */
 export const getExpandClassCapacityUrl = (id: string) => {

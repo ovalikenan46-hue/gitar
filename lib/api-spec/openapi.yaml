@@ -305,6 +305,35 @@ paths:
               schema:
                 $ref: "#/components/schemas/ClassWithStats"
 
+  /teacher/classes/{id}:
+    delete:
+      operationId: deleteClass
+      tags: [teacher]
+      summary: Delete a class and all its student codes
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+        "403":
+          description: Not authorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /teacher/classes/{id}/expand:
     post:
       operationId: expandClassCapacity

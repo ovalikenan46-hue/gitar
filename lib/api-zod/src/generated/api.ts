@@ -240,6 +240,13 @@ export const CreateClassBody = zod.object({
 });
 
 /**
+ * @summary Delete a class and all its student codes
+ */
+export const DeleteClassParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+/**
  * @summary Add additional student slots (and codes) to an existing class
  */
 export const ExpandClassCapacityParams = zod.object({
