@@ -380,22 +380,51 @@ paths:
               schema:
                 $ref: "#/components/schemas/SmartboardCodeResponse"
 
-  /teacher/learning-requests:
+  /teacher/classes/{classId}/student-codes-progress:
     get:
-      operationId: getTeacherLearningRequests
+      operationId: getClassStudentCodesProgress
       tags: [teacher]
-      summary: List pending learning requests from the teacher's students
+      summary: Get learning progress summary for each student code in a class
       security:
         - bearerAuth: []
+      parameters:
+        - name: classId
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         "200":
-          description: List of pending requests
+          description: Progress per student code
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/LearningRequest"
+                  $ref: "#/components/schemas/StudentCodeProgress"
+
+  /teacher/student-codes/{studentId}/learning-progress:
+    get:
+      operationId: getStudentLearningProgress
+      tags: [teacher]
+      summary: Get detailed learning activity progress for a student
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Activity list with learned status
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StudentActivityProgress"
 
   /smartboard/{code}:
     get:
@@ -699,6 +728,9 @@ components:
         usedByName:
           type: string
           nullable: true
+        usedByUserId:
+          type: string
+          nullable: true
 
     ClassWithStats:
       type: object
@@ -728,34 +760,42 @@ components:
           items:
             $ref: "#/components/schemas/StudentCodeInfo"
 
-    LearningRequest:
+    StudentCodeProgress:
       type: object
-      required: [id, teacherId, classId, className, studentId, studentName, lessonId, lessonTitle, lessonCode, status, createdAt]
+      required: [code, isActive, learnedCount, totalActivityCount]
       properties:
-        id:
+        code:
           type: string
-        teacherId:
-          type: string
-        classId:
-          type: string
-        className:
-          type: string
+        isActive:
+          type: boolean
         studentId:
           type: string
-        studentName:
-          type: string
-        lessonId:
-          type: string
-        lessonTitle:
-          type: string
-        lessonCode:
-          type: string
-        status:
-          type: string
-          enum: [pending]
-        createdAt:
+          nullable: true
+        learnedCount:
+          type: integer
+        totalActivityCount:
+          type: integer
+        lastActivityAt:
           type: string
           format: date-time
+          nullable: true
+
+    StudentActivityProgress:
+      type: object
+      required: [activityKey, moduleKey, activityTitle, learned]
+      properties:
+        activityKey:
+          type: string
+        moduleKey:
+          type: string
+        activityTitle:
+          type: string
+        learned:
+          type: boolean
+        learnedAt:
+          type: string
+          format: date-time
+          nullable: true
 
     SmartboardCodeResponse:
       type: object

@@ -1,24 +1,37 @@
 import { Router, type IRouter } from "express";
-import { db, lessonsTable, lessonProgressTable, classesTable, usersTable, studentLearningRequestsTable } from "@workspace/db";
+import { db, lessonsTable, lessonProgressTable, classesTable, usersTable, studentCodesTable } from "@workspace/db";
 import { eq, and, asc } from "drizzle-orm";
 import { requireAuth, type AuthedRequest } from "../lib/auth";
+import { addLearningRequest } from "../lib/learning-cache";
 
 const router: IRouter = Router();
 
 router.use("/student", requireAuth(["student"]));
 
-async function loadStudent(userId: string) {
-  const [u] = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
-  return u;
+interface StudentContext {
+  student: typeof usersTable.$inferSelect;
+  class: typeof classesTable.$inferSelect;
+  studentCode: string | null;
+  lessons: {
+    id: string;
+    moduleNumber: number;
+    moduleTitle: string;
+    code: string;
+    title: string;
+    description: string;
+    level: number;
+    locked: boolean;
+    completed: boolean;
+  }[];
 }
 
-async function getLessonsForStudent(userId: string) {
-  const student = await loadStudent(userId);
-  if (!student || !student.classId) return null;
+async function getLessonsForStudent(userId: string): Promise<StudentContext | null> {
+  const [u] = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+  if (!u || !u.classId) return null;
   const [cls] = await db
     .select()
     .from(classesTable)
-    .where(eq(classesTable.id, student.classId))
+    .where(eq(classesTable.id, u.classId))
     .limit(1);
   if (!cls) return null;
   const lessons = await db.select().from(lessonsTable).orderBy(asc(lessonsTable.orderIndex));
@@ -27,9 +40,18 @@ async function getLessonsForStudent(userId: string) {
     .from(lessonProgressTable)
     .where(eq(lessonProgressTable.userId, userId));
   const completed = new Set(progress.map((p) => p.lessonId));
+
+  // Öğrencinin student_code'unu bul
+  const [codeRow] = await db
+    .select({ code: studentCodesTable.code })
+    .from(studentCodesTable)
+    .where(eq(studentCodesTable.usedByUserId, userId))
+    .limit(1);
+
   return {
-    student,
+    student: u,
     class: cls,
+    studentCode: codeRow?.code ?? null,
     lessons: lessons.map((l) => ({
       id: l.id,
       moduleNumber: l.moduleNumber,
@@ -71,6 +93,8 @@ router.post("/student/lessons/:id/complete", async (req, res) => {
     res.status(403).json({ error: "Bu ders henüz kilitli" });
     return;
   }
+
+  // 1) Lesson progress (doğrudan DB — kilit/açma sistemi için gerekli)
   if (!lesson.completed) {
     await db
       .insert(lessonProgressTable)
@@ -78,21 +102,22 @@ router.post("/student/lessons/:id/complete", async (req, res) => {
       .onConflictDoNothing();
   }
 
-  // Öğretmen paneli için öğrenme isteği kaydet (duplicate'i engelle)
-  await db
-    .insert(studentLearningRequestsTable)
-    .values({
+  // 2) Öğrenme takibi — RAM cache üzerinden (120s'de bir DB'ye yazılır)
+  if (data.class.institutionId && data.class.teacherId) {
+    addLearningRequest({
+      institutionId: data.class.institutionId,
       teacherId: data.class.teacherId,
       classId: data.class.id,
       studentId: auth.userId,
-      studentName: data.student.name,
-      lessonId,
-      lessonTitle: lesson.title,
-      lessonCode: lesson.code,
-      className: data.class.name,
-      status: "pending",
-    })
-    .onConflictDoNothing();
+      studentCode: data.studentCode ?? "unknown",
+      moduleKey: lesson.code,
+      activityKey: lesson.id,
+      activityTitle: lesson.title,
+      status: "learned",
+      createdAt: new Date(),
+    });
+  }
+
   const refreshed = await getLessonsForStudent(auth.userId);
   const updated = refreshed?.lessons.find((l) => l.id === lessonId);
   res.json(updated ?? lesson);
@@ -105,13 +130,13 @@ router.get("/student/dashboard", async (req, res) => {
     res.status(404).json({ error: "Sınıf bulunamadı" });
     return;
   }
-  const completed = data.lessons.filter((l) => l.completed).length;
+  const completedCount = data.lessons.filter((l) => l.completed).length;
   const next = data.lessons.find((l) => !l.completed && !l.locked) ?? null;
   res.json({
     studentName: data.student.name,
     className: data.class.name,
     currentLevel: data.class.levelUnlocked,
-    completedLessons: completed,
+    completedLessons: completedCount,
     totalLessons: data.lessons.length,
     nextLesson: next,
   });

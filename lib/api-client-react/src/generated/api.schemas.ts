@@ -136,6 +136,7 @@ export interface StudentCodeInfo {
   code: string;
   used: boolean;
   usedByName?: string | null;
+  usedByUserId?: string | null;
 }
 
 export interface ClassWithStats {
@@ -151,25 +152,21 @@ export interface ClassWithStats {
   studentCodes: StudentCodeInfo[];
 }
 
-export type LearningRequestStatus =
-  (typeof LearningRequestStatus)[keyof typeof LearningRequestStatus];
+export interface StudentCodeProgress {
+  code: string;
+  isActive: boolean;
+  studentId?: string | null;
+  learnedCount: number;
+  totalActivityCount: number;
+  lastActivityAt?: string | null;
+}
 
-export const LearningRequestStatus = {
-  pending: "pending",
-} as const;
-
-export interface LearningRequest {
-  id: string;
-  teacherId: string;
-  classId: string;
-  className: string;
-  studentId: string;
-  studentName: string;
-  lessonId: string;
-  lessonTitle: string;
-  lessonCode: string;
-  status: LearningRequestStatus;
-  createdAt: string;
+export interface StudentActivityProgress {
+  activityKey: string;
+  moduleKey: string;
+  activityTitle: string;
+  learned: boolean;
+  learnedAt?: string | null;
 }
 
 export interface SmartboardCodeResponse {

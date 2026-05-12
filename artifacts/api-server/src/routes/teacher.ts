@@ -7,8 +7,9 @@ import {
   institutionsTable,
   teacherCodesTable,
   studentLearningRequestsTable,
+  lessonsTable,
 } from "@workspace/db";
-import { eq, and, isNull, count, inArray, desc } from "drizzle-orm";
+import { eq, and, isNull, count, inArray, asc } from "drizzle-orm";
 import { CreateClassBody, ExpandClassCapacityBody } from "@workspace/api-zod";
 import {
   requireAuth,
@@ -17,6 +18,7 @@ import {
   type AuthedRequest,
 } from "../lib/auth";
 import { teacherDashboardCache } from "../lib/cache";
+import { pendingLearningRequests } from "../lib/learning-cache";
 
 const router: IRouter = Router();
 const CACHE_TTL = 2 * 60 * 1000; // 2 dakika
@@ -24,12 +26,10 @@ const CACHE_TTL = 2 * 60 * 1000; // 2 dakika
 router.use("/teacher", requireAuth(["teacher"]));
 
 // ── Optimized bulk loader ──────────────────────────────────────────────────────
-// Tüm sınıfları 4 sorguda yükler (N sınıf için N*4 yerine sabit 4 sorgu)
 async function getAllClassesWithStats(teacherId: string) {
   const cached = teacherDashboardCache.get(teacherId);
   if (cached) return cached;
 
-  // 1) Öğretmenin sınıfları
   const classes = await db
     .select()
     .from(classesTable)
@@ -43,7 +43,6 @@ async function getAllClassesWithStats(teacherId: string) {
 
   const classIds = classes.map((c) => c.id);
 
-  // 2) Tüm sınıfların öğrenci sayısı — tek sorgu
   const studentCounts = await db
     .select({ classId: usersTable.classId, c: count() })
     .from(usersTable)
@@ -54,7 +53,6 @@ async function getAllClassesWithStats(teacherId: string) {
     studentCounts.map((r) => [r.classId ?? "", Number(r.c)])
   );
 
-  // 3) Tüm öğrenci kodları — tek sorgu
   const allCodes = await db
     .select({
       code: studentCodesTable.code,
@@ -65,7 +63,6 @@ async function getAllClassesWithStats(teacherId: string) {
     .where(inArray(studentCodesTable.classId, classIds))
     .orderBy(studentCodesTable.createdAt);
 
-  // 4) Kodu kullanan kullanıcı adları — tek sorgu (sadece gerekenler)
   const usedIds = allCodes
     .map((c) => c.usedByUserId)
     .filter((v): v is string => v !== null);
@@ -79,7 +76,6 @@ async function getAllClassesWithStats(teacherId: string) {
     for (const u of users) userMap.set(u.id, u.name);
   }
 
-  // Kodları sınıfa göre grupla
   const codesByClass = new Map<string, typeof allCodes>(
     classIds.map((id) => [id, []])
   );
@@ -106,6 +102,7 @@ async function getAllClassesWithStats(teacherId: string) {
         code: c.code,
         used: c.usedByUserId !== null,
         usedByName: c.usedByUserId ? (userMap.get(c.usedByUserId) ?? null) : null,
+        usedByUserId: c.usedByUserId ?? null,
       })),
     };
   });
@@ -114,7 +111,6 @@ async function getAllClassesWithStats(teacherId: string) {
   return result;
 }
 
-// ── Tek sınıf için (yazma sonrası yenileme) ───────────────────────────────────
 async function getOneClassWithStats(id: string) {
   const [cls] = await db.select().from(classesTable).where(eq(classesTable.id, id)).limit(1);
   if (!cls) return null;
@@ -160,6 +156,7 @@ async function getOneClassWithStats(id: string) {
       code: c.code,
       used: c.usedByUserId !== null,
       usedByName: c.usedByUserId ? (userMap.get(c.usedByUserId) ?? null) : null,
+      usedByUserId: c.usedByUserId ?? null,
     })),
   };
 }
@@ -354,23 +351,146 @@ router.post("/teacher/classes/:id/smartboard-code", async (req, res) => {
   res.json({ smartboardCode: code });
 });
 
-router.get("/teacher/learning-requests", async (req, res) => {
+// ── Öğrenme Takibi Endpoint'leri ──────────────────────────────────────────────
+
+router.get("/teacher/classes/:classId/student-codes-progress", async (req, res) => {
   const { auth } = req as unknown as AuthedRequest;
+  const classId = req.params.classId;
 
-  // Sadece bu öğretmenin sınıflarına ait pending istekler
-  const requests = await db
-    .select()
+  const [cls] = await db.select().from(classesTable).where(eq(classesTable.id, classId)).limit(1);
+  if (!cls || cls.teacherId !== auth.userId) {
+    res.status(404).json({ error: "Sınıf bulunamadı" });
+    return;
+  }
+
+  // Tüm öğrenci kodları
+  const codes = await db
+    .select({
+      code: studentCodesTable.code,
+      usedByUserId: studentCodesTable.usedByUserId,
+    })
+    .from(studentCodesTable)
+    .where(eq(studentCodesTable.classId, classId))
+    .orderBy(studentCodesTable.createdAt);
+
+  // Toplam ders sayısı (dinamik)
+  const [totalRow] = await db.select({ c: count() }).from(lessonsTable);
+  const totalActivityCount = Number(totalRow?.c ?? 0);
+
+  // DB'deki öğrenme kayıtları (bu sınıfa ait)
+  const dbRequests = await db
+    .select({
+      studentId: studentLearningRequestsTable.studentId,
+      activityKey: studentLearningRequestsTable.activityKey,
+      createdAt: studentLearningRequestsTable.createdAt,
+    })
     .from(studentLearningRequestsTable)
-    .where(
-      and(
-        eq(studentLearningRequestsTable.teacherId, auth.userId),
-        eq(studentLearningRequestsTable.status, "pending"),
-      ),
-    )
-    .orderBy(desc(studentLearningRequestsTable.createdAt))
-    .limit(500);
+    .where(eq(studentLearningRequestsTable.classId, classId));
 
-  res.json(requests);
+  // RAM cache'deki kayıtlar (bu sınıfa ait)
+  const cacheRequests = [...pendingLearningRequests.values()].filter(
+    (e) => e.classId === classId
+  );
+
+  // studentId → { count, lastAt }
+  const byStudent = new Map<string, { learnedKeys: Set<string>; lastAt: Date }>();
+
+  for (const r of dbRequests) {
+    const existing = byStudent.get(r.studentId);
+    if (!existing) {
+      byStudent.set(r.studentId, { learnedKeys: new Set([r.activityKey]), lastAt: r.createdAt });
+    } else {
+      existing.learnedKeys.add(r.activityKey);
+      if (r.createdAt > existing.lastAt) existing.lastAt = r.createdAt;
+    }
+  }
+
+  // RAM cache ekle (duplicate önle)
+  for (const r of cacheRequests) {
+    const existing = byStudent.get(r.studentId);
+    if (!existing) {
+      byStudent.set(r.studentId, { learnedKeys: new Set([r.activityKey]), lastAt: r.createdAt });
+    } else {
+      existing.learnedKeys.add(r.activityKey);
+      if (r.createdAt > existing.lastAt) existing.lastAt = r.createdAt;
+    }
+  }
+
+  const result = codes.map((c) => {
+    const studentData = c.usedByUserId ? byStudent.get(c.usedByUserId) : null;
+    return {
+      code: c.code,
+      isActive: c.usedByUserId !== null,
+      studentId: c.usedByUserId ?? null,
+      learnedCount: studentData?.learnedKeys.size ?? 0,
+      totalActivityCount,
+      lastActivityAt: studentData?.lastAt?.toISOString() ?? null,
+    };
+  });
+
+  res.json(result);
+});
+
+router.get("/teacher/student-codes/:studentId/learning-progress", async (req, res) => {
+  const { auth } = req as unknown as AuthedRequest;
+  const studentId = req.params.studentId;
+
+  // Öğrenci bu öğretmenin sınıfında mı?
+  const [student] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.id, studentId))
+    .limit(1);
+  if (!student || !student.classId) {
+    res.status(404).json({ error: "Öğrenci bulunamadı" });
+    return;
+  }
+  const [cls] = await db
+    .select()
+    .from(classesTable)
+    .where(eq(classesTable.id, student.classId))
+    .limit(1);
+  if (!cls || cls.teacherId !== auth.userId) {
+    res.status(403).json({ error: "Yetki yok" });
+    return;
+  }
+
+  // Tüm dersler (sıralı)
+  const allLessons = await db
+    .select()
+    .from(lessonsTable)
+    .orderBy(asc(lessonsTable.orderIndex));
+
+  // DB kayıtları
+  const dbRequests = await db
+    .select({
+      activityKey: studentLearningRequestsTable.activityKey,
+      createdAt: studentLearningRequestsTable.createdAt,
+    })
+    .from(studentLearningRequestsTable)
+    .where(eq(studentLearningRequestsTable.studentId, studentId));
+
+  // RAM cache
+  const cacheRequests = [...pendingLearningRequests.values()].filter(
+    (e) => e.studentId === studentId
+  );
+
+  // activityKey → learnedAt
+  const learnedMap = new Map<string, Date>();
+  for (const r of dbRequests) learnedMap.set(r.activityKey, r.createdAt);
+  for (const r of cacheRequests) {
+    if (!learnedMap.has(r.activityKey)) learnedMap.set(r.activityKey, r.createdAt);
+  }
+
+  const result = allLessons.map((l) => ({
+    activityKey: l.id,
+    moduleKey: l.code,
+    activityTitle: l.title,
+    learned: learnedMap.has(l.id),
+    learnedAt: learnedMap.get(l.id)?.toISOString() ?? null,
+  }));
+
+  res.json(result);
 });
 
 export default router;

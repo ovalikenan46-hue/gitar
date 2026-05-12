@@ -224,6 +224,7 @@ export const ListMyClassesResponseItem = zod.object({
       code: zod.string(),
       used: zod.boolean(),
       usedByName: zod.string().nullish(),
+      usedByUserId: zod.string().nullish(),
     }),
   ),
 });
@@ -264,6 +265,7 @@ export const ExpandClassCapacityResponse = zod.object({
       code: zod.string(),
       used: zod.boolean(),
       usedByName: zod.string().nullish(),
+      usedByUserId: zod.string().nullish(),
     }),
   ),
 });
@@ -290,6 +292,7 @@ export const UnlockNextLevelResponse = zod.object({
       code: zod.string(),
       used: zod.boolean(),
       usedByName: zod.string().nullish(),
+      usedByUserId: zod.string().nullish(),
     }),
   ),
 });
@@ -306,23 +309,40 @@ export const GenerateSmartboardCodeResponse = zod.object({
 });
 
 /**
- * @summary List pending learning requests from the teacher's students
+ * @summary Get learning progress summary for each student code in a class
  */
-export const GetTeacherLearningRequestsResponseItem = zod.object({
-  id: zod.string(),
-  teacherId: zod.string(),
-  classId: zod.string(),
-  className: zod.string(),
-  studentId: zod.string(),
-  studentName: zod.string(),
-  lessonId: zod.string(),
-  lessonTitle: zod.string(),
-  lessonCode: zod.string(),
-  status: zod.enum(["pending"]),
-  createdAt: zod.coerce.date(),
+export const GetClassStudentCodesProgressParams = zod.object({
+  classId: zod.coerce.string(),
 });
-export const GetTeacherLearningRequestsResponse = zod.array(
-  GetTeacherLearningRequestsResponseItem,
+
+export const GetClassStudentCodesProgressResponseItem = zod.object({
+  code: zod.string(),
+  isActive: zod.boolean(),
+  studentId: zod.string().nullish(),
+  learnedCount: zod.number(),
+  totalActivityCount: zod.number(),
+  lastActivityAt: zod.coerce.date().nullish(),
+});
+export const GetClassStudentCodesProgressResponse = zod.array(
+  GetClassStudentCodesProgressResponseItem,
+);
+
+/**
+ * @summary Get detailed learning activity progress for a student
+ */
+export const GetStudentLearningProgressParams = zod.object({
+  studentId: zod.coerce.string(),
+});
+
+export const GetStudentLearningProgressResponseItem = zod.object({
+  activityKey: zod.string(),
+  moduleKey: zod.string(),
+  activityTitle: zod.string(),
+  learned: zod.boolean(),
+  learnedAt: zod.coerce.date().nullish(),
+});
+export const GetStudentLearningProgressResponse = zod.array(
+  GetStudentLearningProgressResponseItem,
 );
 
 /**

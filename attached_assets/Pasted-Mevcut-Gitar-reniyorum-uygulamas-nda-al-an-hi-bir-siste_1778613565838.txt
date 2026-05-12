@@ -1,0 +1,177 @@
+Mevcut Gitar Öğreniyorum uygulamasında çalışan hiçbir sistemi bozmadan, öğretmen panelindeki “Ben öğrendim” takip yapısını sınıf kartı içindeki öğrenci kodlarına entegre et.
+
+Amaç:
+Yüksek öğrenci sayılarında öğretmen panelinde öğrenci isimleri ve detayları kalabalık görünmesin. Öğretmen, sınıf kartı içinde sadece öğrenci kodlarını görsün. Öğrenci koduna tıklayınca o öğrencinin “Ben öğrendim” ilerleme kutucukları açılsın.
+
+Mevcut sistem korunacak:
+- Admin paneli bozulmasın.
+- Kurum sistemi bozulmasın.
+- Öğretmen kodları bozulmasın.
+- Öğrenci kodları bozulmasın.
+- Öğrenci koduyla giriş sistemi bozulmasın.
+- Sınıf kartı sistemi bozulmasın.
+- Genel modül açma/kapatma sistemi aynen sınıf kartında aktif kalacak.
+- Mevcut “Ben öğrendim” butonları kaldırılmayacak.
+- Mevcut modül/egzersiz yapısı değiştirilmeyecek.
+
+Yeni öğretmen takip mantığı:
+- Sınıf kartında öğrenciler isim kalabalığı şeklinde gösterilmesin.
+- Sınıf kartında öğretmenin oluşturduğu öğrenci kodları listelensin.
+- Her öğrenci kodu ayrı küçük kart/satır olarak görünsün.
+- Öğrenci kodu henüz hiç kullanılmadıysa pasif/nötr görünsün.
+- Öğrenci kodu ile ilk giriş yapıldığında kod “aktif” olarak işaretlensin.
+- Aktif olan kodun yanında küçük ilerleme özeti görünsün:
+  Örnek: 3/22 öğrendim
+- Toplam sayı sabit 22 olarak hard-code edilmesin.
+- Sistemde kaç tane “Ben öğrendim” butonu/egzersizi varsa toplam sayı otomatik oradan gelsin.
+- Eğer sistemde 22 egzersiz varsa 22 kutucuk oluşsun.
+- İleride egzersiz sayısı artarsa veya azalırsa kutucuk sayısı otomatik güncellensin.
+
+Kod üzerine tıklama:
+- Öğretmen sınıf kartında öğrenci koduna tıklayınca küçük bir detay paneli/modal/accordion açılsın.
+- Bu panelde o öğrenci koduna ait öğrenme takip kutucukları görünsün.
+- Her egzersiz için bir kutucuk oluşsun.
+- Öğrenci ilgili egzersizde “Ben öğrendim” dediyse kutucuk yeşil olsun.
+- Henüz “Ben öğrendim” demediyse kutucuk nötr/gri olsun.
+- Bu aşamada öğretmen onay/red yapmayacak.
+- Öğretmen sadece öğrencinin hangi egzersizlerde “Ben öğrendim” dediğini görecek.
+- Kutucukların üzerinde veya tooltip olarak egzersiz/modül adı görünsün.
+
+Renk mantığı:
+- Gri/Nötr: Öğrenci bu egzersiz için henüz “Ben öğrendim” demedi.
+- Yeşil: Öğrenci bu egzersiz için “Ben öğrendim” dedi.
+- Kod aktif değilse öğrenci kodu pasif/nötr görünsün.
+- Kod kullanılmışsa aktif görünsün.
+
+Öğrenci tarafı:
+- Öğrenci mevcut sistemde olduğu gibi kendi koduyla giriş yapacak.
+- Öğrenci mevcut modül/egzersizlerde “Ben öğrendim” butonuna basacak.
+- Bu butonun mevcut çalışma mantığı bozulmayacak.
+- Sadece bu tıklama bilgisi öğretmen panelinde ilgili öğrenci kodunun içine yansıtılacak.
+
+Veri mimarisi:
+- “Ben öğrendim” tıklamaları server RAM cache’e alınsın.
+- Bu kayıtlar 120 saniyede bir toplu şekilde Neon PostgreSQL veritabanına yazılsın.
+- Her tıklamada DB’ye direkt yazma yapılmasın.
+- DB hatası olursa kayıt RAM’de kalsın ve sonraki 120 saniyelik denemede tekrar yazılsın.
+- Duplicate kayıt oluşmasın.
+
+Önerilen tablo:
+student_learning_requests
+
+Alanlar:
+- id
+- institution_id
+- teacher_id
+- class_id
+- student_id
+- student_code
+- module_key
+- activity_key
+- activity_title
+- status default: learned
+- created_at
+- flushed_at
+- updated_at
+
+Önerilen unique constraint:
+student_id + module_key + activity_key
+
+Önerilen indexler:
+- institution_id
+- teacher_id
+- class_id
+- student_id
+- student_code
+- status
+- created_at
+
+RAM cache:
+pendingLearningRequests = new Map()
+
+Map key:
+studentId + moduleKey + activityKey
+
+Map value:
+{
+  institutionId,
+  teacherId,
+  classId,
+  studentId,
+  studentCode,
+  moduleKey,
+  activityKey,
+  activityTitle,
+  status: "learned",
+  createdAt
+}
+
+API ihtiyaçları:
+1. POST /api/student/learning-request
+- Öğrenci “Ben öğrendim” butonuna bastığında çalışsın.
+- Öğrenciye bağlı institution_id, teacher_id, class_id ve student_code bilgilerini mevcut sistemden bulsun.
+- Kaydı RAM cache içine eklesin.
+- DB’ye hemen yazmasın.
+- Aynı öğrenci aynı egzersiz için tekrar basarsa duplicate oluşturmasın.
+- Başarılı cevap dönsün.
+
+2. GET /api/teacher/classes/:classId/student-codes-progress
+- Sadece giriş yapan öğretmenin kendi sınıfındaki öğrenci kodlarını getirsin.
+- Her kod için:
+  - student_code
+  - is_active
+  - learned_count
+  - total_activity_count
+  - last_activity_at
+bilgilerini döndürsün.
+- Öğretmen başka öğretmenin öğrencilerini göremesin.
+
+3. GET /api/teacher/student-codes/:studentId/learning-progress
+- Sadece ilgili öğretmene ait öğrencinin detayını getirsin.
+- Sistemdeki tüm “Ben öğrendim” egzersizlerini listele.
+- Her egzersiz için:
+  - module_key
+  - activity_key
+  - activity_title
+  - learned true/false
+  - learned_at
+bilgilerini döndürsün.
+
+Egzersiz sayısı:
+- Toplam egzersiz sayısı sabit 22 olarak yazılmasın.
+- Uygulamadaki mevcut modül/egzersiz konfigürasyonundan otomatik hesapla.
+- Eğer mevcut projede egzersiz listesi merkezi bir dosyada tutuluyorsa oradan oku.
+- Eğer dağınıksa, yeni bir central activity registry oluştur:
+  learningActivities = [
+    { moduleKey, activityKey, title, order }
+  ]
+- Mevcut “Ben öğrendim” butonları bu activityKey değerleriyle eşleşsin.
+- Sistemde kaç activity varsa öğretmen panelindeki kutucuk sayısı ona göre oluşsun.
+
+Öğretmen paneli UI:
+- Sınıf kartında mevcut genel modül açma/kapatma alanı aynen kalsın.
+- Altına veya uygun bir alana “Öğrenci Kodları ve Öğrenme Takibi” bölümü ekle.
+- Öğrenci kodları sade liste/grid şeklinde görünsün.
+- Her kod satırında:
+  - Öğrenci kodu
+  - Aktif/Pasif durumu
+  - Öğrenme özeti: örn. 3/22
+  - Son işlem tarihi
+görünsün.
+- Koda tıklanınca detay paneli açılsın.
+- Detay panelinde egzersiz kutucukları grid şeklinde gösterilsin.
+- Yeşil kutucuklar “Ben öğrendim” denmiş egzersizleri göstersin.
+- Gri kutucuklar henüz tamamlanmamış egzersizleri göstersin.
+
+Performans:
+- Sınıf kartı ilk açıldığında tüm öğrencilerin tüm detaylarını çekme.
+- İlk ekranda sadece öğrenci kodları ve özet ilerleme bilgisi gelsin.
+- Detay kutucukları sadece öğretmen ilgili öğrenci koduna tıklayınca yüklensin.
+- Bu sayede yüksek öğrenci sayılarında panel ağırlaşmasın.
+- Sorguları teacher_id ve class_id ile sınırla.
+- Gereksiz geniş joinlerden kaçın.
+- Indexleri doğru kullan.
+- 120 saniyelik batch write sistemiyle DB yazma yükünü azalt.
+
+Çok önemli:
+Önce mevcut dosya yapısını analiz et. Sonra minimum değişiklikle uygula. Mevcut çalışan hiçbir şeyi bozma. Bu görev sadece öğretmenin sınıf kartı içinde öğrenci koduna tıklayarak öğrencinin “Ben öğrendim” ilerlemesini görmesini sağlar. Genel modül açma sistemi ve öğrenci akışı aynen korunur.

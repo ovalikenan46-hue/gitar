@@ -10,4 +10,5 @@ export interface StudentCodeInfo {
   code: string;
   used: boolean;
   usedByName?: string | null;
+  usedByUserId?: string | null;
 }

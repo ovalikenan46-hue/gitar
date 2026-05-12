@@ -31,10 +31,11 @@ import type {
   HealthStatus,
   InstitutionWithStats,
   InviteCode,
-  LearningRequest,
   LessonWithProgress,
   SmartboardClassInfo,
   SmartboardCodeResponse,
+  StudentActivityProgress,
+  StudentCodeProgress,
   StudentDashboard,
   TeacherLoginBody,
   UpdateInstitutionLimitsBody,
@@ -1441,73 +1442,187 @@ export const useGenerateSmartboardCode = <
 };
 
 /**
- * @summary List pending learning requests from the teacher's students
+ * @summary Get learning progress summary for each student code in a class
  */
-export const getGetTeacherLearningRequestsUrl = () => {
-  return `/api/teacher/learning-requests`;
+export const getGetClassStudentCodesProgressUrl = (classId: string) => {
+  return `/api/teacher/classes/${classId}/student-codes-progress`;
 };
 
-export const getTeacherLearningRequests = async (
+export const getClassStudentCodesProgress = async (
+  classId: string,
   options?: RequestInit,
-): Promise<LearningRequest[]> => {
-  return customFetch<LearningRequest[]>(getGetTeacherLearningRequestsUrl(), {
-    ...options,
-    method: "GET",
-  });
+): Promise<StudentCodeProgress[]> => {
+  return customFetch<StudentCodeProgress[]>(
+    getGetClassStudentCodesProgressUrl(classId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
 };
 
-export const getGetTeacherLearningRequestsQueryKey = () => {
-  return [`/api/teacher/learning-requests`] as const;
+export const getGetClassStudentCodesProgressQueryKey = (classId: string) => {
+  return [`/api/teacher/classes/${classId}/student-codes-progress`] as const;
 };
 
-export const getGetTeacherLearningRequestsQueryOptions = <
-  TData = Awaited<ReturnType<typeof getTeacherLearningRequests>>,
+export const getGetClassStudentCodesProgressQueryOptions = <
+  TData = Awaited<ReturnType<typeof getClassStudentCodesProgress>>,
   TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof getTeacherLearningRequests>>,
-    TError,
-    TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}) => {
+>(
+  classId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getClassStudentCodesProgress>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
   const { query: queryOptions, request: requestOptions } = options ?? {};
 
   const queryKey =
-    queryOptions?.queryKey ?? getGetTeacherLearningRequestsQueryKey();
+    queryOptions?.queryKey ?? getGetClassStudentCodesProgressQueryKey(classId);
 
   const queryFn: QueryFunction<
-    Awaited<ReturnType<typeof getTeacherLearningRequests>>
-  > = ({ signal }) => getTeacherLearningRequests({ signal, ...requestOptions });
+    Awaited<ReturnType<typeof getClassStudentCodesProgress>>
+  > = ({ signal }) =>
+    getClassStudentCodesProgress(classId, { signal, ...requestOptions });
 
-  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-    Awaited<ReturnType<typeof getTeacherLearningRequests>>,
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!classId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getClassStudentCodesProgress>>,
     TError,
     TData
   > & { queryKey: QueryKey };
 };
 
-export type GetTeacherLearningRequestsQueryResult = NonNullable<
-  Awaited<ReturnType<typeof getTeacherLearningRequests>>
+export type GetClassStudentCodesProgressQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getClassStudentCodesProgress>>
 >;
-export type GetTeacherLearningRequestsQueryError = ErrorType<unknown>;
+export type GetClassStudentCodesProgressQueryError = ErrorType<unknown>;
 
 /**
- * @summary List pending learning requests from the teacher's students
+ * @summary Get learning progress summary for each student code in a class
  */
 
-export function useGetTeacherLearningRequests<
-  TData = Awaited<ReturnType<typeof getTeacherLearningRequests>>,
+export function useGetClassStudentCodesProgress<
+  TData = Awaited<ReturnType<typeof getClassStudentCodesProgress>>,
   TError = ErrorType<unknown>,
->(options?: {
-  query?: UseQueryOptions<
-    Awaited<ReturnType<typeof getTeacherLearningRequests>>,
+>(
+  classId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getClassStudentCodesProgress>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetClassStudentCodesProgressQueryOptions(
+    classId,
+    options,
+  );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get detailed learning activity progress for a student
+ */
+export const getGetStudentLearningProgressUrl = (studentId: string) => {
+  return `/api/teacher/student-codes/${studentId}/learning-progress`;
+};
+
+export const getStudentLearningProgress = async (
+  studentId: string,
+  options?: RequestInit,
+): Promise<StudentActivityProgress[]> => {
+  return customFetch<StudentActivityProgress[]>(
+    getGetStudentLearningProgressUrl(studentId),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetStudentLearningProgressQueryKey = (studentId: string) => {
+  return [`/api/teacher/student-codes/${studentId}/learning-progress`] as const;
+};
+
+export const getGetStudentLearningProgressQueryOptions = <
+  TData = Awaited<ReturnType<typeof getStudentLearningProgress>>,
+  TError = ErrorType<unknown>,
+>(
+  studentId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getStudentLearningProgress>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetStudentLearningProgressQueryKey(studentId);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getStudentLearningProgress>>
+  > = ({ signal }) =>
+    getStudentLearningProgress(studentId, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!studentId,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getStudentLearningProgress>>,
     TError,
     TData
-  >;
-  request?: SecondParameter<typeof customFetch>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-  const queryOptions = getGetTeacherLearningRequestsQueryOptions(options);
+  > & { queryKey: QueryKey };
+};
+
+export type GetStudentLearningProgressQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getStudentLearningProgress>>
+>;
+export type GetStudentLearningProgressQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get detailed learning activity progress for a student
+ */
+
+export function useGetStudentLearningProgress<
+  TData = Awaited<ReturnType<typeof getStudentLearningProgress>>,
+  TError = ErrorType<unknown>,
+>(
+  studentId: string,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getStudentLearningProgress>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetStudentLearningProgressQueryOptions(
+    studentId,
+    options,
+  );
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;
