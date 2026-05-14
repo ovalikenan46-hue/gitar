@@ -1,0 +1,60 @@
+
+Search
+
+Last hour
+
+
+
+==> Deploying...
+Menu
+==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+==> Running 'node --enable-source-maps artifacts/api-server/dist/index.mjs'
+/opt/render/project/src/artifacts/api-server/src/lib/auth.ts:9
+  throw new Error("SESSION_SECRET environment variable is required");
+        ^
+Error: SESSION_SECRET environment variable is required
+    at <anonymous> (/opt/render/project/src/artifacts/api-server/src/lib/auth.ts:9:9)
+    at ModuleJob.run (node:internal/modules/esm/module_job:430:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:661:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+Node.js v24.14.1
+==> Exited with status 1
+==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
+==> Instance srv-d7shb58g4nts738mkgrg-5kzw2 restarted
+==> Running 'node --enable-source-maps artifacts/api-server/dist/index.mjs'
+/opt/render/project/src/artifacts/api-server/src/lib/auth.ts:9
+  throw new Error("SESSION_SECRET environment variable is required");
+        ^
+Error: SESSION_SECRET environment variable is required
+    at <anonymous> (/opt/render/project/src/artifacts/api-server/src/lib/auth.ts:9:9)
+    at ModuleJob.run (node:internal/modules/esm/module_job:430:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:661:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+Node.js v24.14.1
+==> Deploying...
+==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+    at <anonymous> (/opt/render/project/src/artifacts/api-server/src/app.ts:41:9) {
+  originalPath: '*'
+}
+Node.js v24.14.1
+==> Exited with status 1
+==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
+==> Instance srv-d7shb58g4nts738mkgrg-pvztn restarted
+==> Running 'node --enable-source-maps artifacts/api-server/dist/index.mjs'
+/opt/render/project/src/node_modules/.pnpm/path-to-regexp@8.3.0/node_modules/path-to-regexp/src/index.ts:225
+      throw new PathError(`Missing parameter name at index ${index}`, str);
+            ^
+PathError [TypeError]: Missing parameter name at index 1: *; visit https://git.new/pathToRegexpError for info
+    at name (/opt/render/project/src/node_modules/.pnpm/path-to-regexp@8.3.0/node_modules/path-to-regexp/src/index.ts:225:13)
+    at parse (/opt/render/project/src/node_modules/.pnpm/path-to-regexp@8.3.0/node_modules/path-to-regexp/src/index.ts:242:62)
+    at pathToRegexp (/opt/render/project/src/node_modules/.pnpm/path-to-regexp@8.3.0/node_modules/path-to-regexp/src/index.ts:480:54)
+    at Object.match (/opt/render/project/src/node_modules/.pnpm/path-to-regexp@8.3.0/node_modules/path-to-regexp/src/index.ts:438:28)
+    at matcher (/opt/render/project/src/node_modules/.pnpm/router@2.2.0/node_modules/router/lib/layer.js:86:23)
+    at new Layer (/opt/render/project/src/node_modules/.pnpm/router@2.2.0/node_modules/router/lib/layer.js:93:62)
+    at router8.route (/opt/render/project/src/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:428:17)
+    at app2.route (/opt/render/project/src/node_modules/.pnpm/express@5.2.1/node_modules/express/lib/application.js:257:22)
+    at app2.app2.<computed> (/opt/render/project/src/node_modules/.pnpm/express@5.2.1/node_modules/express/lib/application.js:478:22)
+    at <anonymous> (/opt/render/project/src/artifacts/api-server/src/app.ts:41:9) {
+  originalPath: '*'
+}
+Node.js v24.14.1

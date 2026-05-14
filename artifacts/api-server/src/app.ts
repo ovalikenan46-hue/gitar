@@ -38,7 +38,7 @@ if (process.env.NODE_ENV === "production") {
   const frontendDist = path.resolve(process.cwd(), "artifacts/guitar-app/dist/public");
   if (fs.existsSync(frontendDist)) {
     app.use(express.static(frontendDist));
-    app.get("*", (_req, res) => {
+    app.use((_req, res) => {
       res.sendFile(path.join(frontendDist, "index.html"));
     });
     logger.info({ frontendDist }, "Serving frontend static files");
