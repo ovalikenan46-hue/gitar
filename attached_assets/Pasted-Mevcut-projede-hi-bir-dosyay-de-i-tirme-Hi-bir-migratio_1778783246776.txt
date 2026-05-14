@@ -1,0 +1,73 @@
+Mevcut projede hiçbir dosyayı değiştirme.
+Hiçbir migration çalıştırma.
+Hiçbir package güncelleme.
+Sadece analiz et ve detaylı production raporu ver.
+
+Kontrol edilmesi gerekenler:
+
+1. Neon PostgreSQL bağlantısı aktif mi?
+- DATABASE_URL okunuyor mu?
+- Backend gerçekten Neon’a bağlanıyor mu?
+- Hangi dosyada DB bağlantısı kuruluyor?
+- pg / drizzle / prisma / başka ORM hangisi kullanılıyor?
+- Connection test başarılı mı?
+
+2. Render production uyumluluğu:
+- Build command ne olmalı?
+- Start command ne olmalı?
+- Environment variables eksiksiz mi?
+- Render deploy sırasında problem çıkaracak dosya/folder yapısı var mı?
+- Root directory doğru mu?
+- package.json scriptleri uygun mu?
+
+3. Güvenlik kontrolü:
+- Admin şifresi frontend içinde gözüküyor mu?
+- LocalStorage içinde hassas data tutuluyor mu?
+- Frontend doğrudan DB’ye bağlanıyor mu?
+- API endpointleri güvenli mi?
+- SQL injection riski var mı?
+- Hardcoded secret var mı?
+
+4. Mimari kontrol:
+- Admin → kurum → öğretmen → sınıf → öğrenci akışı DB tabanlı mı?
+- Hangi alanlar halen mock/localStorage çalışıyor?
+- Hangi alanlar gerçek DB kullanıyor?
+- Öğrenci progress sistemi nasıl çalışıyor?
+- “Bunu öğrendim” sistemi nasıl çalışıyor?
+- 120 saniyelik cache sistemi çalışıyor mu?
+- Öğretmen paneli hangi veriyi nereden çekiyor?
+
+5. Database yapısı:
+- Hangi tablolar mevcut?
+- Hangi tablolar eksik?
+- Foreign key yapıları doğru mu?
+- UUID kullanılıyor mu?
+- Kodlar unique mi?
+
+6. Ölçek analizi:
+- 5000 kayıtlı / 600 aktif kullanıcı için mevcut yapı yeterli mi?
+- Render Starter için riskli alanlar neler?
+- Neon connection kullanımı doğru mu?
+- Gereksiz DB yazımı var mı?
+- Gereksiz polling var mı?
+- Memory cache kullanılıyor mu?
+
+7. Performans:
+- En ağır endpointler hangileri?
+- N+1 query problemi var mı?
+- Gereksiz rerender veya API çağrısı var mı?
+- Teacher dashboard optimize mi?
+- Cache sistemi yeterli mi?
+
+8. Sonuç raporu:
+Şunları maddeler halinde yaz:
+- Şu an çalışan yapı ne kadar production hazır?
+- Kritik problemler
+- Orta seviye problemler
+- Düşük öncelikli problemler
+- Hemen düzeltilmesi gerekenler
+- Şimdilik dokunulmasa da olur denilenler
+
+ÖNEMLİ:
+Hiçbir şeyi değiştirme.
+Sadece analiz et ve detaylı rapor oluştur.
