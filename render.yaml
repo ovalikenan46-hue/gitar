@@ -3,7 +3,7 @@ services:
     name: gitar-ogreniyorum
     runtime: node
     buildCommand: >
-      npm install -g pnpm &&
+      corepack enable pnpm &&
       pnpm install &&
       pnpm --filter @workspace/guitar-app run build &&
       pnpm --filter @workspace/api-server run build &&
