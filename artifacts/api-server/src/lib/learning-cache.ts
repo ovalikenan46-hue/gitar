@@ -15,19 +15,11 @@ export interface LearningCacheEntry {
 }
 
 // key = `${studentId}:${activityKey}`
+// RAM map: sadece retry amacıyla tutuluyor — başarılı write'tan sonra temizlenir
 export const pendingLearningRequests = new Map<string, LearningCacheEntry>();
 
-export function addLearningRequest(entry: LearningCacheEntry): void {
-  const key = `${entry.studentId}:${entry.activityKey}`;
-  if (!pendingLearningRequests.has(key)) {
-    pendingLearningRequests.set(key, entry);
-  }
-}
-
-async function flushLearningRequests(): Promise<void> {
-  if (pendingLearningRequests.size === 0) return;
-  const entries = [...pendingLearningRequests.entries()];
-  const values = entries.map(([, e]) => ({
+function toDbRow(e: LearningCacheEntry) {
+  return {
     institutionId: e.institutionId,
     teacherId: e.teacherId,
     classId: e.classId,
@@ -39,7 +31,37 @@ async function flushLearningRequests(): Promise<void> {
     status: "learned" as const,
     createdAt: e.createdAt,
     flushedAt: new Date(),
-  }));
+  };
+}
+
+// Her "Bunu öğrendim" isteği anında DB'ye yazılır.
+// Yazma başarısız olursa RAM map'te kalır ve 120s flush'ta yeniden denenir.
+async function writeImmediately(entry: LearningCacheEntry, key: string): Promise<void> {
+  try {
+    await db
+      .insert(studentLearningRequestsTable)
+      .values(toDbRow(entry))
+      .onConflictDoNothing();
+    pendingLearningRequests.delete(key);
+    logger.info(`Learning request written immediately: ${key}`);
+  } catch (err) {
+    logger.error({ err }, `Immediate write failed for ${key} — will retry on flush`);
+    // map'te bırak, 120s flush retry eder
+  }
+}
+
+export function addLearningRequest(entry: LearningCacheEntry): void {
+  const key = `${entry.studentId}:${entry.activityKey}`;
+  if (pendingLearningRequests.has(key)) return; // zaten bekliyor veya yazıldı
+  pendingLearningRequests.set(key, entry);
+  void writeImmediately(entry, key);
+}
+
+// Retry: sadece daha önce başarısız olan kayıtlar için
+async function flushLearningRequests(): Promise<void> {
+  if (pendingLearningRequests.size === 0) return;
+  const entries = [...pendingLearningRequests.entries()];
+  const values = entries.map(([, e]) => toDbRow(e));
   try {
     await db
       .insert(studentLearningRequestsTable)
@@ -48,14 +70,14 @@ async function flushLearningRequests(): Promise<void> {
     for (const [key] of entries) {
       pendingLearningRequests.delete(key);
     }
-    logger.info(`Flushed ${values.length} learning requests to DB`);
+    logger.info(`Retry flush: ${values.length} learning request(s) written to DB`);
   } catch (err) {
-    logger.error({ err }, "Failed to flush learning requests — will retry");
+    logger.error({ err }, "Retry flush failed — will try again");
   }
 }
 
-// Flush every 120 seconds
+// 120 saniyelik retry flush (sadece başarısız yazımlar için)
 setInterval(() => { void flushLearningRequests(); }, 120_000);
 
-// Graceful shutdown — flush before exit
+// Graceful shutdown — kalan varsa flush et
 process.on("SIGTERM", () => { void flushLearningRequests(); });

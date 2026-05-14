@@ -1,0 +1,83 @@
+Hiçbir UI tasarımını bozma.
+Mevcut çalışan sistemi koru.
+Hiçbir çalışan akışı kırma.
+
+Sadece production güvenlik ve stabilite düzeltmeleri yap.
+
+MEVCUT DURUM:
+- Neon PostgreSQL aktif çalışıyor
+- Render Environment Variables ayarlandı:
+  DATABASE_URL
+  ADMIN_PASSWORD
+  SESSION_SECRET
+  NODE_ENV=production
+- Admin → kurum → öğretmen → sınıf → öğrenci sistemi çalışıyor
+- Öğrenci progress sistemi çalışıyor
+- “Bunu öğrendim” sistemi çalışıyor
+- 120 saniyelik cache sistemi çalışıyor
+- Teacher dashboard cache sistemi çalışıyor
+
+ŞİMDİ YAPILACAKLAR:
+
+1. ADMIN_PASSWORD güvenliği:
+Kod içinde:
+process.env["ADMIN_PASSWORD"] ?? "114344_Kenan"
+veya benzeri fallback varsa kaldır.
+
+ADMIN_PASSWORD environment variable yoksa:
+server açık hata mesajı verip başlamasın.
+
+Admin şifresi kaynak kodda hiçbir yerde hardcoded kalmasın.
+
+2. Render sleep + RAM cache güvenliği:
+Şu an “Bunu öğrendim” sistemi RAM cache kullanıyorsa:
+- veri kaybı yaşanmayacak şekilde güvenli hale getir.
+- lesson_progress anında DB’ye yazılmaya devam etsin.
+- öğrenci ilerlemesi hiçbir durumda kaybolmasın.
+- 120 saniyelik performans cache mantığı korunabilir.
+- Ancak Render sleep/wake durumunda pending learning request tamamen kaybolmasın.
+
+Mümkünse:
+- RAM cache sadece performans amaçlı kullanılsın.
+- Kritik öğrenme isteği DB’ye güvenli şekilde yazılsın.
+- Flush başarısız olursa retry sistemi devam etsin.
+
+3. Teacher dashboard optimizasyonu:
+Mevcut 2 dakika TTL cache sistemini koru.
+Gereksiz DB sorgusu oluşturma.
+N+1 query oluşturma.
+Bulk query mantığını bozma.
+
+4. Performans koruması:
+5000 kayıtlı öğrenci / 600 aktif kullanıcı hedefini bozacak işlem ekleme.
+Gereksiz polling ekleme.
+Gereksiz rerender ekleme.
+Her öğrenci hareketinde ekstra DB write oluşturma.
+
+5. Güvenlik:
+Frontend hiçbir şekilde doğrudan DB’ye bağlanmasın.
+Tüm işlemler backend API üzerinden devam etsin.
+Drizzle parametrized query yapısı korunmalı.
+SESSION_SECRET zorunlu olsun.
+DATABASE_URL zorunlu olsun.
+
+6. Kod düzeni:
+Mevcut dosya yapısını mümkün olduğunca koru.
+Sadece gerekli dosyalarda minimal değişiklik yap.
+Render production deploy yapısını bozma.
+
+7. İşlem sonunda sadece rapor ver:
+- Hangi dosyalar değişti?
+- ADMIN_PASSWORD fallback tamamen kaldırıldı mı?
+- Render sleep durumunda veri kaybı riski kaldı mı?
+- “Bunu öğrendim” sistemi artık güvenli mi?
+- Cache sistemi korunuyor mu?
+- 5000 kayıtlı / 600 aktif kullanıcı hedefi için risk var mı?
+- Yeni environment variable gerekiyor mu?
+- Render build/start yapısı değişti mi?
+
+ÖNEMLİ:
+UI değiştirme.
+Tasarım değiştirme.
+Çalışan sistemi bozma.
+Sadece production güvenlik ve stabilite iyileştirmesi yap.
