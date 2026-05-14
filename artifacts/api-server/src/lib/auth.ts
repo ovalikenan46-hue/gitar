@@ -9,7 +9,7 @@ if (!SESSION_SECRET) {
   throw new Error("SESSION_SECRET environment variable is required");
 }
 
-export const ADMIN_PASSWORD = "114344_Kenan";
+export const ADMIN_PASSWORD = process.env["ADMIN_PASSWORD"] ?? "114344_Kenan";
 export const ADMIN_USER_ID = "admin-root";
 
 export type UserRole = "admin" | "teacher" | "student";

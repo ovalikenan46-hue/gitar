@@ -1,0 +1,63 @@
+Birazdan Neon PostgreSQL DATABASE_URL değerini Replit Secrets içine ekleyeceğim.
+
+Senden istediğim:
+Mevcut gitar öğrenme uygulamasının çalışan yapısını bozmadan Neon + Render production mimarisine hazırla.
+
+Mevcut sistem:
+- Admin giriş yapıyor.
+- Admin kurum kartı oluşturuyor.
+- Kurum kartının içinde öğretmen giriş kodları oluşuyor.
+- Öğretmen bu kodla giriş yapıyor.
+- Öğretmen sınıf kartı oluşturuyor.
+- Sınıf kartı içinde 8 haneli öğrenci giriş kodları oluşuyor.
+- Her sınıf için ayrıca 6 haneli akıllı tahta kodu oluşuyor.
+- Öğrenci kendi adı soyadı + öğrenci kodu ile giriş yapıyor.
+- Öğrenci modülleri ve bölümleri kullanıyor.
+- Öğrenci “Bunu öğrendim” dediğinde bu bilgi DB’ye kaydediliyor.
+- Öğretmen panelinde bu durum 120 saniyelik cache/yenileme mantığıyla görünür hale geliyor.
+- Öğretmen sınıf kartında öğrenci kodunun yanına tıklayınca öğrencinin hangi seviyede/modülde/bölümde olduğu görünüyor.
+
+Yapılacaklar:
+1. Mevcut UI ve çalışan akış bozulmayacak.
+2. LocalStorage/mock/fake data ile çalışan admin, kurum, öğretmen kodu, sınıf, öğrenci kodu, akıllı tahta kodu ve öğrenci progress verileri Neon PostgreSQL’e taşınacak.
+3. Frontend doğrudan Neon’a bağlanmayacak. Tüm veri işlemleri backend API üzerinden yapılacak.
+4. DATABASE_URL sadece backend tarafında process.env.DATABASE_URL ile okunacak.
+5. Admin şifresi koda yazılmayacak. ADMIN_PASSWORD environment variable olarak okunacak.
+6. Replit Secrets ve Render Environment Variables içinde şu değişkenler kullanılacak:
+   - DATABASE_URL
+   - ADMIN_PASSWORD
+   - NODE_ENV=production
+7. Neon bağlantısı için backend’de güvenli pg Pool veya mevcut ORM bağlantısı kullanılacak.
+8. Sayfa yenilense bile kurumlar, öğretmen kodları, sınıflar, öğrenci kodları, akıllı tahta kodları ve öğrenci progress bilgileri DB’den geri gelsin.
+9. Öğrencinin “Bunu öğrendim” işlemi DB’ye yazılsın.
+10. Öğretmen panelinde öğrenci ilerlemesi 120 saniyelik mevcut cache mantığı korunarak gösterilsin.
+11. Öğretmen öğrenci detayına tıkladığında öğrencinin:
+   - aktif modülü
+   - aktif bölümü
+   - tamamladığı bölümler
+   - öğretmen onayı bekleyen bölümler
+   - açılmış/kilitli bölümler
+   görünsün.
+12. Migration/schema oluştur.
+13. Render deploy için gerekli build/start komutlarını ve environment variable talimatlarını bana çıktı olarak ver.
+14. Değişikliklerden sonra bana şunu raporla:
+   - Hangi dosyalar değişti?
+   - Hangi tablolar oluşturuldu?
+   - Replit Secrets içine ne yazacağım?
+   - Render Environment Variables içine ne yazacağım?
+   - Render build command ne olacak?
+   - Render start command ne olacak?
+   - Neon bağlantısı test edildi mi?
+   - Admin → kurum → öğretmen → sınıf → öğrenci → progress akışı test edildi mi?
+
+Tablo yapısı önerisi:
+institutions
+teacher_codes
+classes
+student_codes
+class_board_codes
+student_progress
+module_progress
+teacher_approvals
+
+Lütfen önce projeyi analiz et, mevcut çalışan sistemi bozmadan en az müdahaleyle Neon DB + Render production mimarisine geçir.
