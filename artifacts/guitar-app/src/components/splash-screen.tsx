@@ -32,8 +32,7 @@ function FloatingNote({ x, y, delay, size, color }: typeof NOTES[0]) {
 }
 
 export function SplashScreen({ onComplete }: SplashScreenProps) {
-  const [visible, setVisible]           = useState(true);
-  const [showTapHint, setShowTapHint]   = useState(false);
+  const [visible, setVisible] = useState(true);
   const audioRef   = useRef<HTMLAudioElement | null>(null);
   const timerRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
   const playingRef = useRef(false);
@@ -50,10 +49,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
     const audio = audioRef.current;
     if (!audio || playingRef.current) return;
     audio.play()
-      .then(() => {
-        playingRef.current = true;
-        setShowTapHint(false);
-      })
+      .then(() => { playingRef.current = true; })
       .catch(() => {});
   };
 
@@ -73,14 +69,22 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
       audio.play()
         .then(() => { playingRef.current = true; })
         .catch(() => {
-          /* Autoplay engellendi — 1.2 sn sonra "ses" ipucu balonunu göster */
-          setTimeout(() => setShowTapHint(true), 1200);
+          // Autoplay engellendi — ilk kullanıcı etkileşiminde sessizce başlat
+          const unlock = () => {
+            startAudio();
+            document.removeEventListener("click",      unlock);
+            document.removeEventListener("touchstart", unlock);
+            document.removeEventListener("keydown",    unlock);
+          };
+          document.addEventListener("click",      unlock, { once: true });
+          document.addEventListener("touchstart", unlock, { once: true });
+          document.addEventListener("keydown",    unlock, { once: true });
         });
     }, { once: true });
 
     audio.load();
 
-    /* Güvenlik: her durumda 60 sn sonra geç (kullanıcı bekliyorsa beklesin) */
+    /* Güvenlik: her durumda 60 sn sonra geç */
     timerRef.current = setTimeout(finish, 60000);
 
     return () => {
@@ -146,28 +150,6 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
           >
             Temelden Başla, Müzikle Büyü!
           </motion.p>
-
-          {/* Ses ipucu balonu — sadece autoplay engellendiğinde çıkar */}
-          <AnimatePresence>
-            {showTapHint && (
-              <motion.button
-                key="tap-hint"
-                className="absolute top-6 right-6 flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold text-white pointer-events-auto cursor-pointer"
-                style={{
-                  background: "rgba(108,99,255,0.75)",
-                  backdropFilter: "blur(8px)",
-                  boxShadow: "0 0 20px rgba(108,99,255,0.5)",
-                }}
-                initial={{ opacity: 0, scale: 0.7, y: -10 }}
-                animate={{ opacity: 1, scale: [1, 1.05, 1], y: 0 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ duration: 0.4, scale: { duration: 1.4, repeat: Infinity } }}
-                onClick={(e) => { e.stopPropagation(); startAudio(); }}
-              >
-                🎵 Müziği aç
-              </motion.button>
-            )}
-          </AnimatePresence>
 
           {/* Geç butonu */}
           <motion.button
