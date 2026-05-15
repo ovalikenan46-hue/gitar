@@ -28,6 +28,7 @@ export function BgMusicProvider({ children }: { children: React.ReactNode }) {
 
   const unlock = useCallback(() => {
     unlockedRef.current = true;
+    wantPlayRef.current = true;
     tryPlay();
   }, [tryPlay]);
 

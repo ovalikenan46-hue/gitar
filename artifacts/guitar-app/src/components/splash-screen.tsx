@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import logoImg from "@assets/ChatGPT_Image_1_May_2026_08_31_58_1777613580606.png";
+import { useBgMusic } from "@/contexts/bg-music-context";
 
 interface SplashScreenProps {
   onComplete: () => void;
@@ -31,65 +32,39 @@ function FloatingNote({ x, y, delay, size, color }: typeof NOTES[0]) {
   );
 }
 
+// Splash süresini animasyon bitimiyle eşitle (logo ~1.1s + text ~1.7s + buffer)
+const SPLASH_DURATION = 3800;
+
 export function SplashScreen({ onComplete }: SplashScreenProps) {
   const [visible, setVisible] = useState(true);
-  const audioRef   = useRef<HTMLAudioElement | null>(null);
-  const timerRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const playingRef = useRef(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { unlock } = useBgMusic();
 
   const finish = () => {
     if (timerRef.current) clearTimeout(timerRef.current);
-    if (audioRef.current) audioRef.current.pause();
     document.body.style.overflow = "";
     setVisible(false);
     setTimeout(onComplete, 650);
   };
 
-  const startAudio = () => {
-    const audio = audioRef.current;
-    if (!audio || playingRef.current) return;
-    audio.play()
-      .then(() => { playingRef.current = true; })
-      .catch(() => {});
-  };
-
   useEffect(() => {
     document.body.style.overflow = "hidden";
 
-    const base = import.meta.env.BASE_URL ?? "/";
-    const audio = new Audio(`${base}sounds/intro.mp3`);
-    audio.volume = 0.85;
-    audio.preload = "auto";
-    audioRef.current = audio;
+    // Müziği hemen başlatmaya çalış (bg music context üzerinden)
+    unlock();
 
-    audio.addEventListener("ended", () => setTimeout(finish, 350), { once: true });
-    audio.addEventListener("error",  () => { timerRef.current = setTimeout(finish, 5000); }, { once: true });
+    // Tarayıcı autoplay'i engellerse ilk etkileşimde başlat
+    const handleInteraction = () => { unlock(); };
+    document.addEventListener("click",      handleInteraction, { once: true });
+    document.addEventListener("touchstart", handleInteraction, { once: true });
 
-    audio.addEventListener("canplaythrough", () => {
-      audio.play()
-        .then(() => { playingRef.current = true; })
-        .catch(() => {
-          // Autoplay engellendi — ilk kullanıcı etkileşiminde sessizce başlat
-          const unlock = () => {
-            startAudio();
-            document.removeEventListener("click",      unlock);
-            document.removeEventListener("touchstart", unlock);
-            document.removeEventListener("keydown",    unlock);
-          };
-          document.addEventListener("click",      unlock, { once: true });
-          document.addEventListener("touchstart", unlock, { once: true });
-          document.addEventListener("keydown",    unlock, { once: true });
-        });
-    }, { once: true });
-
-    audio.load();
-
-    /* Güvenlik: her durumda 60 sn sonra geç */
-    timerRef.current = setTimeout(finish, 60000);
+    // Animasyon bittikten sonra otomatik geç
+    timerRef.current = setTimeout(finish, SPLASH_DURATION);
 
     return () => {
-      clearTimeout(timerRef.current!);
-      audio.pause();
+      if (timerRef.current) clearTimeout(timerRef.current);
+      document.removeEventListener("click",      handleInteraction);
+      document.removeEventListener("touchstart", handleInteraction);
       document.body.style.overflow = "";
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -106,7 +81,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.6, ease: "easeInOut" }}
-          onClick={startAudio}
+          onClick={() => unlock()}
         >
           {NOTES.map((n, i) => <FloatingNote key={i} {...n} />)}
 
