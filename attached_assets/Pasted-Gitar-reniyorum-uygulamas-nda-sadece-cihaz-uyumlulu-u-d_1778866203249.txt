@@ -1,0 +1,43 @@
+Gitar Öğreniyorum uygulamasında sadece cihaz uyumluluğu düzeltmesi yap.
+
+ÖNEMLİ:
+- Mevcut sistemi bozma.
+- Görsel tasarımı değiştirme.
+- İçerikleri değiştirme.
+- Animasyonların görsel mantığını değiştirme.
+- Database, auth, admin, öğretmen, öğrenci, kod sistemi, API ve veri akışına dokunma.
+- Migration, seed, tablo değişikliği yapma.
+- Sadece uygulamanın eski cihazlarda açılmasını sağlayacak teknik uyumluluk düzenlemesi yap.
+
+HEDEF:
+Uygulama aynı görsel içerikle şu cihazlarda sorunsuz açılsın:
+- iPhone / iPad minimum iOS 12 Safari
+- Android minimum Android 8 Chrome/WebView
+- Tabletler
+- Bilgisayarlar
+- Akıllı tahtalar
+
+YAPILACAKLAR:
+1. Uygulamada iOS 12 ve eski Android cihazlarda crash oluşturabilecek modern JS/CSS kullanımlarını kontrol et.
+2. Gerekirse uyumlu polyfill veya fallback ekle.
+3. CSS tarafında eski Safari uyumsuzluklarını düzelt:
+   - dvh/svh yerine güvenli vh fallback kullan.
+   - gap, backdrop-filter, complex filter, mask-image gibi sorun çıkarabilecek kullanımlara fallback ekle.
+   - overflow-x taşmalarını engelle.
+4. Ağır animasyonları tamamen kaldırma; sadece eski cihazlarda daha güvenli çalışacak hale getir.
+5. requestAnimationFrame, lazy load veya güvenli başlangıç kontrolü kullanarak ilk açılışta sayfanın kapanmasını engelle.
+6. Null/undefined hatası oluşturabilecek alanları güvenli hale getir.
+7. Mobil cihazlarda bellek taşmasına sebep olan büyük görsel/canvas/animasyon yükleri varsa optimize et ama görsel görünümü koru.
+8. prefers-reduced-motion açık olan cihazlarda animasyon daha hafif çalışsın.
+9. Herhangi bir sayfa hata verirse tüm uygulama kapanmasın; aynı tasarım diliyle güvenli fallback göster.
+10. Build ve typecheck hatasız geçsin.
+
+KABUL KRİTERLERİ:
+- Görsel tasarım aynı kalacak.
+- Sayfa içeriği aynı kalacak.
+- Sadece uyumluluk ve açılma problemi düzeltilecek.
+- iOS 12 Safari ve Android 8+ cihazlarda uygulama açılacak.
+- Tablet, bilgisayar ve akıllı tahtada mevcut görünüm korunacak.
+- Diğer sistem akışlarına dokunulmayacak.
+
+İşlem sonunda sadece değiştirilen dosyaları ve yapılan teknik düzeltmeleri kısa raporla.

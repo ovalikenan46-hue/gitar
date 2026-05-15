@@ -3,8 +3,9 @@ import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, MotionConfig } from "framer-motion";
 import { Toaster as SonnerToaster } from "sonner";
+import { ErrorBoundary } from "@/components/error-boundary";
 
 // Layouts
 import { Protected } from "@/components/layout/protected";
@@ -119,15 +120,19 @@ function AppInner() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <BgMusicProvider>
-          <AppInner />
-        </BgMusicProvider>
-        <Toaster />
-        <SonnerToaster richColors position="top-center" />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <MotionConfig reducedMotion="user">
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <BgMusicProvider>
+              <AppInner />
+            </BgMusicProvider>
+            <Toaster />
+            <SonnerToaster richColors position="top-center" />
+          </TooltipProvider>
+        </QueryClientProvider>
+      </MotionConfig>
+    </ErrorBoundary>
   );
 }
 

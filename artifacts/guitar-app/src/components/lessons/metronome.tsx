@@ -11,7 +11,11 @@ import { Button } from "@/components/ui/button";
 let audioCtx: AudioContext | null = null;
 
 function getAudioCtx(): AudioContext {
-  if (!audioCtx) audioCtx = new AudioContext();
+  if (!audioCtx) {
+    const Ctx = window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    audioCtx = new Ctx();
+  }
   return audioCtx;
 }
 

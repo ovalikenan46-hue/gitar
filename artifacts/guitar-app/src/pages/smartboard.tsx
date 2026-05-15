@@ -137,7 +137,8 @@ export default function Smartboard() {
   };
 
   const byModule = classInfo.lessons.reduce<Record<number, SmartboardLesson[]>>((acc, l) => {
-    (acc[l.moduleNumber] ??= []).push(l);
+    if (!acc[l.moduleNumber]) acc[l.moduleNumber] = [];
+    acc[l.moduleNumber].push(l);
     return acc;
   }, {});
 

@@ -85,7 +85,7 @@ export default function Landing() {
       {/* Mute / unmute — bottom-left */}
       <motion.button
         className="absolute bottom-5 left-5 z-30 w-11 h-11 rounded-full flex items-center justify-center shadow-lg border border-white/50 focus:outline-none"
-        style={{ background: "rgba(255,255,255,0.55)", backdropFilter: "blur(10px)" }}
+        style={{ background: "rgba(255,255,255,0.55)", backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" } as never}
         onClick={toggleMusic}
         whileTap={{ scale: 0.88 }}
         aria-label={playing ? "Müziği kapat" : "Müziği aç"}
