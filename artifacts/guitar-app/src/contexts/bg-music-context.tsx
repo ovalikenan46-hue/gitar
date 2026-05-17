@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useContext } from "react";
 
 export interface BgMusicCtx {
   playing: boolean;
@@ -9,9 +9,13 @@ export interface BgMusicCtx {
 }
 
 const BASE = (import.meta as { env: { BASE_URL: string } }).env.BASE_URL ?? "/";
+
+/**
+ * .mp3 uzantılı dosya: iOS Safari audio/mpeg MIME tipini doğru alır.
+ * .mpeg uzantısı video/mpeg olarak servis edilip iOS'ta bloklanıyordu.
+ */
 export const BG_SRC =
-  BASE.replace(/\/$/, "") +
-  "/sounds/gitar_uygulama_alt_muzik_1777625374974.mpeg";
+  BASE.replace(/\/$/, "") + "/sounds/bg-music.mp3";
 
 export const BgMusicContext = createContext<BgMusicCtx>({
   playing: false,
