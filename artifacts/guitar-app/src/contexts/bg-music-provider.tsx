@@ -2,17 +2,17 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { BgMusicContext, BG_SRC } from "./bg-music-context";
 
 export function BgMusicProvider({ children }: { children: React.ReactNode }) {
-  const audioRef     = useRef<HTMLAudioElement | null>(null);
-  const unlockedRef  = useRef(false);   // true after first user gesture
-  const wantPlayRef  = useRef(false);   // true while landing is visible
+  const audioRef    = useRef<HTMLAudioElement | null>(null);
+  const unlockedRef = useRef(false);  // true after first user gesture
+  const wantPlayRef = useRef(false);  // true while landing is visible
   const [playing, setPlaying] = useState(false);
 
-  /* ── Audio element oluştur ────────────────────────────── */
+  /* ── Audio element — preload:auto ile hazır beklet ────── */
   useEffect(() => {
     const audio = new Audio(BG_SRC);
     audio.loop    = true;
     audio.volume  = 0.45;
-    audio.preload = "metadata"; // kapıyı aç, tamamını hemen indirme
+    audio.preload = "auto"; // tam olarak yükle — ilk dokunuşta gecikme olmasın
     audioRef.current = audio;
     return () => {
       audio.pause();
@@ -20,34 +20,51 @@ export function BgMusicProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  /* ── Çal: her iki koşul sağlandığında ────────────────── */
+  /* ── Çal ─────────────────────────────────────────────── */
   const tryPlay = useCallback(() => {
     const audio = audioRef.current;
     if (!audio || !unlockedRef.current || !wantPlayRef.current) return;
     if (!audio.paused) return;
     audio.play()
       .then(() => setPlaying(true))
-      .catch(() => { /* autoplay engellendi — sessizce devam */ });
+      .catch(() => {/* autoplay engellendi — kullanıcı hareketi bekleniyor */});
   }, []);
 
-  /* ── Ses kilidini aç (kullanıcı dokunuşunda) ─────────── */
+  /* ── Ses kilidini aç (kullanıcı dokunuşunda çağrılır) ── */
   const unlock = useCallback(() => {
+    if (unlockedRef.current) {
+      // Zaten açık — sadece çalmayı dene
+      wantPlayRef.current = true;
+      tryPlay();
+      return;
+    }
     unlockedRef.current = true;
     wantPlayRef.current = true;
 
-    // iOS Safari: AudioContext ile sessizce kilidi aç
-    try {
-      const AudioCtxCtor =
-        window.AudioContext ||
-        (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-      if (AudioCtxCtor) {
-        const ctx = new AudioCtxCtor();
-        if (ctx.state === "suspended") ctx.resume().catch(() => {});
-        setTimeout(() => ctx.close().catch(() => {}), 500);
-      }
-    } catch { /* desteklenmiyor */ }
+    const audio = audioRef.current;
+    if (!audio) return;
 
-    tryPlay();
+    // Kısa süreliğine sessiz çal/durdur → iOS/Android audio session kilidi açılır
+    audio.volume = 0;
+    audio.play()
+      .then(() => {
+        audio.pause();
+        audio.currentTime = 0;
+        audio.volume = 0.45;
+        // Şimdi gerçekten başlat
+        if (wantPlayRef.current) {
+          audio.play()
+            .then(() => setPlaying(true))
+            .catch(() => {});
+        }
+      })
+      .catch(() => {
+        // Sessiz çalma bile başarısız oldu — direkt dene
+        audio.volume = 0.45;
+        audio.play()
+          .then(() => setPlaying(true))
+          .catch(() => {});
+      });
   }, [tryPlay]);
 
   /* ── Landing açıldığında devam et ────────────────────── */
