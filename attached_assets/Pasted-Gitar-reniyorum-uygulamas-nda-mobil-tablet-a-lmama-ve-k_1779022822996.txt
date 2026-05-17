@@ -1,0 +1,86 @@
+Gitar Öğreniyorum uygulamasında mobil/tablet açılmama ve kasma problemini özellikle animasyon/render yükü açısından düzelt.
+
+ÖNEMLİ:
+- Mevcut sistemi bozma.
+- Database, auth, admin, öğretmen, öğrenci kod sistemi, API ve veri akışına dokunma.
+- Görsel tasarımı değiştirme.
+- Logo, renkler, giriş kartı ve genel görünüm aynı kalsın.
+- Bilgisayarda çalışan görünümü bozma.
+- Sadece mobil/tablet performans, render ve animasyon problemini düzelt.
+
+SORUN:
+Bilgisayarda uygulama sorunsuz açılıyor.
+Telefon ve tabletlerde:
+- logo sonrası beyaz giriş kartı boş kalıyor,
+- içerik geç render oluyor,
+- sayfa dönüp kalıyor,
+- animasyon/render yükü cihazı kilitliyor gibi davranıyor.
+
+BU SORUNA ODAKLAN:
+Sorunun büyük ihtimalle ağır animasyon, blur, motion veya mobil GPU/render yükünden kaynaklandığını varsayarak optimizasyon yap.
+
+YAPILACAKLAR:
+1. Framer Motion animasyonlarını kontrol et:
+   - initial opacity 0’da kalma problemini düzelt
+   - transform translate/scale animasyonlarının render kilitlemesini önle
+   - whileInView / layout / shared layout animasyonlarını mobilde güvenli hale getir
+   - mobilde ağır motion efektlerini azalt
+   - giriş ekranı animasyon beklemeden görünür olsun
+
+2. Mobil güvenli animasyon modu ekle:
+   - telefon/tablette otomatik Lite Motion aktif olsun
+   - animasyon süreleri düşürülsün
+   - blur ve glow efektleri hafifletilsin
+   - particle/floating efektleri mobilde azaltılsın
+   - backdrop-filter yoğunluğu azaltılsın
+   - mobil GPU’yu zorlayan efektler güvenli hale getirilsin
+
+3. İçerik görünürlüğü:
+   - giriş kartı hiçbir zaman opacity 0’da kalmasın
+   - giriş seçenekleri mutlaka render olsun
+   - animasyon başarısız olsa bile içerik görünür olsun
+   - beyaz kart boş görünmesin
+
+4. CSS performansı:
+   - ağır blur/filter efektlerini optimize et
+   - will-change kullanımını kontrol et
+   - overflow ve z-index katmanlarını sadeleştir
+   - mobil Safari render buglarını önle
+   - 100vh fallback koru
+
+5. Splash/logo ekranı:
+   - maksimum kısa süre sonra login ekranına geçsin
+   - mobilde sonsuz animasyon/loading olmasın
+
+6. Performans optimizasyonu:
+   - mobilde ilk açılışta ağır animasyonları geciktir
+   - lazy load güvenli çalışsın
+   - giriş ekranı önce hızlı açılsın
+   - efektler sonra devreye girsin
+
+7. Cihaz uyumluluğu:
+   - iOS 12+
+   - Android 8+
+   - telefonlar
+   - tabletler
+   - bilgisayarlar
+   - akıllı tahtalar
+
+TEST ET:
+- npm run build
+- npm run typecheck
+- iPhone Safari viewport
+- iPhone Chrome viewport
+- tablet viewport
+- düşük performanslı mobil viewport
+
+KABUL KRİTERLERİ:
+- Telefonlarda giriş ekranı boş kalmayacak.
+- Tabletlerde uygulama takılmayacak.
+- Mobilde kasma ciddi şekilde azalacak.
+- Animasyonlar cihazı kilitlemeyecek.
+- Bilgisayardaki görünüm bozulmayacak.
+- Tasarım aynı kalacak.
+- Sistem ve veri yapısı değişmeyecek.
+
+İşlem sonunda sadece değişen dosyaları ve yapılan optimizasyonları kısa raporla.
