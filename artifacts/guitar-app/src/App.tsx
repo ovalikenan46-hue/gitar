@@ -27,6 +27,9 @@ import NotFound from "@/pages/not-found";
 // Splash
 import { SplashScreen } from "@/components/splash-screen";
 
+// PWA Install
+import { InstallPrompt } from "@/components/install-prompt";
+
 // Audio
 import { BgMusicProvider } from "@/contexts/bg-music-provider";
 import { useBgMusic } from "@/contexts/bg-music-context";
@@ -127,6 +130,7 @@ function App() {
             <BgMusicProvider>
               <AppInner />
             </BgMusicProvider>
+            <InstallPrompt />
             <Toaster />
             <SonnerToaster richColors position="top-center" />
           </TooltipProvider>

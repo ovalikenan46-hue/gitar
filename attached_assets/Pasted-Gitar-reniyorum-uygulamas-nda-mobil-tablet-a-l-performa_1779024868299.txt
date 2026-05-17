@@ -1,0 +1,128 @@
+Gitar Öğreniyorum uygulamasında mobil/tablet açılış performansı, mobil app hissi, ana ekrana ekleme ikonu ve açılış animasyonu-ses senkronizasyonunu birlikte düzelt.
+
+ÖNEMLİ KURALLAR:
+- Mevcut sistemi bozma.
+- Database, migration, seed, auth, admin, öğretmen, öğrenci kod sistemi, API ve veri akışına dokunma.
+- Bilgisayarda çalışan mevcut yapıyı bozma.
+- Görsel içerikleri değiştirme.
+- Logo, renkler, giriş kartı ve genel marka görünümü aynı kalsın.
+- Sadece mobil/tablet performans, açılış, PWA/ana ekrana ekleme ve ses-animasyon senkronizasyonu düzeltilecek.
+
+ANA SORUN:
+Uygulama bilgisayarda açılıyor fakat telefon ve tablette geç açılıyor, animasyon düzgün çalışmıyor ve cihaz yük altında kalıyor.
+Mobil/tablette Web App gibi değil, mobil uygulama gibi hızlı ve sade açılmalı.
+
+1. FAST MOBILE MODE:
+Telefon ve tabletlerde otomatik Fast Mobile Mode aktif olsun.
+Koşullar:
+- ekran genişliği 1024px altıysa
+- dokunmatik cihazsa
+- prefers-reduced-motion açıksa
+
+Fast Mobile Mode aktifken:
+- ağır splash animasyonları kapansın
+- floating note animasyonları kapansın
+- büyük blur blob animasyonları kapansın
+- clef/logo döngü animasyonları kapansın
+- Framer Motion giriş animasyonları kapansın
+- backdrop-blur, glow, filter ve büyük gradient yükleri minimuma insin
+- giriş kartı ilk render’da direkt görünsün
+- opacity: 0, scale, translate başlangıç animasyonları mobilde kullanılmasın
+- mobilde maksimum 1 saniye içinde giriş ekranı görünür olsun
+
+Masaüstünde mevcut animasyonlar korunabilir.
+
+2. MOBİL APP HİSSİ:
+Telefon ve tablette uygulama mobil app gibi çalışsın.
+- Sayfalar arası geçişler sade ve hızlı olsun.
+- Geri dönüş butonları mobil kullanıcı için görünür ve anlaşılır olsun.
+- Öğrenci ekranı, öğretmen ekranı ve ana ekran içinde gerekli yerlerde geri/ana sayfa butonları kontrol edilsin.
+- Tarayıcıda geri basınca kullanıcı boş sayfaya düşmesin.
+- Mobilde header, kart, buton ve giriş alanları taşmasın.
+- Tablet ve telefonda ekran dışına taşma olmasın.
+
+3. ANA EKRANA EKLEME / PWA:
+Uygulama telefona ve tablete ana ekran ikonu olarak eklenebilsin.
+
+Yapılacaklar:
+- manifest.json kontrol edilsin veya yoksa eklensin.
+- Uygulama adı: Gitar Öğreniyorum
+- short_name: Gitar
+- start_url doğru ayarlansın.
+- display: standalone olsun.
+- background_color ve theme_color marka tasarımına uygun olsun.
+- iOS için apple-touch-icon eklensin.
+- Android için maskable icon desteği eklensin.
+- favicon ve PWA ikonları uygulamanın kendi gitar logosuyla oluşturulsun/kullanılsın.
+- Ana ekrana eklenince telefonda/tablette uygulama kendi logosuyla ikon olarak görünsün.
+- Öğrenci ekranında ve ana ekranda “Ana ekrana ekle” veya kurulum ikon alanı sade şekilde eklensin.
+- iOS Safari için kullanıcıya kısa açıklama gösterilsin:
+  “Paylaş butonuna bas → Ana Ekrana Ekle”
+- Android Chrome için beforeinstallprompt destekleniyorsa kurulum butonu çalışsın.
+
+4. AÇILIŞ ANİMASYONU VE SES SENKRONİZASYONU:
+Açılışta kullanılan ses ve animasyon senkron çalışsın.
+
+ÖNEMLİ:
+Mobil tarayıcılar kullanıcı dokunmadan sesi otomatik başlatmayabilir.
+Bu yüzden:
+- İlk kullanıcı dokunuşunda/tıklamasında audio unlock yapılsın.
+- Kullanıcı “Başla” veya giriş ekranına ilk dokunduğunda ses ve animasyon aynı anda başlasın.
+- Ses animasyondan geç başlamasın.
+- Ses yüklenmeden animasyon başlamasın; gerekiyorsa kısa preload yapılır.
+- Ses yüklenemezse uygulama takılmasın, sessiz devam etsin.
+- Açılış animasyonu bittikten sonra kullanıcı ana giriş ekranına teslim edilsin.
+- Mobilde animasyon ağırsa sade versiyon kullanılsın ama ses başlangıcı senkron kalsın.
+
+5. PERFORMANS:
+- Mobilde ilk açılışta ağır görsel, animasyon veya ses yükleri geciktirilsin.
+- Önce giriş ekranı hızlı render edilsin.
+- Ağır assetler sonradan yüklensin.
+- Lazy load/Suspense mobilde sonsuz loading oluşturmasın.
+- iOS Safari ve Android Chrome’da beyaz ekran, boş kart, geç yükleme ve takılma olmasın.
+
+6. UYUMLULUK:
+Minimum hedef:
+- iOS 12+
+- Android 8+
+- iPhone
+- iPad
+- Android telefon
+- Android tablet
+- bilgisayar
+- akıllı tahta
+
+Kontrol edilecekler:
+- 100vh fallback
+- overflow-x hidden
+- min-height güvenliği
+- eski Safari CSS fallback
+- webkitAudioContext fallback
+- null/undefined güvenliği
+
+TEST:
+- npm run typecheck
+- npm run build
+- iPhone Safari viewport
+- iPhone Chrome viewport
+- Android Chrome viewport
+- tablet viewport
+- desktop viewport
+- akıllı tahta geniş ekran viewport
+
+KABUL KRİTERLERİ:
+- Telefonlarda uygulama hızlı açılacak.
+- Tabletlerde uygulama hızlı açılacak.
+- Giriş kartı boş kalmayacak.
+- Animasyon takılması olmayacak.
+- Mobilde kasma olmayacak.
+- PWA ana ekrana eklenebilecek.
+- Ana ekrana eklenince uygulama kendi gitar logosuyla görünecek.
+- Öğrenci ve ana ekranda kurulum yönlendirmesi anlaşılır olacak.
+- Geri dönüş ve ana sayfa butonları mobil app hissi verecek.
+- Açılış sesi ve animasyon ilk kullanıcı etkileşiminden sonra aynı anda başlayacak.
+- Ses yüklenmezse uygulama bozulmayacak.
+- Bilgisayar görünümü bozulmayacak.
+- Sistem, database, API ve kullanıcı akışı değişmeyecek.
+
+İşlem sonunda sadece değişen dosyaları ve yapılan teknik düzeltmeleri kısa raporla.
