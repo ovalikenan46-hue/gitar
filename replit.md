@@ -51,3 +51,12 @@ Modern, playful guitar learning web app for Turkish middle school students (ages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks
 - `pnpm --filter @workspace/db run push` — push DB schema
 - `pnpm --filter @workspace/scripts run seed` — seed lessons + demo institution
+
+## GitHub Push
+
+```bash
+git push https://ovalikenan46-hue:$GITHUB_TOKEN@github.com/ovalikenan46-hue/gitar.git main
+```
+
+- Token `GITHUB_TOKEN` environment variable olarak kaydedildi (development scope).
+- Her checkpoint sonrası bu komutla push yapılır.
