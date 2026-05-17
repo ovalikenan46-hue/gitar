@@ -55,8 +55,8 @@ Modern, playful guitar learning web app for Turkish middle school students (ages
 ## GitHub Push
 
 ```bash
-git push https://ovalikenan46-hue:$GITHUB_TOKEN@github.com/ovalikenan46-hue/gitar.git main
+git push https://ovalikenan46-hue:$GITHUB_PERSONAL_ACCESS_TOKEN@github.com/ovalikenan46-hue/gitar.git main
 ```
 
-- Token `GITHUB_TOKEN` environment variable olarak kaydedildi (development scope).
+- Token `GITHUB_PERSONAL_ACCESS_TOKEN` secret olarak kaydedildi.
 - Her checkpoint sonrası bu komutla push yapılır.
