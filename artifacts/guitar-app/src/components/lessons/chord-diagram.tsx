@@ -5,22 +5,19 @@ import { Button } from "@/components/ui/button";
 import { Play } from "lucide-react";
 import handImg from "@assets/ChatGPT_Image_1_May_2026_09_50_42_1777618251403.png";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
 interface Finger {
-  string: number; // 0 = high e … 5 = low E
-  fret: number;   // 1–4
-  finger: number; // 1–4
+  string: number;
+  fret: number;
+  finger: number;
   name: string;
 }
 
 interface ChordDef {
   name: string;
   fingers: Finger[];
-  audioFile: string; // filename under public/sounds/
+  audioFile: string;
 }
 
-// ── Chord definitions ─────────────────────────────────────────────────────────
-// string: 0 = high e (1st), 1 = B (2nd), 2 = G (3rd), 3 = D (4th), 4 = A (5th), 5 = low E (6th)
 const CHORDS: Record<string, ChordDef> = {
   Em: {
     name: "Mi Minör (Em)",
@@ -57,7 +54,6 @@ const CHORDS: Record<string, ChordDef> = {
     ],
     audioFile: "chords/D.mp4",
   },
-  // ── Modül 5 ──────────────────────────────────────────────────────────────────
   E: {
     name: "Mi Majör (E)",
     fingers: [
@@ -116,7 +112,6 @@ const CHORDS: Record<string, ChordDef> = {
   },
 };
 
-// ── Visual constants ──────────────────────────────────────────────────────────
 const FINGER_COLORS: Record<number, string> = {
   1: "#22C55E",
   2: "#3B82F6",
@@ -124,7 +119,6 @@ const FINGER_COLORS: Record<number, string> = {
   4: "#EC4899",
 };
 
-// String labels (top = low E, bottom = high e) and thicknesses
 const STRINGS = [
   { label: "E", thickness: 3.2 },
   { label: "A", thickness: 2.6 },
@@ -134,7 +128,6 @@ const STRINGS = [
   { label: "e", thickness: 0.9 },
 ];
 
-// ── Coordinate helpers ────────────────────────────────────────────────────────
 function stringToYPercent(stringNum: number) {
   const idx = 5 - stringNum;
   return ((idx + 0.5) / 6) * 100;
@@ -144,7 +137,6 @@ function fretToXPercent(fretNum: number) {
   return ((fretNum - 0.5) / 4) * 100;
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
 export type ChordCode = "Em" | "Am" | "C" | "D" | "E" | "A" | "Dm" | "G" | "F" | "B7";
 
 export function ChordDiagram({ chordCode }: { chordCode: ChordCode }) {
@@ -170,64 +162,63 @@ export function ChordDiagram({ chordCode }: { chordCode: ChordCode }) {
     if (isPlaying) return;
     setIsPlaying(true);
     setStep(0);
-
     const audio = new Audio(`${import.meta.env.BASE_URL}sounds/${chord.audioFile}`);
     audio.play().catch(() => {});
-
     for (let i = 1; i <= chord.fingers.length; i++) {
       await delay(380);
       setStep(i);
     }
-
     await delay(3000);
     setIsPlaying(false);
   };
 
   return (
-    <div className="w-full flex flex-col items-center gap-5 bg-white rounded-[2rem] p-5 shadow-sm">
-      <h3 className="text-2xl font-bold text-gray-800">{chord.name}</h3>
+    <div className="w-full flex flex-col items-center gap-5 bg-white rounded-[2rem] p-4 sm:p-5 shadow-sm">
+      <h3 className="text-xl sm:text-2xl font-bold text-gray-800">{chord.name}</h3>
 
-      <div className="flex flex-row items-start gap-5 w-full">
+      {/* Küçük ekranlarda dikey, büyük ekranlarda yatay */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-4 sm:gap-5 w-full">
 
-        {/* Hand thumbnail */}
-        <div className="flex-shrink-0 flex flex-col items-center gap-2">
-          <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
-            Parmak Rehberi
-          </span>
+        {/* El görüntüsü + parmak renk listesi — küçük ekranda yatay bölünmüş */}
+        <div className="flex flex-row sm:flex-col items-start gap-3 sm:gap-2 sm:flex-shrink-0">
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+              Parmak Rehberi
+            </span>
+            <button
+              onClick={() => setLightboxOpen(true)}
+              aria-label="Parmak rehberini büyüt"
+              className="relative rounded-xl overflow-hidden border border-gray-100 bg-gray-50 shadow-sm cursor-zoom-in focus:outline-none hover:border-primary/30 transition-colors touch-manipulation"
+              style={{ width: "clamp(110px, 30vw, 168px)", aspectRatio: "168/139" }}
+            >
+              <img
+                src={handImg}
+                alt="Sol El Parmak Rehberi"
+                draggable={false}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-x-0 bottom-0 flex justify-center pb-1">
+                <span className="text-[9px] text-gray-400 bg-white/80 rounded-full px-2 py-0.5 flex items-center gap-0.5">
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+                  </svg>
+                  Büyüt
+                </span>
+              </div>
+            </button>
+          </div>
 
-          <button
-            onClick={() => setLightboxOpen(true)}
-            aria-label="Parmak rehberini büyüt"
-            className="relative rounded-xl overflow-hidden border border-gray-100 bg-gray-50 shadow-sm cursor-zoom-in focus:outline-none hover:border-primary/30 transition-colors"
-            style={{ width: 168, height: 139 }}
-          >
-            <img
-              src={handImg}
-              alt="Sol El Parmak Rehberi"
-              draggable={false}
-              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-            />
-            <div className="absolute inset-x-0 bottom-0 flex justify-center pb-1">
-              <span className="text-[9px] text-gray-400 bg-white/80 rounded-full px-2 py-0.5 flex items-center gap-0.5">
-                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
-                </svg>
-                Büyüt
-              </span>
-            </div>
-          </button>
-
-          <div className="flex flex-col gap-1 mt-0.5">
+          <div className="flex flex-col gap-1 mt-1">
             {[
               { n: 1, label: "İşaret" },
               { n: 2, label: "Orta"   },
               { n: 3, label: "Yüzük"  },
               { n: 4, label: "Serçe"  },
             ].map(({ n, label }) => (
-              <span key={n} className="flex items-center gap-1 text-[10px] font-medium" style={{ color: FINGER_COLORS[n] }}>
+              <span key={n} className="flex items-center gap-1 text-[11px] font-medium" style={{ color: FINGER_COLORS[n] }}>
                 <span
                   className="inline-flex items-center justify-center rounded-full text-white font-bold flex-shrink-0"
-                  style={{ width: 14, height: 14, fontSize: 8, background: FINGER_COLORS[n] }}
+                  style={{ width: 16, height: 16, fontSize: 9, background: FINGER_COLORS[n] }}
                 >
                   {n}
                 </span>
@@ -237,12 +228,11 @@ export function ChordDiagram({ chordCode }: { chordCode: ChordCode }) {
           </div>
         </div>
 
-        {/* Horizontal fretboard */}
+        {/* Perde diyagramı */}
         <div className="flex-1 flex flex-col gap-1.5 min-w-0">
           <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider self-center">
             Perde Diyagramı
           </span>
-
           <div className="flex ml-7">
             {[1, 2, 3, 4].map(f => (
               <div key={f} className="flex-1 text-center text-[10px] font-semibold text-gray-400">
@@ -250,7 +240,6 @@ export function ChordDiagram({ chordCode }: { chordCode: ChordCode }) {
               </div>
             ))}
           </div>
-
           <div className="flex items-stretch gap-0">
             <div className="flex flex-col justify-around pr-1.5" style={{ width: 26 }}>
               {STRINGS.map(({ label }) => (
@@ -262,7 +251,7 @@ export function ChordDiagram({ chordCode }: { chordCode: ChordCode }) {
 
             <div
               className="relative flex-1 bg-[#3E2723] rounded-r-sm border-[3px] border-[#2E1A17]"
-              style={{ height: 168, borderLeftWidth: 14, borderLeftColor: "#F5F5F5" }}
+              style={{ height: 160, borderLeftWidth: 14, borderLeftColor: "#F5F5F5" }}
             >
               <div className="absolute inset-0 flex">
                 {[1, 2, 3].map(f => (
@@ -309,7 +298,7 @@ export function ChordDiagram({ chordCode }: { chordCode: ChordCode }) {
         </div>
       </div>
 
-      <Button size="lg" className="rounded-2xl px-10" onClick={startAnimation} disabled={isPlaying}>
+      <Button size="lg" className="rounded-2xl px-10 touch-manipulation" onClick={startAnimation} disabled={isPlaying}>
         <Play className="w-5 h-5 mr-2 fill-current" />
         {isPlaying ? "Çalınıyor…" : "Çal"}
       </Button>

@@ -23,9 +23,7 @@ interface TransitionDef {
   steps: string[];
 }
 
-// string: 0=high e (1st), 1=B (2nd), 2=G (3rd), 3=D (4th), 4=A (5th), 5=low E (6th)
 const TRANSITIONS: Record<string, TransitionDef> = {
-  // ── Modül 3 ──────────────────────────────────────────────────────────────────
   "3A": {
     title: "Em → Am Geçişi",
     fromName: "Em", toName: "Am",
@@ -72,8 +70,6 @@ const TRANSITIONS: Record<string, TransitionDef> = {
       "Yüzük parmağını (3) A telinden B teline taşı — D hazır! 🎸",
     ],
   },
-
-  // ── Modül 6A ─────────────────────────────────────────────────────────────────
   "6A1": {
     title: "Em → E Geçişi",
     fromName: "Em", toName: "E",
@@ -119,8 +115,6 @@ const TRANSITIONS: Record<string, TransitionDef> = {
       "Serçe parmağını (4) B teline, 2. perdeye ekle — A hazır! 🎸",
     ],
   },
-
-  // ── Modül 6B ─────────────────────────────────────────────────────────────────
   "6B1": {
     title: "Dm → C Geçişi",
     fromName: "Dm", toName: "C",
@@ -154,8 +148,6 @@ const TRANSITIONS: Record<string, TransitionDef> = {
       "Yüzük (3) kaldır, Serçe (4) e teline 3. perdeye ekle — G hazır! 🎸",
     ],
   },
-
-  // ── Modül 6C ─────────────────────────────────────────────────────────────────
   "6C1": {
     title: "C → F Geçişi (Barre)",
     fromName: "C", toName: "F",
@@ -190,8 +182,6 @@ const TRANSITIONS: Record<string, TransitionDef> = {
       "Yüzük parmağını (3) A telinden D teline taşı — Em hazır! 🎸",
     ],
   },
-
-  // ── Modül 6D ─────────────────────────────────────────────────────────────────
   "6D1": {
     title: "Em → B7 Geçişi",
     fromName: "Em", toName: "B7",
@@ -297,7 +287,6 @@ export function ChordTransition({ transitionCode }: { transitionCode: Transition
         ? { visible: true,  str: f.fromStr, fret: f.fromFret }
         : { visible: false, str: f.fromStr, fret: f.fromFret };
     }
-    // move
     return step < moveStep
       ? { visible: true, str: f.fromStr, fret: f.fromFret }
       : { visible: true, str: f.toStr,   fret: f.toFret   };
@@ -310,16 +299,17 @@ export function ChordTransition({ transitionCode }: { transitionCode: Transition
     audio.play().catch(() => {});
   };
 
-  // Which finger nums appear in this transition
   const usedNums = Array.from(new Set(def.fingers.map(f => f.num))).sort();
 
   return (
-    <div className="w-full flex flex-col items-center gap-5 bg-white rounded-[2rem] p-5 shadow-sm">
-      <h3 className="text-2xl font-bold text-gray-800">{def.title}</h3>
+    <div className="w-full flex flex-col items-center gap-4 bg-white rounded-[2rem] p-4 sm:p-5 shadow-sm">
+      <h3 className="text-xl sm:text-2xl font-bold text-gray-800 text-center">{def.title}</h3>
 
-      <div className="flex flex-row items-start gap-5 w-full">
-        {/* Info panel */}
-        <div className="flex-shrink-0 w-40 flex flex-col gap-3">
+      {/* Küçük ekranlarda dikey, büyük ekranlarda yatay */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-start gap-4 sm:gap-5 w-full">
+
+        {/* Bilgi paneli */}
+        <div className="sm:flex-shrink-0 sm:w-40 flex flex-col gap-3">
           <div className="bg-primary/5 rounded-2xl p-3">
             <p className="font-bold text-primary text-[10px] uppercase tracking-wider mb-1">
               Adım {step} / {totalSteps}
@@ -345,9 +335,9 @@ export function ChordTransition({ transitionCode }: { transitionCode: Transition
             )}
           </AnimatePresence>
 
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-row sm:flex-col gap-2 sm:gap-1 flex-wrap">
             {usedNums.map((n) => (
-              <span key={n} className="flex items-center gap-1 text-[10px] font-medium" style={{ color: FINGER_COLORS[n] ?? "#6C63FF" }}>
+              <span key={n} className="flex items-center gap-1 text-[11px] font-medium" style={{ color: FINGER_COLORS[n] ?? "#6C63FF" }}>
                 <span
                   className="inline-flex items-center justify-center rounded-full text-white font-bold flex-shrink-0"
                   style={{ width: 14, height: 14, fontSize: 8, background: FINGER_COLORS[n] ?? "#6C63FF" }}
@@ -360,7 +350,7 @@ export function ChordTransition({ transitionCode }: { transitionCode: Transition
           </div>
         </div>
 
-        {/* Fretboard */}
+        {/* Perde diyagramı */}
         <div className="flex-1 flex flex-col gap-1.5 min-w-0">
           <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider self-center">
             Perde Diyagramı
@@ -383,9 +373,8 @@ export function ChordTransition({ transitionCode }: { transitionCode: Transition
 
             <div
               className="relative flex-1 bg-[#3E2723] rounded-r-sm border-[3px] border-[#2E1A17]"
-              style={{ height: 168, borderLeftWidth: 14, borderLeftColor: "#F5F5F5" }}
+              style={{ height: 160, borderLeftWidth: 14, borderLeftColor: "#F5F5F5" }}
             >
-              {/* Fret lines */}
               <div className="absolute inset-0 flex">
                 {[1, 2, 3].map((f) => (
                   <div key={f} className="flex-1 border-r-[2px] border-[#BDBDBD]" />
@@ -393,7 +382,6 @@ export function ChordTransition({ transitionCode }: { transitionCode: Transition
                 <div className="flex-1" />
               </div>
 
-              {/* Strings */}
               {STRINGS.map(({ label, thickness }, idx) => (
                 <div
                   key={label}
@@ -402,7 +390,6 @@ export function ChordTransition({ transitionCode }: { transitionCode: Transition
                 />
               ))}
 
-              {/* Movement arrow — only for "move" action */}
               {activeMovable && activeMovable.action === "move" && (() => {
                 const mIdx = movableFingers.indexOf(activeMovable);
                 if (step !== mIdx + 1) return null;
@@ -426,7 +413,6 @@ export function ChordTransition({ transitionCode }: { transitionCode: Transition
                 );
               })()}
 
-              {/* Fingers — each wrapped in its own AnimatePresence for smooth exit */}
               {def.fingers.map((f) => {
                 const pos = getPos(f);
                 const color = FINGER_COLORS[f.num] ?? "#6C63FF";
@@ -470,43 +456,32 @@ export function ChordTransition({ transitionCode }: { transitionCode: Transition
         </div>
       </div>
 
-      {/* Controls */}
-      <div className="flex items-center gap-3 w-full justify-center flex-wrap">
-        <Button variant="outline" size="sm" className="rounded-xl" onClick={() => playAudio(def.fromAudio)}>
+      {/* Kontroller */}
+      <div className="flex items-center gap-2 sm:gap-3 w-full justify-center flex-wrap">
+        <Button variant="outline" size="sm" className="rounded-xl touch-manipulation" onClick={() => playAudio(def.fromAudio)}>
           <Play className="w-4 h-4 mr-1 fill-current" /> {def.fromName} Çal
         </Button>
         <div className="flex gap-2">
-          <Button variant="outline" size="icon" className="rounded-xl"
+          <Button variant="outline" size="icon" className="rounded-xl touch-manipulation"
             onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0}>
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <Button size="icon" className="rounded-xl"
+          <Button size="icon" className="rounded-xl touch-manipulation"
             onClick={() => setStep(Math.min(totalSteps, step + 1))} disabled={isComplete}>
             <ChevronRight className="w-4 h-4" />
           </Button>
         </div>
         {isComplete ? (
-          <Button size="sm" className="rounded-xl bg-accent text-accent-foreground hover:bg-accent/90"
+          <Button size="sm" className="rounded-xl bg-accent text-accent-foreground hover:bg-accent/90 touch-manipulation"
             onClick={() => playAudio(def.toAudio)}>
             <Play className="w-4 h-4 mr-1 fill-current" /> {def.toName} Çal
           </Button>
         ) : (
-          <Button variant="ghost" size="sm" className="rounded-xl text-muted-foreground" onClick={() => setStep(0)}>
+          <Button variant="ghost" size="sm" className="rounded-xl touch-manipulation"
+            onClick={() => setStep(0)} disabled={step === 0}>
             <RotateCcw className="w-4 h-4 mr-1" /> Başa Dön
           </Button>
         )}
-      </div>
-
-      {/* Progress dots */}
-      <div className="flex gap-1.5 items-center">
-        {Array.from({ length: totalSteps + 1 }, (_, i) => (
-          <div
-            key={i}
-            className={`h-1.5 rounded-full transition-all duration-300 ${
-              i === step ? "w-6 bg-primary" : i < step ? "w-3 bg-primary/40" : "w-3 bg-muted"
-            }`}
-          />
-        ))}
       </div>
     </div>
   );

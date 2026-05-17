@@ -39,9 +39,10 @@ function FloatingNote({ x, y, delay, size, color, lite }: typeof NOTES_DESKTOP[0
   );
 }
 
-/* Ana ekrana ekle kılavuzu — sadece mobilde gösterilir */
+/* Ana ekrana ekle kılavuzu — sadece mobilde, standalone değilse */
 function InstallHint() {
-  const ua = typeof navigator !== "undefined" ? navigator.userAgent : "";
+  if (typeof window === "undefined") return null;
+  const ua = navigator.userAgent;
   const isIOS = /iPad|iPhone|iPod/.test(ua) && !("MSStream" in window);
   const isAndroid = /Android/.test(ua);
   if (!isIOS && !isAndroid) return null;
@@ -49,10 +50,9 @@ function InstallHint() {
     window.matchMedia("(display-mode: standalone)").matches ||
     (navigator as { standalone?: boolean }).standalone === true;
   if (alreadyAdded) return null;
-
   return (
     <motion.div
-      className="absolute bottom-6 left-4 right-4 flex items-center justify-center gap-2"
+      className="absolute bottom-6 left-4 right-4 flex items-center justify-center"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 1.2, duration: 0.5 }}
@@ -71,18 +71,28 @@ function InstallHint() {
   );
 }
 
+/* Dokunmatik cihaz tespiti — hook değil, render-time değerlendirme */
+function detectTouch(): boolean {
+  if (typeof window === "undefined") return false;
+  return "ontouchstart" in window || navigator.maxTouchPoints > 0;
+}
+
 const DESKTOP_DURATION = 3800;
-const MOBILE_INTRO_MS  = 1800;
-const MOBILE_AUTO_SKIP = 9000;
+const TOUCH_INTRO_MS   = 2200; // "Başla" sonrası kısa animasyon
+const TOUCH_AUTO_SKIP  = 12000; // dokunmadan otomatik geç
 
 type Phase = "idle" | "playing";
 
 export function SplashScreen({ onComplete }: SplashScreenProps) {
   const [visible, setVisible] = useState(true);
   const [phase, setPhase]     = useState<Phase>("idle");
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { unlock } = useBgMusic();
-  const lite = useLiteMode();
+  const timerRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isTouchRef  = useRef(detectTouch());
+  const { unlock }  = useBgMusic();
+  const lite        = useLiteMode(); // animasyon kalitesi için
+
+  /* isTouch: tüm dokunmatik cihazlar (telefon + tablet) "Başla" butonu görmeli */
+  const isTouch = isTouchRef.current;
 
   const finish = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -91,15 +101,16 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
     setTimeout(onComplete, lite ? 350 : 600);
   }, [lite, onComplete]);
 
-  /* Mobil: "🎵 Başla" butonuna basıldığında */
+  /* Dokunmatik: "🎵 Başla" butonuna basıldığında */
   const handleStart = useCallback(() => {
     if (phase === "playing") return;
     setPhase("playing");
-    unlock();
-    timerRef.current = setTimeout(finish, MOBILE_INTRO_MS);
+    unlock(); // kullanıcı hareketi bağlamında — iOS/Android sesi açar
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(finish, TOUCH_INTRO_MS);
   }, [phase, unlock, finish]);
 
-  /* Masaüstü: ekrana herhangi bir yerde tıklayınca sesi başlat */
+  /* Masaüstü: tıklayınca ses başlat */
   const handleDesktopClick = useCallback(() => {
     unlock();
   }, [unlock]);
@@ -107,14 +118,14 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
   useEffect(() => {
     document.body.style.overflow = "hidden";
 
-    if (!lite) {
-      /* Masaüstü: hemen çalmayı dene (autoplay izinli tarayıcılarda çalışır) */
+    if (!isTouch) {
+      /* Masaüstü — autoplay dene (Chromium MEI yüksekse çalışır) */
       unlock();
       setPhase("playing");
       timerRef.current = setTimeout(finish, DESKTOP_DURATION);
     } else {
-      /* Mobil: kullanıcı dokunmadan ses başlatma — auto-skip */
-      timerRef.current = setTimeout(finish, MOBILE_AUTO_SKIP);
+      /* Tüm dokunmatik cihazlar — sessizce bekle, auto-skip koy */
+      timerRef.current = setTimeout(finish, TOUCH_AUTO_SKIP);
     }
 
     return () => {
@@ -125,7 +136,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
   }, []);
 
   const notes = lite ? NOTES_LITE : NOTES_DESKTOP;
-  const showNotes = !lite || phase === "playing";
+  const showNotes = !isTouch || phase === "playing";
 
   return (
     <AnimatePresence>
@@ -138,8 +149,9 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: lite ? 0.25 : 0.6, ease: "easeInOut" }}
-          onClick={!lite ? handleDesktopClick : undefined}
+          onClick={!isTouch ? handleDesktopClick : undefined}
         >
+          {/* Yüzen notalar */}
           {showNotes && notes.map((n, i) => <FloatingNote key={i} {...n} lite={lite} />)}
 
           {/* Blur blob'ları — masaüstünde */}
@@ -179,31 +191,31 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
             <motion.img
               src={logoImg}
               alt="Gitar Öğreniyorum"
-              className="w-56 h-56 sm:w-72 sm:h-72 object-contain drop-shadow-2xl select-none"
+              className="w-48 h-48 sm:w-64 sm:h-64 md:w-72 md:h-72 object-contain drop-shadow-2xl select-none"
               animate={
-                !lite && phase === "playing" ? { y: [0, -14, 0] }
-                : lite && phase === "playing" ? { scale: [1, 1.04, 1] }
+                !isTouch && phase === "playing" ? { y: [0, -14, 0] }
+                : isTouch && phase === "playing" ? { scale: [1, 1.04, 1] }
                 : {}
               }
-              transition={{ duration: lite ? 1.6 : 3.2, repeat: Infinity, ease: "easeInOut", delay: lite ? 0 : 1.2 }}
+              transition={{ duration: lite ? 1.6 : 3.2, repeat: Infinity, ease: "easeInOut", delay: isTouch ? 0 : 1.2 }}
               draggable={false}
             />
           </motion.div>
 
           {/* Başlık */}
           <motion.p
-            className="mt-5 text-base sm:text-xl font-bold tracking-wide text-white/90"
+            className="mt-4 text-sm sm:text-lg md:text-xl font-bold tracking-wide text-white/90 text-center px-4"
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: lite ? 0.3 : 0.9, duration: 0.4 }}
+            transition={{ delay: isTouch ? 0.3 : 0.9, duration: 0.4 }}
           >
             Temelden Başla, Müzikle Büyü!
           </motion.p>
 
-          {/* Masaüstü: ses ipucu */}
-          {!lite && phase === "playing" && (
+          {/* Masaüstü ses ipucu */}
+          {!isTouch && phase === "playing" && (
             <motion.p
-              className="mt-3 text-xs text-white/30"
+              className="mt-2 text-xs text-white/30"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 1.5 }}
@@ -212,10 +224,10 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
             </motion.p>
           )}
 
-          {/* Mobil: "🎵 Başla" butonu */}
-          {lite && phase === "idle" && (
+          {/* Tüm dokunmatik cihazlar: "🎵 Başla" butonu */}
+          {isTouch && phase === "idle" && (
             <motion.button
-              className="mt-8 px-10 py-4 rounded-2xl text-white font-bold text-lg shadow-2xl active:scale-95"
+              className="mt-8 px-10 py-4 rounded-2xl text-white font-bold text-lg shadow-2xl active:scale-95 touch-manipulation"
               style={{ background: "linear-gradient(135deg, #4299e1 0%, #6C63FF 100%)" }}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -226,8 +238,8 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
             </motion.button>
           )}
 
-          {/* Mobil playing fazı */}
-          {lite && phase === "playing" && (
+          {/* Dokunmatik playing fazı */}
+          {isTouch && phase === "playing" && (
             <motion.p
               className="mt-6 text-xs text-white/40"
               initial={{ opacity: 0 }}
@@ -239,7 +251,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
           )}
 
           {/* Masaüstü: "Geç" butonu */}
-          {!lite && (
+          {!isTouch && (
             <motion.button
               className="absolute bottom-6 text-sm text-white/35 hover:text-white/65 transition-colors"
               initial={{ opacity: 0 }}
@@ -251,8 +263,8 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
             </motion.button>
           )}
 
-          {/* Mobil: Ana ekrana ekle kılavuzu */}
-          {lite && <InstallHint />}
+          {/* Mobil: Ana ekrana ekle */}
+          {isTouch && <InstallHint />}
         </motion.div>
       )}
     </AnimatePresence>

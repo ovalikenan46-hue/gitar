@@ -3,16 +3,15 @@ import { BgMusicContext, BG_SRC } from "./bg-music-context";
 
 export function BgMusicProvider({ children }: { children: React.ReactNode }) {
   const audioRef    = useRef<HTMLAudioElement | null>(null);
-  const unlockedRef = useRef(false);  // true after first user gesture
-  const wantPlayRef = useRef(false);  // true while landing is visible
+  const unlockedRef = useRef(false);
+  const wantPlayRef = useRef(false);
   const [playing, setPlaying] = useState(false);
 
-  /* ── Audio element — preload:auto ile hazır beklet ────── */
   useEffect(() => {
     const audio = new Audio(BG_SRC);
     audio.loop    = true;
     audio.volume  = 0.45;
-    audio.preload = "auto"; // tam olarak yükle — ilk dokunuşta gecikme olmasın
+    audio.preload = "auto";
     audioRef.current = audio;
     return () => {
       audio.pause();
@@ -20,60 +19,48 @@ export function BgMusicProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  /* ── Çal ─────────────────────────────────────────────── */
   const tryPlay = useCallback(() => {
     const audio = audioRef.current;
     if (!audio || !unlockedRef.current || !wantPlayRef.current) return;
     if (!audio.paused) return;
     audio.play()
       .then(() => setPlaying(true))
-      .catch(() => {/* autoplay engellendi — kullanıcı hareketi bekleniyor */});
+      .catch(() => {});
   }, []);
 
-  /* ── Ses kilidini aç (kullanıcı dokunuşunda çağrılır) ── */
+  /**
+   * Kullanıcı hareketi (button tap/click) içinde DOĞRUDAN çağrılmalı.
+   * iOS/Android: audio.play() kullanıcı hareketi event handler'ında
+   * senkron çağrıldığında izin verilir — asenkron callback'te çalışmaz.
+   */
   const unlock = useCallback(() => {
-    if (unlockedRef.current) {
-      // Zaten açık — sadece çalmayı dene
-      wantPlayRef.current = true;
-      tryPlay();
-      return;
-    }
-    unlockedRef.current = true;
     wantPlayRef.current = true;
-
     const audio = audioRef.current;
     if (!audio) return;
 
-    // Kısa süreliğine sessiz çal/durdur → iOS/Android audio session kilidi açılır
-    audio.volume = 0;
-    audio.play()
-      .then(() => {
-        audio.pause();
-        audio.currentTime = 0;
-        audio.volume = 0.45;
-        // Şimdi gerçekten başlat
-        if (wantPlayRef.current) {
-          audio.play()
-            .then(() => setPlaying(true))
-            .catch(() => {});
-        }
-      })
-      .catch(() => {
-        // Sessiz çalma bile başarısız oldu — direkt dene
-        audio.volume = 0.45;
-        audio.play()
-          .then(() => setPlaying(true))
-          .catch(() => {});
-      });
-  }, [tryPlay]);
+    if (unlockedRef.current) {
+      // Zaten açık, sadece çal
+      if (audio.paused) {
+        audio.play().then(() => setPlaying(true)).catch(() => {});
+      }
+      return;
+    }
 
-  /* ── Landing açıldığında devam et ────────────────────── */
+    unlockedRef.current = true;
+    // Tek bir play() çağrısı — kullanıcı hareketi event'ine doğrudan bağlı
+    audio.play()
+      .then(() => setPlaying(true))
+      .catch(() => {
+        // Autoplay tamamen bloklandı (ör. bazı desktop tarayıcılar)
+        // Sessizce devam et — kullanıcı ses butonundan açabilir
+      });
+  }, []);
+
   const resumeOnLanding = useCallback(() => {
     wantPlayRef.current = true;
     tryPlay();
   }, [tryPlay]);
 
-  /* ── Landing kapandığında durdur ─────────────────────── */
   const pauseOnLeave = useCallback(() => {
     wantPlayRef.current = false;
     const audio = audioRef.current;
@@ -82,12 +69,12 @@ export function BgMusicProvider({ children }: { children: React.ReactNode }) {
     setPlaying(false);
   }, []);
 
-  /* ── Kullanıcı mute/unmute ────────────────────────────── */
   const toggle = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
     if (audio.paused) {
       wantPlayRef.current = true;
+      unlockedRef.current = true;
       audio.play().then(() => setPlaying(true)).catch(() => {});
     } else {
       wantPlayRef.current = false;

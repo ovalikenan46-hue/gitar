@@ -15,6 +15,9 @@ import { motion } from "framer-motion";
 import { pageVariants, pageTransition } from "@/lib/animations";
 import { Link } from "wouter";
 import { toast } from "sonner";
+import { MusicBg } from "@/components/music-bg";
+import { useLiteMode } from "@/hooks/use-lite-mode";
+
 const STORAGE_KEY = "guitar_teacher_saved";
 
 interface SavedTeacher {
@@ -50,6 +53,7 @@ export default function TeacherLogin() {
   const queryClient = useQueryClient();
   const checkCode = useCheckInviteCode();
   const login = useTeacherLogin();
+  const lite = useLiteMode();
 
   const [saved, setSaved] = useState<SavedTeacher | null>(null);
   const [validatedCode, setValidatedCode] = useState<{ code: string; institutionName: string } | null>(null);
@@ -124,13 +128,18 @@ export default function TeacherLogin() {
       exit="out"
       variants={pageVariants}
       transition={pageTransition}
-      className="min-h-screen w-full flex items-center justify-center p-4 relative"
+      className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden"
+      style={{
+        background: "linear-gradient(135deg, #fff8e1 0%, #ffffff 35%, #f3e5f5 65%, #e8eaf6 100%)",
+      }}
     >
-      <Link href="/" className="absolute top-4 left-4 p-2 text-muted-foreground hover:text-foreground bg-white/50 rounded-full backdrop-blur-sm">
+      <MusicBg count={lite ? 5 : 14} />
+
+      <Link href="/" className="absolute top-4 left-4 z-10 p-2 text-muted-foreground hover:text-foreground bg-white/50 rounded-full backdrop-blur-sm">
         <ArrowLeft className="w-6 h-6" />
       </Link>
 
-      <Card className="w-full max-w-md shadow-xl border-white/50 bg-white/80 backdrop-blur-xl rounded-3xl overflow-hidden">
+      <Card className="w-full max-w-md shadow-xl border-white/50 bg-white/85 backdrop-blur-xl rounded-3xl overflow-hidden relative z-10">
         <CardHeader className="text-center pb-2">
           <div className="mx-auto w-16 h-16 bg-secondary/20 rounded-full flex items-center justify-center mb-4 text-secondary">
             <GraduationCap className="w-8 h-8" />
@@ -146,7 +155,7 @@ export default function TeacherLogin() {
         </CardHeader>
 
         <CardContent className="space-y-4">
-          {/* ── HIZLI GİRİŞ KARTI ── */}
+          {/* Hızlı Giriş */}
           {saved && !validatedCode && (
             <motion.div
               initial={{ opacity: 0, y: -8 }}
@@ -167,7 +176,6 @@ export default function TeacherLogin() {
                     </p>
                   </div>
                 </div>
-
                 <Button
                   className="w-full py-6 text-base rounded-2xl bg-secondary text-secondary-foreground hover:bg-secondary/90 shadow-md"
                   onClick={onQuickLogin}
@@ -180,21 +188,17 @@ export default function TeacherLogin() {
                   )}
                 </Button>
               </div>
-
               <button
                 type="button"
                 className="w-full text-sm text-muted-foreground hover:text-foreground flex items-center justify-center gap-1 py-1 transition-colors"
-                onClick={() => {
-                  clearSaved();
-                  setSaved(null);
-                }}
+                onClick={() => { clearSaved(); setSaved(null); }}
               >
                 <RefreshCw className="w-3.5 h-3.5" /> Farklı hesapla giriş yap
               </button>
             </motion.div>
           )}
 
-          {/* ── KOD FORMU ── */}
+          {/* Kod Formu */}
           {!saved && !validatedCode && (
             <Form {...codeForm}>
               <form onSubmit={codeForm.handleSubmit(onCheckCode)} className="space-y-6">
@@ -233,7 +237,7 @@ export default function TeacherLogin() {
             </Form>
           )}
 
-          {/* ── KİMLİK FORMU ── */}
+          {/* Kimlik Formu */}
           {!saved && validatedCode && (
             <div className="space-y-6">
               <motion.div
@@ -278,7 +282,6 @@ export default function TeacherLogin() {
                       </FormItem>
                     )}
                   />
-                  {/* Beni Hatırla */}
                   <button
                     type="button"
                     className={`w-full flex items-center gap-3 p-3 rounded-2xl border transition-colors text-left ${
@@ -303,10 +306,7 @@ export default function TeacherLogin() {
                       type="button"
                       variant="ghost"
                       className="rounded-2xl"
-                      onClick={() => {
-                        setValidatedCode(null);
-                        identityForm.reset();
-                      }}
+                      onClick={() => { setValidatedCode(null); identityForm.reset(); }}
                     >
                       <ArrowLeft className="w-4 h-4 mr-1" /> Kodu değiştir
                     </Button>
