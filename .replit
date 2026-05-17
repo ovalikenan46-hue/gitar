@@ -41,4 +41,4 @@ channel = "stable-25_05"
 [userenv]
 
 [userenv.development]
-GITHUB_TOKEN = "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"
+GITHUB_TOKEN = "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"
