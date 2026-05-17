@@ -1,9 +1,13 @@
 import { useMemo } from "react";
 
 /**
- * Mobil / tablet, dokunmatik ekran veya prefers-reduced-motion aktifse true döner.
- * Vite SPA olduğu için window erişimi her zaman güvenli.
- * İlk render'da doğru değeri verir; sonradan değişmez.
+ * Mobil / tablet, dokunmatik ekran, prefers-reduced-motion
+ * veya standalone PWA modunda true döner.
+ *
+ * "Lite mod" aktifken:
+ *  - Ağır animasyonlar (blob, büyük blur, particle yağmuru) kapatılır.
+ *  - Hafif intro animasyonlarına izin verilir (logo scale/fade, 2-3 yüzen nota).
+ *  - Kart içeriği animasyon beklenmeden anında görünür olur.
  */
 export function useLiteMode(): boolean {
   return useMemo(() => {
@@ -11,6 +15,9 @@ export function useLiteMode(): boolean {
     const isSmallScreen  = window.innerWidth < 1024;
     const isTouch        = "ontouchstart" in window || navigator.maxTouchPoints > 0;
     const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    return isSmallScreen || isTouch || prefersReduced;
+    const isStandalone   =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (navigator as { standalone?: boolean }).standalone === true;
+    return isSmallScreen || isTouch || prefersReduced || isStandalone;
   }, []);
 }

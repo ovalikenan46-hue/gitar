@@ -1,0 +1,104 @@
+Gitar Öğreniyorum uygulamasında PWA / ana ekrana eklenen mobil sürümde açılış performansı, kısa intro animasyonu ve açılış müziği problemini düzelt.
+
+ÖNEMLİ KURALLAR:
+- Database, migration, seed, auth, admin, öğretmen, öğrenci kod sistemi, API ve veri akışına dokunma.
+- Masaüstü görünümünü bozma.
+- Görsel marka kimliğini değiştirme.
+- Sadece mobil/PWA açılış performansı, intro animasyonu ve ses başlatma problemi düzeltilecek.
+
+SORUN:
+Telefon ana ekranına eklenen PWA sürümünde:
+- Uygulama çok zor/geç açılıyor.
+- Açılış animasyonu çalışmıyor.
+- Açılış animasyonundaki müzik çalmıyor.
+- Ana ekrana gelince mevcut müzik devam etmiyor.
+- Mobilde performans hâlâ ağır.
+
+KESİN HEDEF:
+Mobil/PWA’da uygulama hızlı açılsın.
+Ağır animasyonlar kapalı kalsın ama hafif kısa intro animasyonu çalışsın.
+Ses, mobil tarayıcı kurallarına uygun şekilde ilk kullanıcı dokunuşunda başlasın.
+Intro müziği ana ekrana geçince kesilmesin; gerekiyorsa düşük sesle devam etsin veya kontrollü şekilde fade out yapılsın.
+
+YAPILACAKLAR:
+
+1. PWA / standalone mode algıla:
+- window.matchMedia('(display-mode: standalone)')
+- navigator.standalone
+- mobil/touch cihaz kontrolü
+Bu moddaysa Mobile PWA Mode aktif olsun.
+
+2. Mobil/PWA açılışını hızlandır:
+- İlk render’da sadece logo, kısa başlat ekranı ve temel giriş ekranı yüklensin.
+- Ağır görseller, dekoratif animasyonlar ve büyük efektler sonra yüklensin.
+- Lazy/Suspense yüzünden boş ekran oluşmasın.
+- Giriş ekranı maksimum 1 saniye içinde görünür olsun.
+- Splash veya intro sonsuz beklemede kalmasın.
+
+3. Hafif intro animasyonu ekle/koru:
+- Mobilde ağır blob, blur, particle, floating note kalabalığı çalışmasın.
+- Ancak tamamen animasyonsuz kalmasın.
+- Mobil/PWA için sadece hafif logo scale/fade ve kısa nota hareketi gibi düşük maliyetli intro çalışsın.
+- Intro süresi kısa olsun: 1.5–2.5 saniye.
+- Animasyon bitmese bile giriş ekranına geçiş garanti olsun.
+
+4. Ses başlatma problemini düzelt:
+Mobil tarayıcılar kullanıcı etkileşimi olmadan sesi otomatik başlatmaz.
+Bu yüzden:
+- İlk ekranda “Başla” / “Müziği Aç ve Başla” butonu göster.
+- Kullanıcı bu butona dokunduğu anda AudioContext unlock yapılsın.
+- HTMLAudioElement veya AudioContext hangisi kullanılıyorsa mobil uyumlu başlatılsın.
+- iOS için webkitAudioContext fallback korunsun.
+- Ses preload edilsin ama uygulamayı kilitlemesin.
+- Ses yüklenemezse uygulama bozulmasın, sessiz devam etsin.
+- Promise rejection hataları yakalansın.
+
+5. Animasyon ve müzik senkronu:
+- Kullanıcı “Başla” butonuna dokunduğunda müzik ve hafif intro aynı anda başlasın.
+- Intro müziği geç başlamasın.
+- Ana ekrana geçince müzik birden kesilmesin.
+- Ana ekranda mevcut müzik devam edecekse state/global audio manager ile korunmalı.
+- Eğer ana ekranda devam etmesi istenmiyorsa yumuşak fade out yapılmalı.
+- Route değişince audio component unmount olup sesi kesmemeli.
+- Audio yönetimi App seviyesinde veya global provider seviyesinde olmalı.
+
+6. Mobilde animasyon kapatma mantığını düzelt:
+- Fast Mobile Mode tüm animasyonları kör şekilde kapatmasın.
+- Ağır animasyonları kapatsın.
+- Hafif intro animasyonuna izin versin.
+- Mobilde beyaz kart ve giriş butonları animasyon beklemeden görünür olsun.
+
+7. PWA ikon ve ana ekran davranışı:
+- manifest, apple-touch-icon, standalone meta tag’ler korunacak.
+- Ana ekrandan açıldığında PWA tam ekran hissi korunacak.
+- Geri/ana ekran butonları bozulmayacak.
+
+8. Performans:
+- backdrop-blur, büyük blur blob, filter, glow ve particle yoğunluğu mobil/PWA’da kapalı veya minimum olacak.
+- İlk açılışta bundle/asset yükünü azalt.
+- Müzik dosyası büyükse lazy preload yap ama ilk dokunuşta çalabilecek hale getir.
+- Gereksiz re-render ve sonsuz state döngüsü varsa düzelt.
+
+TEST:
+- npm run typecheck
+- npm run build
+- iPhone Safari
+- iPhone ana ekrana eklenmiş PWA
+- Android Chrome
+- Android ana ekrana eklenmiş PWA
+- tablet
+- desktop
+
+KABUL KRİTERLERİ:
+- Telefon ana ekranından açılan PWA hızlı açılacak.
+- İlk ekranda kullanıcıya net “Başla / Müziği Aç ve Başla” butonu görünecek.
+- Butona dokununca ses başlayacak.
+- Hafif intro animasyonu çalışacak.
+- Ana ekrana geçince müzik kesilmeyecek veya yumuşak fade out yapılacak.
+- Mobilde ağır animasyonlar cihazı kasmayacak.
+- Beyaz kart boş kalmayacak.
+- Uygulama takılmayacak.
+- Masaüstü görünümü ve sistem akışı bozulmayacak.
+- Database/API/auth tarafına dokunulmayacak.
+
+İşlem sonunda sadece değişen dosyaları ve yapılan teknik düzeltmeleri kısa raporla.
