@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { GraduationCap, ArrowLeft, Building2, ArrowRight, Loader2, UserCheck, RefreshCw, BookmarkCheck } from "lucide-react";
+import { ArrowLeft, Building2, ArrowRight, Loader2, UserCheck, RefreshCw, BookmarkCheck } from "lucide-react";
+import logoImg from "@assets/ChatGPT_Image_1_May_2026_08_31_58_1777613580606.png";
 import { motion } from "framer-motion";
 import { pageVariants, pageTransition } from "@/lib/animations";
 import { Link } from "wouter";
@@ -141,8 +142,8 @@ export default function TeacherLogin() {
 
       <Card className="w-full max-w-md shadow-xl border-white/50 bg-white/85 backdrop-blur-xl rounded-3xl overflow-hidden relative z-10">
         <CardHeader className="text-center pb-2">
-          <div className="mx-auto w-16 h-16 bg-secondary/20 rounded-full flex items-center justify-center mb-4 text-secondary">
-            <GraduationCap className="w-8 h-8" />
+          <div className="mx-auto w-16 h-16 mb-4">
+            <img src={logoImg} alt="Logo" className="w-full h-full object-contain drop-shadow-md" draggable={false} />
           </div>
           <CardTitle className="text-3xl font-bold text-foreground">Öğretmen Girişi</CardTitle>
           <CardDescription className="text-muted-foreground text-base">

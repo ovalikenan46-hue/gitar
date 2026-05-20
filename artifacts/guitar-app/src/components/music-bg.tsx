@@ -125,12 +125,13 @@ export function MusicBg({ count = 18 }: { count?: number }) {
   const items = useMemo<Sym[]>(() => {
     const arr: Sym[] = [];
     for (let i = 0; i < count; i++) {
-      const row = Math.floor(i / 6);
-      const col = i % 6;
+      // 5 sütun × 4 satır → ekranın her köşesini kapsar (üst %5, %29, %53, %77)
+      const col = i % 5;
+      const row = Math.floor(i / 5);
       arr.push({
         glyph:    SYMBOLS[i % SYMBOLS.length],
-        left:     5 + col * 16 + (Math.random() - 0.5) * 9,
-        top:      6 + row * 30 + (Math.random() - 0.5) * 12,
+        left:     4 + col * 19 + (Math.random() - 0.5) * 8,
+        top:      5 + row * 24 + (Math.random() - 0.5) * 10,
         size:     74 + Math.random() * 54,
         color:    COLORS[i % COLORS.length],
         variant:  VARIANTS[i % VARIANTS.length],

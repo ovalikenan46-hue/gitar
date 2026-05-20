@@ -230,7 +230,7 @@ export default function Landing() {
 
       {/* Alt bilgi */}
       <p className="absolute bottom-3 left-0 right-0 text-center text-[11px] text-black/55 select-none px-4">
-        Bütün hakları Biltekra Eğitim Kurumu'na Aittir.
+        © 2026 Biltekra Eğitim Kurumu – Tüm Hakları Saklıdır.
       </p>
     </div>
   );
