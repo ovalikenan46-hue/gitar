@@ -227,6 +227,11 @@ export default function Landing() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Alt bilgi */}
+      <p className="absolute bottom-3 left-0 right-0 text-center text-[11px] text-white/35 select-none px-4">
+        Bütün hakları Biltekra Eğitim Kurumu'na Aittir.
+      </p>
     </div>
   );
 }
