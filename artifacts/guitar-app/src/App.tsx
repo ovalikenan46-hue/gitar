@@ -7,32 +7,26 @@ import { AnimatePresence } from "framer-motion";
 import { Toaster as SonnerToaster } from "sonner";
 import { ErrorBoundary } from "@/components/error-boundary";
 
-// Layouts — eager (hafif, her yerde lazım)
 import { Protected } from "@/components/layout/protected";
 import { StudentLayout } from "@/components/layout/student-layout";
 
-// İlk yüklenen sayfalar — eager
+// Landing — eager (ilk sayfa)
 import Landing from "@/pages/landing";
 
-// Diğer sayfalar — lazy (mobil başlangıç süresini %60+ azaltır)
-const TeacherLogin   = lazy(() => import("@/pages/teacher-login"));
-const StudentLogin   = lazy(() => import("@/pages/student-login"));
-const AdminDashboard = lazy(() => import("@/pages/admin-dashboard"));
+// Diğer sayfalar — lazy yükle (mobil ilk açılışı hızlandırır)
+const TeacherLogin     = lazy(() => import("@/pages/teacher-login"));
+const StudentLogin     = lazy(() => import("@/pages/student-login"));
+const AdminDashboard   = lazy(() => import("@/pages/admin-dashboard"));
 const TeacherDashboard = lazy(() => import("@/pages/teacher-dashboard"));
-const StudentHome    = lazy(() => import("@/pages/student-home"));
-const StudentLessons = lazy(() => import("@/pages/student-lessons"));
-const LessonDetail   = lazy(() => import("@/pages/lesson-detail"));
-const StudentProfile = lazy(() => import("@/pages/student-profile"));
-const Smartboard     = lazy(() => import("@/pages/smartboard"));
-const NotFound       = lazy(() => import("@/pages/not-found"));
+const StudentHome      = lazy(() => import("@/pages/student-home"));
+const StudentLessons   = lazy(() => import("@/pages/student-lessons"));
+const LessonDetail     = lazy(() => import("@/pages/lesson-detail"));
+const StudentProfile   = lazy(() => import("@/pages/student-profile"));
+const Smartboard       = lazy(() => import("@/pages/smartboard"));
+const NotFound         = lazy(() => import("@/pages/not-found"));
 
-// Splash
 import { SplashScreen } from "@/components/splash-screen";
-
-// PWA Install
 import { InstallPrompt } from "@/components/install-prompt";
-
-// Audio
 import { BgMusicProvider } from "@/contexts/bg-music-provider";
 import { useBgMusic } from "@/contexts/bg-music-context";
 
@@ -47,7 +41,6 @@ const queryClient = new QueryClient({
   },
 });
 
-/** Lazy sayfa yüklenirken gösterilen minimal spinner */
 function PageLoader() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -66,49 +59,36 @@ function Router() {
           <Route path="/student-login" component={StudentLogin} />
 
           <Route path="/admin">
-            <Protected role="admin">
-              <AdminDashboard />
-            </Protected>
+            <Protected role="admin"><AdminDashboard /></Protected>
           </Route>
 
           <Route path="/teacher">
-            <Protected role="teacher">
-              <TeacherDashboard />
-            </Protected>
+            <Protected role="teacher"><TeacherDashboard /></Protected>
           </Route>
 
           <Route path="/student">
             <Protected role="student">
-              <StudentLayout>
-                <StudentHome />
-              </StudentLayout>
+              <StudentLayout><StudentHome /></StudentLayout>
             </Protected>
           </Route>
 
           <Route path="/student/lessons">
             <Protected role="student">
-              <StudentLayout>
-                <StudentLessons />
-              </StudentLayout>
+              <StudentLayout><StudentLessons /></StudentLayout>
             </Protected>
           </Route>
 
           <Route path="/student/lessons/:id">
-            <Protected role="student">
-              <LessonDetail />
-            </Protected>
+            <Protected role="student"><LessonDetail /></Protected>
           </Route>
 
           <Route path="/student/profile">
             <Protected role="student">
-              <StudentLayout>
-                <StudentProfile />
-              </StudentLayout>
+              <StudentLayout><StudentProfile /></StudentLayout>
             </Protected>
           </Route>
 
           <Route path="/smartboard/:code" component={Smartboard} />
-
           <Route component={NotFound} />
         </Switch>
       </AnimatePresence>
@@ -120,17 +100,27 @@ function AppInner() {
   const [splashDone, setSplashDone] = useState(false);
   const { unlock } = useBgMusic();
 
+  /**
+   * Splash bitti → bg-music başlat.
+   *
+   * Bu fonksiyon SplashScreen içinden setTimeout ile çağrılır (gesture değil).
+   * iOS'ta bu çalışır çünkü SplashScreen'deki "Başla" gesture'ında
+   * preUnlock() zaten bg-music audio element'ini unlock etmiş durumda.
+   * Unlocked element üzerinde setTimeout'tan play() güvenle çalışır.
+   */
   const handleSplashComplete = () => {
     setSplashDone(true);
-    // NOT: unlock() buradan ÇAĞIRILMAMALI — splash screen içindeki
-    // "Başla" butonu zaten kullanıcı gesture içinde unlock() çağırıyor.
-    // Burada çağırmak setTimeout callback'inden olur = iOS bloklar.
+    unlock(); // bg-music başlat — preUnlock sayesinde iOS'ta güvenli
   };
 
   return (
     <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-      {!splashDone && <SplashScreen onComplete={handleSplashComplete} />}
-      <Router />
+      {/* Splash ekranı — sadece bitmeden önce */}
+      <SplashScreen onComplete={handleSplashComplete} visible={!splashDone} />
+
+      {/* Router — YALNIZCA splash bittikten sonra render edilir.
+          Bu sayede mobilde ana sayfa, intro bitmeden asla görünmez. */}
+      {splashDone && <Router />}
     </WouterRouter>
   );
 }
@@ -138,9 +128,6 @@ function AppInner() {
 function App() {
   return (
     <ErrorBoundary>
-      {/* MotionConfig reducedMotion="user" KALDIRILDI:
-          Bazı telefonlarda sistem düzeyinde "animasyonları azalt" açık olduğundan
-          bu ayar Framer Motion'ı tamamen kapatıyordu → splash + geçiş animasyonları görünmüyordu */}
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <BgMusicProvider>

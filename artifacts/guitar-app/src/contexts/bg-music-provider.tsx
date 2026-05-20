@@ -12,7 +12,7 @@ export function BgMusicProvider({ children }: { children: React.ReactNode }) {
     audio.loop    = true;
     audio.volume  = 0.45;
     audio.preload = "auto";
-    audio.src     = BG_SRC; // src en sona — preload ayarlandıktan sonra
+    audio.src     = BG_SRC;
     audio.load();
     audioRef.current = audio;
     return () => {
@@ -22,10 +22,37 @@ export function BgMusicProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   /**
-   * iOS/Android ses kilidi açma.
-   * Bu fonksiyon MUTLAKA kullanıcı gesture (tap/click) event handler'ından
-   * senkron olarak çağrılmalı. setTimeout veya Promise callback içinden
-   * çağrılırsa iOS bloklayabilir.
+   * preUnlock — KULLANICI GESTURE içinde çağrılmalı.
+   *
+   * iOS Safari kuralı: audio.play() yalnızca tap/click handler'ında senkron
+   * çağrılırsa izin verilir. Bu fonksiyon sessizce (vol=0) play→pause yaparak
+   * audio element'i "user-activated" duruma getirir. Böylece intro bittikten
+   * sonra setTimeout içinden bile bg-music başlatılabilir.
+   *
+   * ÇALMAZ — sadece kilit açar.
+   */
+  const preUnlock = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio || unlockedRef.current) return;
+    const savedVol = audio.volume;
+    audio.volume = 0;
+    audio.play()
+      .then(() => {
+        audio.pause();
+        audio.currentTime = 0;
+        audio.volume = savedVol;
+        unlockedRef.current = true;
+      })
+      .catch(() => {
+        audio.volume = savedVol;
+      });
+  }, []);
+
+  /**
+   * unlock — bg-music'i gerçekten BAŞLATIR.
+   * Eğer preUnlock zaten çağrıldıysa (unlock edildi), play() çalışır.
+   * Eğer çağrılmadıysa (masaüstü autoplay akışı), ilk kez açar.
+   * setTimeout / onComplete callback içinden çağrılabilir — iOS güvenli ✓
    */
   const unlock = useCallback(() => {
     wantPlayRef.current = true;
@@ -33,32 +60,23 @@ export function BgMusicProvider({ children }: { children: React.ReactNode }) {
     if (!audio) return;
 
     if (unlockedRef.current) {
-      // Zaten açık — sadece çal
       if (audio.paused) {
         audio.play().then(() => setPlaying(true)).catch(() => {});
       }
       return;
     }
 
+    // Masaüstü / ilk kez: user gesture'dan çağrılmışsa çalışır
     unlockedRef.current = true;
-
-    // iOS/Android: audio.play() kullanıcı gesture içinde senkron çağrılmalı
     audio.play()
-      .then(() => {
-        setPlaying(true);
-      })
+      .then(() => setPlaying(true))
       .catch((err: Error) => {
-        // NotSupportedError = dosya formatı sorunu
-        // NotAllowedError   = policy/autoplay engeli
-        // AbortError        = başka bir play/pause yarış durumu
         if (err.name === "AbortError") {
-          // Yarış durumu — biraz bekle ve tekrar dene
           setTimeout(() => {
-            if (!wantPlayRef.current || !unlockedRef.current) return;
+            if (!wantPlayRef.current) return;
             audio.play().then(() => setPlaying(true)).catch(() => {});
           }, 200);
         }
-        // Diğer hatalar için sessizce devam et
       });
   }, []);
 
@@ -95,7 +113,7 @@ export function BgMusicProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <BgMusicContext.Provider
-      value={{ playing, toggle, unlock, resumeOnLanding, pauseOnLeave }}
+      value={{ playing, toggle, preUnlock, unlock, resumeOnLanding, pauseOnLeave }}
     >
       {children}
     </BgMusicContext.Provider>

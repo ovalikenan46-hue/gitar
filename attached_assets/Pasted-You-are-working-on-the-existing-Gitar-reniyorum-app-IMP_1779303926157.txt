@@ -1,0 +1,64 @@
+You are working on the existing “Gitar Öğreniyorum” app.
+
+IMPORTANT RULES:
+- Do not break the current system.
+- Do not remove existing features.
+- Do not change database structure.
+- Do not run migrations.
+- Do not delete any existing files unless absolutely necessary.
+- Integrate this update safely into the current structure.
+- Keep the existing design, flow, and logic as much as possible.
+- Focus only on the mobile intro flow and audio behavior.
+
+PROBLEM:
+On mobile phones, the app first shows the main home screen, then the intro appears afterward.
+This is wrong.
+
+EXPECTED MOBILE BEHAVIOR:
+When the app opens on a mobile phone:
+1. The intro screen must appear first.
+2. The intro music must play with the intro.
+3. After the intro finishes, the app must go to the main home screen.
+4. The main home screen background music must continue playing after the intro.
+5. The home screen must never appear before the intro on mobile.
+
+AUDIO RULES:
+- Mobile browsers may block autoplay.
+- If audio cannot start automatically, show a clear “Tap to Start” / “Başlat” screen before the intro.
+- After the user taps, unlock audio properly.
+- Then start the intro animation and intro music together.
+- Do not start the intro timer until the intro audio has actually started.
+- Do not show “started” or “loading” unless the audio is really playing.
+- Intro music and main background music must not overlap.
+- Intro music plays only during the intro.
+- Main background music starts only after the intro finishes.
+
+IMPLEMENTATION REQUIREMENTS:
+- Add a safe mobile-first intro gate.
+- Make sure mobile devices do not render the main page before intro completion.
+- Preserve desktop/tablet behavior unless it has the same bug.
+- Use existing intro audio and existing main background music files.
+- Preserve any existing mute/unmute controls if available.
+- Avoid duplicate audio instances.
+- Avoid multiple intro runs after navigation or refresh unless the current app logic already requires it.
+- Do not affect admin, teacher, student login, class code, or database logic.
+
+TESTING:
+After implementation:
+- Run TypeScript/build checks if available.
+- Fix any errors caused by this update.
+- Test the flow on mobile viewport:
+  1. Open app
+  2. Intro appears first
+  3. Tap Start if needed
+  4. Intro music plays with intro
+  5. Intro ends
+  6. Home screen opens
+  7. Main background music continues
+- Give me a short Turkish explanation after finishing:
+  1. What changed?
+  2. Which files were updated?
+  3. How should I test it on a real phone?
+
+GOAL:
+Fix the mobile opening flow so the intro screen always comes first, intro music plays correctly, then the app transitions to the main home screen and the main background music continues safely.
