@@ -229,7 +229,7 @@ export default function Landing() {
       </Dialog>
 
       {/* Alt bilgi */}
-      <p className="absolute bottom-3 left-0 right-0 text-center text-[11px] text-white/35 select-none px-4">
+      <p className="absolute bottom-3 left-0 right-0 text-center text-[11px] text-black/55 select-none px-4">
         Bütün hakları Biltekra Eğitim Kurumu'na Aittir.
       </p>
     </div>
