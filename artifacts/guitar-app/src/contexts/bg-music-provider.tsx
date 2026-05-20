@@ -15,45 +15,30 @@ export function BgMusicProvider({ children }: { children: React.ReactNode }) {
     audio.src     = BG_SRC;
     audio.load();
     audioRef.current = audio;
+
+    /**
+     * iOS / Android ilk dokunuş fallback'i.
+     * Splash'ta gesture olmadığından unlock() bloklanabilir.
+     * wantPlayRef=true ama unlockedRef=false ise, kullanıcının
+     * sayfada ilk dokunuşunda ses başlatılır.
+     */
+    const onFirstInteraction = () => {
+      if (wantPlayRef.current && !unlockedRef.current) {
+        unlockedRef.current = true;
+        audio.play().then(() => setPlaying(true)).catch(() => {});
+      }
+    };
+    document.addEventListener("touchstart", onFirstInteraction, { once: true });
+    document.addEventListener("click",      onFirstInteraction, { once: true });
+
     return () => {
+      document.removeEventListener("touchstart", onFirstInteraction);
+      document.removeEventListener("click",      onFirstInteraction);
       audio.pause();
       audio.src = "";
     };
   }, []);
 
-  /**
-   * preUnlock — KULLANICI GESTURE içinde çağrılmalı.
-   *
-   * iOS Safari kuralı: audio.play() yalnızca tap/click handler'ında senkron
-   * çağrılırsa izin verilir. Bu fonksiyon sessizce (vol=0) play→pause yaparak
-   * audio element'i "user-activated" duruma getirir. Böylece intro bittikten
-   * sonra setTimeout içinden bile bg-music başlatılabilir.
-   *
-   * ÇALMAZ — sadece kilit açar.
-   */
-  const preUnlock = useCallback(() => {
-    const audio = audioRef.current;
-    if (!audio || unlockedRef.current) return;
-    const savedVol = audio.volume;
-    audio.volume = 0;
-    audio.play()
-      .then(() => {
-        audio.pause();
-        audio.currentTime = 0;
-        audio.volume = savedVol;
-        unlockedRef.current = true;
-      })
-      .catch(() => {
-        audio.volume = savedVol;
-      });
-  }, []);
-
-  /**
-   * unlock — bg-music'i gerçekten BAŞLATIR.
-   * Eğer preUnlock zaten çağrıldıysa (unlock edildi), play() çalışır.
-   * Eğer çağrılmadıysa (masaüstü autoplay akışı), ilk kez açar.
-   * setTimeout / onComplete callback içinden çağrılabilir — iOS güvenli ✓
-   */
   const unlock = useCallback(() => {
     wantPlayRef.current = true;
     const audio = audioRef.current;
@@ -66,16 +51,17 @@ export function BgMusicProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Masaüstü / ilk kez: user gesture'dan çağrılmışsa çalışır
     unlockedRef.current = true;
     audio.play()
       .then(() => setPlaying(true))
       .catch((err: Error) => {
+        // iOS autoplay blokladı — ilk dokunuşta onFirstInteraction devreye girer
+        unlockedRef.current = false; // tekrar denenmesi için sıfırla
         if (err.name === "AbortError") {
           setTimeout(() => {
             if (!wantPlayRef.current) return;
             audio.play().then(() => setPlaying(true)).catch(() => {});
-          }, 200);
+          }, 300);
         }
       });
   }, []);
@@ -113,7 +99,7 @@ export function BgMusicProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <BgMusicContext.Provider
-      value={{ playing, toggle, preUnlock, unlock, resumeOnLanding, pauseOnLeave }}
+      value={{ playing, toggle, unlock, resumeOnLanding, pauseOnLeave }}
     >
       {children}
     </BgMusicContext.Provider>
