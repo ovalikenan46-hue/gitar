@@ -1,0 +1,171 @@
+PROJENİN TAM TEKNİK DOKÜMANTASYONUNU OLUŞTUR
+
+Bu aşamada hiçbir kod yazma ve hiçbir dosyayı değiştirme.
+
+Amacın mevcut projeyi eksiksiz analiz ederek geliştirici seviyesinde bir teknik dokümantasyon hazırlamaktır.
+
+Bu doküman, projeyi hiç görmemiş kıdemli bir yazılım mimarının yalnızca bu dokümanı okuyarak projeyi anlayabileceği ayrıntıda olmalıdır.
+
+İncelenecek Konular
+1. Genel Mimari
+Projenin mimarisi
+Kullanılan tasarım desenleri
+Frontend–Backend iletişimi
+Veri akışı
+Modüllerin birbirleriyle ilişkisi
+2. Teknoloji Yığını
+Tüm framework'ler
+Kütüphaneler
+Versiyonlar
+Çalışma amaçları
+3. Klasör Yapısı
+
+Her klasörün amacı.
+
+Her önemli dosyanın görevi.
+
+Dosyalar arasındaki ilişkiler.
+
+4. Authentication ve Authorization
+Giriş sistemi
+Rol sistemi
+Token yapısı
+Oturum yönetimi
+Yetkilendirme akışı
+5. Veritabanı
+
+Her tablo için:
+
+amacı
+kolonları
+veri tipleri
+ilişkileri
+indeksleri
+foreign key yapıları
+
+Ayrıca ER diyagramını metin olarak açıkla.
+
+6. API Dokümantasyonu
+
+Tüm endpoint'leri listele.
+
+Her endpoint için:
+
+URL
+HTTP metodu
+Giriş parametreleri
+Dönen veri
+Yetki gereksinimi
+Kullanıldığı ekranlar
+7. İş Akışları
+
+Ayrıntılı olarak açıkla:
+
+Admin girişi
+Kurum oluşturma
+Öğretmen oluşturma
+Öğretmen girişi
+Sınıf oluşturma
+Öğrenci oluşturma
+Öğrenci girişi
+Ders akışı
+Veri kayıt süreci
+8. Frontend Mimarisi
+Sayfalar
+Bileşenler
+State yönetimi
+Routing
+Form yönetimi
+Validasyon
+9. Backend Mimarisi
+Servisler
+Controller yapısı
+Middleware
+Repository yapısı
+Utility sınıfları
+10. Güvenlik
+
+Detaylı analiz:
+
+Authentication
+Authorization
+Şifreleme
+JWT
+Session
+Rate limiting
+XSS
+SQL Injection
+CSRF
+CORS
+Güvenlik açıkları
+Eksik kontroller
+11. Performans
+Cache yapısı
+Bellek kullanımı
+Veritabanı sorguları
+Ağ trafiği
+Büyük kullanıcı yükündeki davranış
+Darboğazlar
+12. Kod Kalitesi
+Güçlü yönler
+Zayıf yönler
+Tekrarlanan kodlar
+Teknik borçlar
+Refactor gerektiren alanlar
+13. Log ve Hata Yönetimi
+Log sistemi
+Exception yönetimi
+Hata yakalama
+Kullanıcıya gösterilen hatalar
+14. Ortam Yapılandırması
+Environment değişkenleri
+Deployment süreci
+Build süreci
+Üretim ve geliştirme ortamı farkları
+15. Bağımlılık Haritası
+
+Hangi modül hangi modülü kullanıyor?
+
+Veri akışı hangi sırayla gerçekleşiyor?
+
+16. Geliştirme Rehberi
+
+Bu projeye yeni özellik eklemek isteyen bir geliştiricinin bilmesi gereken tüm kurallar.
+
+Kod standartları.
+
+Naming standartları.
+
+Dosya organizasyonu.
+
+17. Risk Analizi
+
+Kodun kırılgan olduğu noktalar.
+
+Veri kaybı oluşturabilecek alanlar.
+
+Güvenlik riskleri.
+
+Performans riskleri.
+
+18. Teknik Borç Analizi
+
+Gelecekte problem oluşturabilecek tüm yapıları listele.
+
+19. Ölçeklenebilirlik
+
+Projenin büyümesi durumunda hangi alanların yeniden tasarlanması gerekir?
+
+20. Sonuç
+
+Projenin genel teknik değerlendirmesini yap.
+
+Önemli Kurallar
+Hiçbir dosyayı değiştirme.
+Hiçbir kod yazma.
+Hiçbir migration çalıştırma.
+Hiçbir veritabanı değişikliği yapma.
+Sadece analiz et ve teknik dokümantasyon oluştur.
+Varsayım yapma; yalnızca projede gerçekten bulunan yapıları belgele.
+Kod örnekleri yerine mimari açıklamalara odaklan.
+Doküman mümkün olduğunca ayrıntılı olsun.

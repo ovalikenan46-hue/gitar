@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "j_OIi7zAApZKP54AFwVor"
+uri = "file://TEKNIK_DOKUMANTASYON.md"
+type = "text"
+title = "Gitar Öğreniyorum — Teknik Dokümantasyon"
