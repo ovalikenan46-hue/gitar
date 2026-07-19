@@ -1,14 +1,23 @@
 import { pgTable, text, timestamp, index, unique } from "drizzle-orm/pg-core";
 import { createId } from "../id";
+import { institutionsTable } from "./institutions";
+import { classesTable } from "./classes";
+import { usersTable } from "./users";
 
 export const studentLearningRequestsTable = pgTable(
   "student_learning_requests",
   {
     id: text("id").primaryKey().$defaultFn(() => createId()),
-    institutionId: text("institution_id").notNull(),
+    institutionId: text("institution_id")
+      .notNull()
+      .references(() => institutionsTable.id, { onDelete: "cascade" }),
     teacherId: text("teacher_id").notNull(),
-    classId: text("class_id").notNull(),
-    studentId: text("student_id").notNull(),
+    classId: text("class_id")
+      .notNull()
+      .references(() => classesTable.id, { onDelete: "cascade" }),
+    studentId: text("student_id")
+      .notNull()
+      .references(() => usersTable.id, { onDelete: "cascade" }),
     studentCode: text("student_code").notNull(),
     moduleKey: text("module_key").notNull(),
     activityKey: text("activity_key").notNull(),

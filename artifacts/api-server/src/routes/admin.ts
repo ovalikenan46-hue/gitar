@@ -1,6 +1,15 @@
 import { Router, type IRouter } from "express";
-import { db, institutionsTable, usersTable, teacherCodesTable, classesTable, studentCodesTable } from "@workspace/db";
-import { eq, and, isNull, count } from "drizzle-orm";
+import {
+  db,
+  institutionsTable,
+  usersTable,
+  teacherCodesTable,
+  classesTable,
+  studentCodesTable,
+  lessonProgressTable,
+  studentLearningRequestsTable,
+} from "@workspace/db";
+import { eq, and, isNull, count, inArray } from "drizzle-orm";
 import { CreateInstitutionBody, UpdateInstitutionLimitsBody } from "@workspace/api-zod";
 import { requireAuth, generateInviteCode } from "../lib/auth";
 
@@ -89,16 +98,38 @@ router.delete("/admin/institutions/:id", async (req, res) => {
     res.status(404).json({ error: "Kurum bulunamadı" });
     return;
   }
-  // Cascade delete: student codes -> classes -> users -> teacher codes -> institution
-  const instClasses = await db.select({ id: classesTable.id }).from(classesTable).where(eq(classesTable.institutionId, id));
-  for (const cls of instClasses) {
-    await db.delete(studentCodesTable).where(eq(studentCodesTable.classId, cls.id));
-  }
-  await db.delete(classesTable).where(eq(classesTable.institutionId, id));
-  await db.delete(usersTable).where(and(eq(usersTable.institutionId, id), eq(usersTable.role, "student")));
-  await db.delete(usersTable).where(and(eq(usersTable.institutionId, id), eq(usersTable.role, "teacher")));
-  await db.delete(teacherCodesTable).where(eq(teacherCodesTable.institutionId, id));
-  await db.delete(institutionsTable).where(eq(institutionsTable.id, id));
+
+  await db.transaction(async (tx) => {
+    const instClasses = await tx
+      .select({ id: classesTable.id })
+      .from(classesTable)
+      .where(eq(classesTable.institutionId, id));
+    const classIds = instClasses.map((c) => c.id);
+
+    const instUsers = await tx
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(eq(usersTable.institutionId, id));
+    const userIds = instUsers.map((u) => u.id);
+
+    if (userIds.length > 0) {
+      await tx.delete(lessonProgressTable).where(inArray(lessonProgressTable.userId, userIds));
+    }
+
+    await tx
+      .delete(studentLearningRequestsTable)
+      .where(eq(studentLearningRequestsTable.institutionId, id));
+
+    if (classIds.length > 0) {
+      await tx.delete(studentCodesTable).where(inArray(studentCodesTable.classId, classIds));
+    }
+
+    await tx.delete(classesTable).where(eq(classesTable.institutionId, id));
+    await tx.delete(usersTable).where(eq(usersTable.institutionId, id));
+    await tx.delete(teacherCodesTable).where(eq(teacherCodesTable.institutionId, id));
+    await tx.delete(institutionsTable).where(eq(institutionsTable.id, id));
+  });
+
   res.status(204).send();
 });
 

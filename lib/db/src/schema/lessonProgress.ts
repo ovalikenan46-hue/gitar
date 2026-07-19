@@ -1,9 +1,12 @@
 import { pgTable, text, timestamp, primaryKey } from "drizzle-orm/pg-core";
+import { usersTable } from "./users";
 
 export const lessonProgressTable = pgTable(
   "lesson_progress",
   {
-    userId: text("user_id").notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => usersTable.id, { onDelete: "cascade" }),
     lessonId: text("lesson_id").notNull(),
     completedAt: timestamp("completed_at").notNull().defaultNow(),
   },
