@@ -18,3 +18,9 @@ id = "dvETbv0tNT-BTKaVLQHuU"
 uri = "file://FAZ1_RAPOR.md"
 type = "text"
 title = "FAZ 1 Raporu — Veri Güvenliği"
+
+[[outputs]]
+id = "Tvwd-WqslJnchu6mPrlZZ"
+uri = "file://FAZ2_RAPOR.md"
+type = "text"
+title = "FAZ 2 Raporu — Admin Güvenliği"

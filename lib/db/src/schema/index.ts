@@ -6,3 +6,6 @@ export * from "./studentCodes";
 export * from "./lessons";
 export * from "./lessonProgress";
 export * from "./learningRequests";
+export * from "./adminLoginLog";
+export * from "./adminAuthorizedDevices";
+export * from "./adminAuditLog";

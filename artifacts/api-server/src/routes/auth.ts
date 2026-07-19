@@ -18,19 +18,71 @@ import {
   loadCurrentUser,
   type AuthedRequest,
 } from "../lib/auth";
+import {
+  isLockedOut,
+  getLockoutRemainingMs,
+  recordFailedAttempt,
+  clearFailedAttempts,
+  logLoginAttempt,
+  checkAndRegisterDevice,
+  getClientIP,
+} from "../lib/adminSecurity";
 
 const router: IRouter = Router();
 
 router.post("/auth/admin-login", async (req, res) => {
+  const ip = getClientIP(req);
+
+  if (isLockedOut(ip)) {
+    const remainingMs = getLockoutRemainingMs(ip);
+    const remainingMin = Math.ceil(remainingMs / 60000);
+    await logLoginAttempt(req, false, "Hesap kilitli", true);
+    res.status(429).json({
+      error: `Çok fazla hatalı giriş. ${remainingMin} dakika sonra tekrar deneyin.`,
+      lockedOut: true,
+      remainingMs,
+    });
+    return;
+  }
+
   const parsed = AdminLoginBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Geçersiz istek" });
     return;
   }
+
   if (parsed.data.password !== ADMIN_PASSWORD) {
-    res.status(401).json({ error: "Hatalı şifre" });
+    const attempts = recordFailedAttempt(ip);
+    await logLoginAttempt(req, false, "Hatalı şifre");
+    const remaining = Math.max(0, 5 - attempts);
+    if (remaining === 0) {
+      res.status(429).json({
+        error: "Çok fazla hatalı giriş. 15 dakika sonra tekrar deneyin.",
+        lockedOut: true,
+        remainingMs: getLockoutRemainingMs(ip),
+      });
+    } else {
+      res.status(401).json({
+        error: `Hatalı şifre. ${remaining} deneme hakkınız kaldı.`,
+        attemptsLeft: remaining,
+      });
+    }
     return;
   }
+
+  const deviceCheck = await checkAndRegisterDevice(req);
+  if (!deviceCheck.allowed) {
+    await logLoginAttempt(req, false, "Yetkisiz cihaz");
+    res.status(403).json({
+      error: "Bu cihaz yetkili değil. Yönetici panelinden cihaz yönetimini kullanın.",
+      deviceBlocked: true,
+    });
+    return;
+  }
+
+  clearFailedAttempts(ip);
+  await logLoginAttempt(req, true);
+
   const token = signToken({ userId: ADMIN_USER_ID, role: "admin" });
   const body = AdminLoginResponse.parse({
     token,

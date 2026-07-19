@@ -8,10 +8,14 @@ import {
   studentCodesTable,
   lessonProgressTable,
   studentLearningRequestsTable,
+  adminAuthorizedDevicesTable,
+  adminLoginLogTable,
+  adminAuditLogTable,
 } from "@workspace/db";
-import { eq, and, isNull, count, inArray } from "drizzle-orm";
+import { eq, and, isNull, count, inArray, desc } from "drizzle-orm";
 import { CreateInstitutionBody, UpdateInstitutionLimitsBody } from "@workspace/api-zod";
 import { requireAuth, generateInviteCode } from "../lib/auth";
+import { recordAudit, deviceFingerprint, detectDeviceType } from "../lib/adminSecurity";
 
 const router: IRouter = Router();
 
@@ -43,8 +47,6 @@ async function getInstitutionStats(id: string) {
   const unusedTeacherCount = unusedTeachers?.c ?? 0;
   const usedTeacherCount = totalTeachers + unusedTeacherCount;
 
-  // For students, the institution-level "used" capacity is the sum of class capacities,
-  // not just enrolled students. That way creating a class actually consumes the quota.
   const classesOfInst = await db
     .select({ cap: classesTable.studentCapacity })
     .from(classesTable)
@@ -67,6 +69,10 @@ async function getInstitutionStats(id: string) {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Institutions
+// ---------------------------------------------------------------------------
+
 router.get("/admin/institutions", async (_req, res) => {
   const rows = await db.select().from(institutionsTable).orderBy(institutionsTable.createdAt);
   const result = await Promise.all(rows.map((r) => getInstitutionStats(r.id)));
@@ -87,6 +93,12 @@ router.post("/admin/institutions", async (req, res) => {
       studentLimit: parsed.data.studentLimit,
     })
     .returning();
+  void recordAudit(req, "institution.create", {
+    institutionId: inst.id,
+    name: parsed.data.name,
+    teacherLimit: parsed.data.teacherLimit,
+    studentLimit: parsed.data.studentLimit,
+  });
   const stats = await getInstitutionStats(inst.id);
   res.status(201).json(stats);
 });
@@ -130,6 +142,7 @@ router.delete("/admin/institutions/:id", async (req, res) => {
     await tx.delete(institutionsTable).where(eq(institutionsTable.id, id));
   });
 
+  void recordAudit(req, "institution.delete", { institutionId: id, name: inst.name });
   res.status(204).send();
 });
 
@@ -164,6 +177,14 @@ router.patch("/admin/institutions/:id", async (req, res) => {
       studentLimit: parsed.data.studentLimit,
     })
     .where(eq(institutionsTable.id, id));
+  void recordAudit(req, "institution.update_limits", {
+    institutionId: id,
+    name: current.name,
+    oldTeacherLimit: current.teacherLimit,
+    newTeacherLimit: parsed.data.teacherLimit,
+    oldStudentLimit: current.studentLimit,
+    newStudentLimit: parsed.data.studentLimit,
+  });
   const updated = await getInstitutionStats(id);
   res.json(updated);
 });
@@ -190,6 +211,7 @@ router.post("/admin/institutions/:id/teacher-codes", async (req, res) => {
     code = generateInviteCode();
   }
   await db.insert(teacherCodesTable).values({ code, institutionId: id });
+  void recordAudit(req, "teacher_code.generate", { institutionId: id, name: stats.name, code });
   res.status(201).json({ code });
 });
 
@@ -210,6 +232,139 @@ router.get("/admin/stats", async (_req, res) => {
     totalStudents: students?.c ?? 0,
     totalClasses: classes?.c ?? 0,
   });
+});
+
+// ---------------------------------------------------------------------------
+// Device Management
+// ---------------------------------------------------------------------------
+
+router.get("/admin/devices", async (_req, res) => {
+  const devices = await db
+    .select()
+    .from(adminAuthorizedDevicesTable)
+    .orderBy(adminAuthorizedDevicesTable.createdAt);
+  res.json(devices);
+});
+
+router.delete("/admin/devices/:id", async (req, res) => {
+  const id = req.params.id;
+  const [device] = await db
+    .select()
+    .from(adminAuthorizedDevicesTable)
+    .where(eq(adminAuthorizedDevicesTable.id, id))
+    .limit(1);
+  if (!device) {
+    res.status(404).json({ error: "Cihaz bulunamadı" });
+    return;
+  }
+  await db.delete(adminAuthorizedDevicesTable).where(eq(adminAuthorizedDevicesTable.id, id));
+  void recordAudit(req, "device.revoke", {
+    deviceId: id,
+    deviceType: device.deviceType,
+    label: device.label,
+  });
+  res.status(204).send();
+});
+
+router.patch("/admin/devices/:id", async (req, res) => {
+  const id = req.params.id;
+  const { label } = req.body as { label?: string };
+  if (!label || typeof label !== "string") {
+    res.status(400).json({ error: "Geçersiz etiket" });
+    return;
+  }
+  const [device] = await db
+    .select()
+    .from(adminAuthorizedDevicesTable)
+    .where(eq(adminAuthorizedDevicesTable.id, id))
+    .limit(1);
+  if (!device) {
+    res.status(404).json({ error: "Cihaz bulunamadı" });
+    return;
+  }
+  const [updated] = await db
+    .update(adminAuthorizedDevicesTable)
+    .set({ label: label.trim() })
+    .where(eq(adminAuthorizedDevicesTable.id, id))
+    .returning();
+  void recordAudit(req, "device.rename", { deviceId: id, label: label.trim() });
+  res.json(updated);
+});
+
+router.post("/admin/devices/register-current", async (req, res) => {
+  const ua = req.headers["user-agent"] ?? "";
+  const fp = deviceFingerprint(ua);
+  const deviceType = detectDeviceType(ua);
+
+  const [existing] = await db
+    .select()
+    .from(adminAuthorizedDevicesTable)
+    .where(eq(adminAuthorizedDevicesTable.fingerprint, fp))
+    .limit(1);
+
+  if (existing) {
+    res.status(409).json({ error: "Bu cihaz zaten kayıtlı", device: existing });
+    return;
+  }
+
+  const [{ slotCount }] = await db
+    .select({ slotCount: count() })
+    .from(adminAuthorizedDevicesTable)
+    .where(eq(adminAuthorizedDevicesTable.deviceType, deviceType));
+
+  if (Number(slotCount) >= 1) {
+    res.status(400).json({
+      error: `${deviceType === "pc" ? "Bilgisayar" : "Telefon"} slotu dolu. Mevcut cihazı silin.`,
+    });
+    return;
+  }
+
+  const { browser, os } = await import("../lib/adminSecurity").then((m) => m.parseUA(ua));
+  const label = `${browser} — ${os}`;
+  const ip = (await import("../lib/adminSecurity")).getClientIP(req);
+  const [newDevice] = await db
+    .insert(adminAuthorizedDevicesTable)
+    .values({ deviceType, fingerprint: fp, label, ip })
+    .returning();
+
+  void recordAudit(req, "device.authorize", { deviceId: newDevice!.id, deviceType, label });
+  res.status(201).json(newDevice);
+});
+
+// ---------------------------------------------------------------------------
+// Audit Log
+// ---------------------------------------------------------------------------
+
+router.get("/admin/audit-log", async (req, res) => {
+  const limit = Math.min(Number(req.query.limit) || 50, 200);
+  const offset = Number(req.query.offset) || 0;
+
+  const rows = await db
+    .select()
+    .from(adminAuditLogTable)
+    .orderBy(desc(adminAuditLogTable.createdAt))
+    .limit(limit)
+    .offset(offset);
+
+  res.json(rows);
+});
+
+// ---------------------------------------------------------------------------
+// Login Log
+// ---------------------------------------------------------------------------
+
+router.get("/admin/login-log", async (req, res) => {
+  const limit = Math.min(Number(req.query.limit) || 30, 100);
+  const offset = Number(req.query.offset) || 0;
+
+  const rows = await db
+    .select()
+    .from(adminLoginLogTable)
+    .orderBy(desc(adminLoginLogTable.createdAt))
+    .limit(limit)
+    .offset(offset);
+
+  res.json(rows);
 });
 
 export default router;
