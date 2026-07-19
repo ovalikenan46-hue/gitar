@@ -1,0 +1,61 @@
+FAZ 2.1 — Device Fingerprint İyileştirmesi (Kod Güncellemesi)
+
+Mevcut admin cihaz yetkilendirme sistemini analiz et.
+
+Amaç: Güvenliği azaltmadan, cihaz tanımlamayı daha kararlı hale getirmek.
+
+Mevcut Durum
+
+Şu anda cihaz kimliği yalnızca:
+
+SHA-256(User-Agent)
+
+ile oluşturuluyor.
+
+Bu yöntem çalışıyor ancak tarayıcı veya işletim sistemi güncellendiğinde User-Agent değişebileceği için aynı cihaz yanlışlıkla yeni cihaz olarak algılanabilir.
+
+İstenen Geliştirme
+
+Mevcut mimariyi bozmadan cihaz tanımlama mekanizmasını iyileştir.
+
+Gereksinimler
+Sadece User-Agent kullanılmasın.
+Fingerprint daha kararlı istemci özelliklerinden oluşturulsun.
+Tarayıcı veya işletim sistemi güncellemelerinde mümkün olduğunca aynı cihaz aynı fingerprint'i üretmeye devam etsin.
+Güvenlik seviyesi düşürülmesin.
+Öğretmen ve öğrenci giriş sistemi etkilenmesin.
+Sadece admin cihaz doğrulaması güncellensin.
+Geriye Dönük Uyumluluk
+
+Bu çok önemlidir.
+
+Mevcut yetkili cihazlar çalışmaya devam etmelidir.
+
+Eski kayıtlı cihazlar geçersiz hale getirilmemelidir.
+
+Gerekirse eski fingerprint ile yeni fingerprint birlikte desteklensin veya güvenli bir geçiş (migration) stratejisi uygulansın.
+
+Hiçbir admin hesabı yanlışlıkla kilitlenmemelidir.
+
+Test Edilecek Senaryolar
+
+Doğrula:
+
+Chrome sürümü güncellendiğinde admin giriş yapabiliyor mu?
+Edge güncellendiğinde giriş devam ediyor mu?
+Windows güncellendiğinde aynı cihaz tanınıyor mu?
+Telefon işletim sistemi güncellendiğinde cihaz hâlâ yetkili mi?
+Gerçekten farklı bir bilgisayar yine engelleniyor mu?
+İkinci telefon hâlâ engelleniyor mu?
+Güvenlik seviyesi korunuyor mu?
+Teslim
+
+Kod değişikliklerinden sonra aşağıdaki bilgileri içeren bir rapor hazırla:
+
+Eski fingerprint yöntemi
+Yeni fingerprint yöntemi
+Neden daha güvenli ve daha kararlı olduğu
+Geriye dönük uyumluluğun nasıl sağlandığı
+Yapılan testlerin sonuçları
+
+Önemli: Mevcut çalışan sistemi bozma. Amaç güvenliği azaltmadan, gereksiz cihaz engellemelerini önleyecek daha dayanıklı bir cihaz tanımlama mekanizması oluşturmaktır.
