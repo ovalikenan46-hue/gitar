@@ -18,6 +18,8 @@ import {
   type AuthedRequest,
 } from "../lib/auth";
 import { teacherDashboardCache } from "../lib/cache";
+import { AppError } from "../middlewares/errorHandler";
+import { getAllLessons } from "../lib/lessons";
 import { pendingLearningRequests } from "../lib/learning-cache";
 
 const router: IRouter = Router();
@@ -185,17 +187,40 @@ async function getInstitutionRemaining(institutionId: string) {
   };
 }
 
-async function generateUniqueStudentCode(): Promise<string> {
-  for (let i = 0; i < 10; i++) {
-    const code = generateStudentCode();
-    const [existing] = await db
-      .select()
-      .from(studentCodesTable)
-      .where(eq(studentCodesTable.code, code))
-      .limit(1);
-    if (!existing) return code;
+// FAZ 4.1: Toplu kod üretimi — eskiden kod başına 1 SELECT + 1 INSERT (2N sorgu),
+// şimdi N kod için toplu INSERT (onConflictDoNothing + returning ile çakışma
+// güvenli). Tam N kod garanti edilir; edilemezse AppError fırlatılır ve
+// transaction geri alınır (kapasite ile kod sayısı asla ayrışmaz).
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+async function insertStudentCodes(
+  tx: Tx,
+  n: number,
+  classId: string,
+  institutionId: string,
+): Promise<string[]> {
+  const inserted: string[] = [];
+  for (let attempt = 0; attempt < 10 && inserted.length < n; attempt++) {
+    const need = n - inserted.length;
+    const candidates = new Set<string>();
+    while (candidates.size < need) candidates.add(generateStudentCode());
+    // Eşzamanlı isteklerde çakışan kodlar sessizce atlanır; eksik kalan
+    // sonraki turda yeniden üretilir — unique constraint hatası oluşmaz.
+    const rows = await tx
+      .insert(studentCodesTable)
+      .values([...candidates].map((code) => ({ code, classId, institutionId })))
+      .onConflictDoNothing({ target: studentCodesTable.code })
+      .returning({ code: studentCodesTable.code });
+    inserted.push(...rows.map((r) => r.code));
   }
-  return generateStudentCode();
+  if (inserted.length < n) {
+    throw new AppError(
+      500,
+      "Öğrenci kodları üretilemedi, lütfen tekrar deneyin",
+      "CODE_GENERATION_FAILED",
+    );
+  }
+  return inserted;
 }
 
 async function generateUniqueSmartboardCode(): Promise<string> {
@@ -296,14 +321,7 @@ router.post("/teacher/classes", async (req, res) => {
         studentCapacity: parsed.data.studentCount,
       })
       .returning();
-    for (let i = 0; i < parsed.data.studentCount; i++) {
-      const code = await generateUniqueStudentCode();
-      await tx.insert(studentCodesTable).values({
-        code,
-        classId: cls.id,
-        institutionId: teacher.institutionId!,
-      });
-    }
+    await insertStudentCodes(tx, parsed.data.studentCount, cls.id, teacher.institutionId!);
     return cls;
   });
 
@@ -342,14 +360,7 @@ router.post("/teacher/classes/:id/expand", async (req, res) => {
       .update(classesTable)
       .set({ studentCapacity: (cls.studentCapacity ?? 0) + parsed.data.additional })
       .where(eq(classesTable.id, id));
-    for (let i = 0; i < parsed.data.additional; i++) {
-      const code = await generateUniqueStudentCode();
-      await tx.insert(studentCodesTable).values({
-        code,
-        classId: id,
-        institutionId: cls.institutionId,
-      });
-    }
+    await insertStudentCodes(tx, parsed.data.additional, id, cls.institutionId);
   });
 
   teacherDashboardCache.invalidate(auth.userId);
@@ -412,19 +423,19 @@ router.get("/teacher/classes/:classId/student-codes-progress", async (req, res) 
     .where(eq(studentCodesTable.classId, classId))
     .orderBy(studentCodesTable.createdAt);
 
-  // Toplam ders sayısı (dinamik)
-  const [totalRow] = await db.select({ c: count() }).from(lessonsTable);
-  const totalActivityCount = Number(totalRow?.c ?? 0);
-
-  // DB'deki öğrenme kayıtları (bu sınıfa ait)
-  const dbRequests = await db
-    .select({
-      studentId: studentLearningRequestsTable.studentId,
-      activityKey: studentLearningRequestsTable.activityKey,
-      createdAt: studentLearningRequestsTable.createdAt,
-    })
-    .from(studentLearningRequestsTable)
-    .where(eq(studentLearningRequestsTable.classId, classId));
+  // FAZ 4.2: ders sayısı cache'den; FAZ 4.1: bağımsız sorgular paralel
+  const [allLessons, dbRequests] = await Promise.all([
+    getAllLessons(),
+    db
+      .select({
+        studentId: studentLearningRequestsTable.studentId,
+        activityKey: studentLearningRequestsTable.activityKey,
+        createdAt: studentLearningRequestsTable.createdAt,
+      })
+      .from(studentLearningRequestsTable)
+      .where(eq(studentLearningRequestsTable.classId, classId)),
+  ]);
+  const totalActivityCount = allLessons.length;
 
   // RAM cache'deki kayıtlar (bu sınıfa ait)
   const cacheRequests = [...pendingLearningRequests.values()].filter(
@@ -494,20 +505,17 @@ router.get("/teacher/student-codes/:studentId/learning-progress", async (req, re
     return;
   }
 
-  // Tüm dersler (sıralı)
-  const allLessons = await db
-    .select()
-    .from(lessonsTable)
-    .orderBy(asc(lessonsTable.orderIndex));
-
-  // DB kayıtları
-  const dbRequests = await db
-    .select({
-      activityKey: studentLearningRequestsTable.activityKey,
-      createdAt: studentLearningRequestsTable.createdAt,
-    })
-    .from(studentLearningRequestsTable)
-    .where(eq(studentLearningRequestsTable.studentId, studentId));
+  // FAZ 4.2: dersler cache'den; FAZ 4.1: bağımsız sorgular paralel
+  const [allLessons, dbRequests] = await Promise.all([
+    getAllLessons(),
+    db
+      .select({
+        activityKey: studentLearningRequestsTable.activityKey,
+        createdAt: studentLearningRequestsTable.createdAt,
+      })
+      .from(studentLearningRequestsTable)
+      .where(eq(studentLearningRequestsTable.studentId, studentId)),
+  ]);
 
   // RAM cache
   const cacheRequests = [...pendingLearningRequests.values()].filter(

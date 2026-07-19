@@ -1,8 +1,9 @@
 import { Router, type IRouter } from "express";
-import { db, lessonsTable, lessonProgressTable, classesTable, usersTable, studentCodesTable } from "@workspace/db";
-import { eq, and, asc } from "drizzle-orm";
+import { db, lessonProgressTable, classesTable, usersTable, studentCodesTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
 import { requireAuth, type AuthedRequest } from "../lib/auth";
 import { addLearningRequest } from "../lib/learning-cache";
+import { getAllLessons } from "../lib/lessons";
 
 const router: IRouter = Router();
 
@@ -34,19 +35,18 @@ async function getLessonsForStudent(userId: string): Promise<StudentContext | nu
     .where(eq(classesTable.id, u.classId))
     .limit(1);
   if (!cls) return null;
-  const lessons = await db.select().from(lessonsTable).orderBy(asc(lessonsTable.orderIndex));
-  const progress = await db
-    .select()
-    .from(lessonProgressTable)
-    .where(eq(lessonProgressTable.userId, userId));
+  // FAZ 4.2: dersler cache'den; FAZ 4.1: bağımsız sorgular paralel çalışır
+  const [lessons, progress, codeRows] = await Promise.all([
+    getAllLessons(),
+    db.select().from(lessonProgressTable).where(eq(lessonProgressTable.userId, userId)),
+    db
+      .select({ code: studentCodesTable.code })
+      .from(studentCodesTable)
+      .where(eq(studentCodesTable.usedByUserId, userId))
+      .limit(1),
+  ]);
   const completed = new Set(progress.map((p) => p.lessonId));
-
-  // Öğrencinin student_code'unu bul
-  const [codeRow] = await db
-    .select({ code: studentCodesTable.code })
-    .from(studentCodesTable)
-    .where(eq(studentCodesTable.usedByUserId, userId))
-    .limit(1);
+  const codeRow = codeRows[0];
 
   return {
     student: u,
@@ -118,9 +118,8 @@ router.post("/student/lessons/:id/complete", async (req, res) => {
     });
   }
 
-  const refreshed = await getLessonsForStudent(auth.userId);
-  const updated = refreshed?.lessons.find((l) => l.id === lessonId);
-  res.json(updated ?? lesson);
+  // FAZ 4.1: İkinci tam yükleme kaldırıldı — güncel durum yerelde biliniyor
+  res.json({ ...lesson, completed: true });
 });
 
 router.get("/student/dashboard", async (req, res) => {

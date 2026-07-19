@@ -21,52 +21,86 @@ const router: IRouter = Router();
 
 router.use("/admin", requireAuth(["admin"]));
 
+// FAZ 4.1: Kurum istatistikleri — N kurum için sorgu sayısı sabit (4),
+// eskiden kurum başına 6 ayrı sorgu çalışıyordu (N+1 problemi).
+type InstitutionRow = typeof institutionsTable.$inferSelect;
+
+async function buildInstitutionStats(insts: InstitutionRow[]) {
+  if (insts.length === 0) return [];
+  const instIds = insts.map((i) => i.id);
+
+  // 3 bağımsız toplu sorgu paralel çalışır
+  const [userCounts, allCodes, allClasses] = await Promise.all([
+    db
+      .select({ institutionId: usersTable.institutionId, role: usersTable.role, c: count() })
+      .from(usersTable)
+      .where(inArray(usersTable.institutionId, instIds))
+      .groupBy(usersTable.institutionId, usersTable.role),
+    db
+      .select({
+        institutionId: teacherCodesTable.institutionId,
+        code: teacherCodesTable.code,
+        usedByUserId: teacherCodesTable.usedByUserId,
+      })
+      .from(teacherCodesTable)
+      .where(inArray(teacherCodesTable.institutionId, instIds))
+      .orderBy(teacherCodesTable.createdAt),
+    db
+      .select({ institutionId: classesTable.institutionId, cap: classesTable.studentCapacity })
+      .from(classesTable)
+      .where(inArray(classesTable.institutionId, instIds)),
+  ]);
+
+  const teacherCount = new Map<string, number>();
+  const studentCount = new Map<string, number>();
+  for (const r of userCounts) {
+    if (!r.institutionId) continue;
+    if (r.role === "teacher") teacherCount.set(r.institutionId, Number(r.c));
+    if (r.role === "student") studentCount.set(r.institutionId, Number(r.c));
+  }
+
+  const codesByInst = new Map<string, { code: string; usedByUserId: string | null }[]>();
+  for (const c of allCodes) {
+    const list = codesByInst.get(c.institutionId) ?? [];
+    list.push({ code: c.code, usedByUserId: c.usedByUserId });
+    codesByInst.set(c.institutionId, list);
+  }
+
+  const capByInst = new Map<string, number>();
+  for (const c of allClasses) {
+    capByInst.set(c.institutionId, (capByInst.get(c.institutionId) ?? 0) + (c.cap ?? 0));
+  }
+
+  return insts.map((inst) => {
+    const codes = codesByInst.get(inst.id) ?? [];
+    const totalTeachers = teacherCount.get(inst.id) ?? 0;
+    const totalStudents = studentCount.get(inst.id) ?? 0;
+    const unusedTeacherCount = codes.filter((c) => c.usedByUserId === null).length;
+    const usedTeacherCount = totalTeachers + unusedTeacherCount;
+    const usedStudentCount = capByInst.get(inst.id) ?? 0;
+
+    return {
+      id: inst.id,
+      name: inst.name,
+      teacherLimit: inst.teacherLimit,
+      studentLimit: inst.studentLimit,
+      totalTeachers,
+      totalStudents,
+      usedTeacherCount,
+      usedStudentCount,
+      remainingTeacherSlots: Math.max(0, inst.teacherLimit - usedTeacherCount),
+      remainingStudentSlots: Math.max(0, inst.studentLimit - usedStudentCount),
+      unusedTeacherCodes: unusedTeacherCount,
+      teacherCodes: codes.map((c) => ({ code: c.code, used: c.usedByUserId !== null })),
+    };
+  });
+}
+
 async function getInstitutionStats(id: string) {
   const [inst] = await db.select().from(institutionsTable).where(eq(institutionsTable.id, id)).limit(1);
   if (!inst) return null;
-  const [teachers] = await db
-    .select({ c: count() })
-    .from(usersTable)
-    .where(and(eq(usersTable.institutionId, id), eq(usersTable.role, "teacher")));
-  const [students] = await db
-    .select({ c: count() })
-    .from(usersTable)
-    .where(and(eq(usersTable.institutionId, id), eq(usersTable.role, "student")));
-  const [unusedTeachers] = await db
-    .select({ c: count() })
-    .from(teacherCodesTable)
-    .where(and(eq(teacherCodesTable.institutionId, id), isNull(teacherCodesTable.usedByUserId)));
-  const codes = await db
-    .select({ code: teacherCodesTable.code, usedByUserId: teacherCodesTable.usedByUserId })
-    .from(teacherCodesTable)
-    .where(eq(teacherCodesTable.institutionId, id))
-    .orderBy(teacherCodesTable.createdAt);
-
-  const totalTeachers = teachers?.c ?? 0;
-  const totalStudents = students?.c ?? 0;
-  const unusedTeacherCount = unusedTeachers?.c ?? 0;
-  const usedTeacherCount = totalTeachers + unusedTeacherCount;
-
-  const classesOfInst = await db
-    .select({ cap: classesTable.studentCapacity })
-    .from(classesTable)
-    .where(eq(classesTable.institutionId, id));
-  const usedStudentCount = classesOfInst.reduce((acc, r) => acc + (r.cap ?? 0), 0);
-
-  return {
-    id: inst.id,
-    name: inst.name,
-    teacherLimit: inst.teacherLimit,
-    studentLimit: inst.studentLimit,
-    totalTeachers,
-    totalStudents,
-    usedTeacherCount,
-    usedStudentCount,
-    remainingTeacherSlots: Math.max(0, inst.teacherLimit - usedTeacherCount),
-    remainingStudentSlots: Math.max(0, inst.studentLimit - usedStudentCount),
-    unusedTeacherCodes: unusedTeacherCount,
-    teacherCodes: codes.map((c) => ({ code: c.code, used: c.usedByUserId !== null })),
-  };
+  const [stats] = await buildInstitutionStats([inst]);
+  return stats ?? null;
 }
 
 // ---------------------------------------------------------------------------
@@ -74,9 +108,10 @@ async function getInstitutionStats(id: string) {
 // ---------------------------------------------------------------------------
 
 router.get("/admin/institutions", async (_req, res) => {
+  // FAZ 4.1: N+1 giderildi — kurum sayısından bağımsız toplam 4 sorgu
   const rows = await db.select().from(institutionsTable).orderBy(institutionsTable.createdAt);
-  const result = await Promise.all(rows.map((r) => getInstitutionStats(r.id)));
-  res.json(result.filter(Boolean));
+  const result = await buildInstitutionStats(rows);
+  res.json(result);
 });
 
 router.post("/admin/institutions", async (req, res) => {
