@@ -11,7 +11,7 @@ import {
   GetMeResponse,
 } from "@workspace/api-zod";
 import {
-  ADMIN_PASSWORD,
+  verifyAdminPassword,
   ADMIN_USER_ID,
   signToken,
   requireAuth,
@@ -51,7 +51,8 @@ router.post("/auth/admin-login", async (req, res) => {
     return;
   }
 
-  if (parsed.data.password !== ADMIN_PASSWORD) {
+  const passwordOk = await verifyAdminPassword(parsed.data.password);
+  if (!passwordOk) {
     const attempts = recordFailedAttempt(ip);
     await logLoginAttempt(req, false, "Hatalı şifre");
     const remaining = Math.max(0, 5 - attempts);
@@ -280,6 +281,20 @@ router.post("/auth/student-login", async (req, res) => {
       className: cls?.name ?? null,
     },
   });
+});
+
+// FAZ 3.1: Oturum yenileme — geçerli token'ı olan kullanıcı süresi dolmadan
+// yeni bir token alabilir (kayan oturum). Refresh token altyapısına gerek kalmadan
+// 1 saatlik kısa ömürlü token güvenliği korunur.
+router.post("/auth/refresh", requireAuth(), async (req, res) => {
+  const { auth } = req as unknown as AuthedRequest;
+  const user = await loadCurrentUser(auth);
+  if (!user) {
+    res.status(401).json({ error: "Kullanıcı bulunamadı" });
+    return;
+  }
+  const token = signToken({ userId: auth.userId, role: auth.role });
+  res.json({ token });
 });
 
 router.get("/auth/me", requireAuth(), async (req, res) => {

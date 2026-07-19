@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
 import type { Request, Response, NextFunction } from "express";
 import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
@@ -13,7 +14,16 @@ const _ADMIN_PASSWORD = process.env["ADMIN_PASSWORD"];
 if (!_ADMIN_PASSWORD) {
   throw new Error("ADMIN_PASSWORD environment variable is required");
 }
-export const ADMIN_PASSWORD: string = _ADMIN_PASSWORD;
+
+// FAZ 3.1: Şifre bellekte sadece bcrypt hash olarak tutulur (cost 12).
+// bcrypt.compare zamanlama saldırılarına karşı sabit-süreli karşılaştırma yapar.
+const BCRYPT_COST = 12;
+const ADMIN_PASSWORD_HASH: string = bcrypt.hashSync(_ADMIN_PASSWORD, BCRYPT_COST);
+
+export async function verifyAdminPassword(candidate: string): Promise<boolean> {
+  return bcrypt.compare(candidate, ADMIN_PASSWORD_HASH);
+}
+
 export const ADMIN_USER_ID = "admin-root";
 
 export type UserRole = "admin" | "teacher" | "student";
@@ -23,13 +33,27 @@ export interface JwtPayload {
   role: UserRole;
 }
 
+// FAZ 3.1: JWT sertleştirme — algoritma sabitlendi (HS256), issuer/audience eklendi.
+const JWT_ISSUER = "gitar-ogreniyorum";
+const JWT_AUDIENCE = "gitar-app";
+export const TOKEN_TTL = "1h";
+
 export function signToken(payload: JwtPayload): string {
-  return jwt.sign(payload, SESSION_SECRET as string, { expiresIn: "1h" });
+  return jwt.sign(payload, SESSION_SECRET as string, {
+    expiresIn: TOKEN_TTL,
+    algorithm: "HS256",
+    issuer: JWT_ISSUER,
+    audience: JWT_AUDIENCE,
+  });
 }
 
 export function verifyToken(token: string): JwtPayload | null {
   try {
-    const decoded = jwt.verify(token, SESSION_SECRET as string) as JwtPayload;
+    const decoded = jwt.verify(token, SESSION_SECRET as string, {
+      algorithms: ["HS256"],
+      issuer: JWT_ISSUER,
+      audience: JWT_AUDIENCE,
+    }) as JwtPayload;
     return decoded;
   } catch {
     return null;

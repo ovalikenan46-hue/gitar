@@ -1,4 +1,5 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
+import { startSessionRefresh } from "@/lib/auth";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -99,6 +100,11 @@ function Router() {
 function AppInner() {
   const [splashDone, setSplashDone] = useState(false);
   const { unlock } = useBgMusic();
+
+  // FAZ 3.1: Oturum açıkken token'ı sessizce yenile (45 dk'da bir)
+  useEffect(() => {
+    startSessionRefresh();
+  }, []);
 
   /**
    * Splash bitti → bg-music başlat.

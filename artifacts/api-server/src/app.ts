@@ -5,6 +5,7 @@ import path from "path";
 import fs from "fs";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import { errorHandler, notFoundHandler } from "./middlewares/errorHandler";
 
 const app: Express = express();
 
@@ -33,6 +34,9 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", router);
 
+// FAZ 3.2: /api altında eşleşmeyen rotalar için standart 404
+app.use("/api", notFoundHandler);
+
 // Production'da frontend statik dosyalarını servis et
 if (process.env.NODE_ENV === "production") {
   const frontendDist = path.resolve(process.cwd(), "artifacts/guitar-app/dist/public");
@@ -44,5 +48,8 @@ if (process.env.NODE_ENV === "production") {
     logger.info({ frontendDist }, "Serving frontend static files");
   }
 }
+
+// FAZ 3.2: Global hata yakalayıcı (en sonda olmalı)
+app.use(errorHandler);
 
 export default app;
