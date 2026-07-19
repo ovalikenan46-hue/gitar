@@ -1,0 +1,199 @@
+PRODUCTION READINESS AUDIT (SADECE ANALİZ)
+
+Öncelikle mevcut projeyi tamamen analiz et.
+
+Hiçbir dosyayı değiştirme.
+
+Hiçbir kod yazma.
+
+Hiçbir migration çalıştırma.
+
+Hiçbir veritabanı değişikliği yapma.
+
+Amacın yalnızca mevcut projenin 10.000 kayıtlı öğrenci kapasitesi için Production Readiness (Canlı Ortam Hazırlık) analizini yapmaktır.
+
+Proje Senaryosu
+
+Sistem aşağıdaki iş akışına göre çalışmaktadır:
+
+Admin giriş yapar.
+Kurum oluşturur.
+Kuruma öğretmen kodları üretir.
+Öğretmen oluşturduğu kod ile giriş yapar.
+Öğretmen kendi sınıflarını oluşturur.
+Öğrenci kodlarını oluşturur.
+Öğrenci öğretmenden aldığı kod ile giriş yapar.
+Öğrenci dersleri çalışır.
+Öğrenci "Bu konuyu öğrendim" işlemini yapar.
+Öğretmen öğrencilerin ilerlemesini takip eder.
+Öğretmen tüm sınıf tamamladığında bir sonraki modülü açar.
+Eğitim dönemi sonunda Admin kurumu siler ve o kuruma ait tüm veriler sistemden kaldırılır.
+
+Bu sistemin uzun süre güvenli ve hatasız çalışması hedeflenmektedir.
+
+Analiz Edilecek Konular
+1. Veri Güvenliği
+
+Kontrol et:
+
+Hiçbir veri kaybolabilir mi?
+Bellekte tutulan kritik veriler var mı?
+Sunucu yeniden başlarsa hangi veriler kaybolabilir?
+Transaction eksik olan işlemler var mı?
+Race condition oluşabilir mi?
+Aynı anda iki işlem çalışırsa veri bozulabilir mi?
+Duplicate kayıt oluşabilir mi?
+Veri tutarsızlığı oluşturabilecek noktalar var mı?
+
+Her madde için;
+
+Risk seviyesi
+Sebebi
+Çözüm önerisi
+
+yaz.
+
+2. Veritabanı
+
+Kontrol et:
+
+İndeksler yeterli mi?
+Büyük veri altında darboğaz oluşur mu?
+Foreign Key eksikliği sorun oluşturur mu?
+Silme işlemleri güvenli mi?
+Kurum silinince bağlı veriler tamamen temizleniyor mu?
+Yetim (orphan) kayıt oluşma ihtimali var mı?
+3. Authentication
+
+Kontrol et:
+
+Admin
+Öğretmen
+Öğrenci
+
+giriş sistemleri güvenli mi?
+
+Yetki kontrollerinde eksik nokta var mı?
+
+Yanlış kullanıcı başka kurumun verilerine ulaşabilir mi?
+
+4. Performans
+
+10.000 kayıtlı öğrenci hedefi için analiz yap.
+
+Aşağıdaki senaryoları değerlendir:
+
+200 aktif kullanıcı
+500 aktif kullanıcı
+1000 aktif kullanıcı
+
+Her senaryoda;
+
+darboğaz
+CPU
+RAM
+Database
+API
+
+değerlendirmesi yap.
+
+5. Cache
+
+Analiz et:
+
+Cache doğru kullanılıyor mu?
+Veri kaybı oluşturabilir mi?
+Restart sonrası sorun yaşanır mı?
+Cache invalidation doğru mu?
+6. API
+
+Kontrol et:
+
+Ağır çalışan endpoint var mı?
+Gereksiz sorgular var mı?
+N+1 problemi var mı?
+Transaction gerektiren endpoint'ler var mı?
+7. Admin İşlemleri
+
+Özellikle kontrol et:
+
+Kurum oluşturma
+Kurum silme
+Öğretmen kodu üretme
+Öğrenci kodu üretme
+Kota hesaplamaları
+
+Bu işlemlerde veri kaybı ihtimali var mı?
+
+8. Öğretmen İşlemleri
+
+Kontrol et:
+
+Sınıf oluşturma
+Öğrenci oluşturma
+Modül açma
+Öğrenci ilerleme takibi
+
+Aynı anda birden fazla işlem olduğunda veri bozulabilir mi?
+
+9. Öğrenci İşlemleri
+
+Kontrol et:
+
+Ders tamamlama
+"Bu konuyu öğrendim" kaydı
+İlerleme kayıtları
+
+Hiçbir durumda kayıt kaybolur mu?
+
+10. Production Altyapısı
+
+Aşağıdaki yapı hedeflenmektedir:
+
+Render Standard
+Neon PostgreSQL (ücretli plan)
+PostgreSQL
+10.000 kayıtlı öğrenci
+
+Bu altyapı yeterli mi?
+
+Eksik olan Production bileşenlerini listele.
+
+11. Production Readiness Skoru
+
+Aşağıdaki başlıkları 10 üzerinden puanla:
+
+Mimari
+Güvenlik
+Performans
+Veri Güvenliği
+Ölçeklenebilirlik
+Kod Kalitesi
+Veritabanı Tasarımı
+Authentication
+Authorization
+Genel Production Hazırlığı
+12. En Kritik Problemler
+
+Sadece gerçekten kritik olan problemleri önem sırasına göre listele.
+
+Her problem için:
+
+Neden kritik?
+Oluşma ihtimali
+Etkisi
+Çözümü
+
+ayrıntılı açıkla.
+
+13. Sonuç
+
+En son aşağıdaki sorulara net cevap ver:
+
+Bu sistem bugün canlıya alınabilir mi?
+10.000 kayıtlı öğrenci için uygun mu?
+Veri kaybı yaşanma ihtimali var mı?
+Mevcut mimari korunmalı mı?
+Yoksa yeniden tasarlanması gereken bölümler var mı?
+
+En önemli kural: Varsayım yapma. Sadece mevcut projeyi analiz ederek cevap ver. Kod yazma, dosya değiştirme veya veritabanında hiçbir işlem yapma. Bu raporun amacı, canlı ortama geçmeden önce sistemin güvenilirliğini ve 10.000 kayıtlı öğrenci hedefi için hazır olup olmadığını teknik olarak değerlendirmektir.
