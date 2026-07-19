@@ -15,6 +15,7 @@ import {
 import { eq, and, isNull, count, inArray, desc } from "drizzle-orm";
 import { CreateInstitutionBody, UpdateInstitutionLimitsBody } from "@workspace/api-zod";
 import { requireAuth, generateInviteCode } from "../lib/auth";
+import { teacherDashboardCache } from "../lib/cache";
 import { recordAudit, deviceFingerprint, detectDeviceType } from "../lib/adminSecurity";
 
 const router: IRouter = Router();
@@ -146,6 +147,9 @@ router.delete("/admin/institutions/:id", async (req, res) => {
     return;
   }
 
+  // FAZ 4.1 düzeltmesi: silinen kurumun öğretmen cache'leri de temizlenecek
+  let teacherIds: string[] = [];
+
   await db.transaction(async (tx) => {
     const instClasses = await tx
       .select({ id: classesTable.id })
@@ -154,10 +158,11 @@ router.delete("/admin/institutions/:id", async (req, res) => {
     const classIds = instClasses.map((c) => c.id);
 
     const instUsers = await tx
-      .select({ id: usersTable.id })
+      .select({ id: usersTable.id, role: usersTable.role })
       .from(usersTable)
       .where(eq(usersTable.institutionId, id));
     const userIds = instUsers.map((u) => u.id);
+    teacherIds = instUsers.filter((u) => u.role === "teacher").map((u) => u.id);
 
     if (userIds.length > 0) {
       await tx.delete(lessonProgressTable).where(inArray(lessonProgressTable.userId, userIds));
@@ -176,6 +181,12 @@ router.delete("/admin/institutions/:id", async (req, res) => {
     await tx.delete(teacherCodesTable).where(eq(teacherCodesTable.institutionId, id));
     await tx.delete(institutionsTable).where(eq(institutionsTable.id, id));
   });
+
+  // FAZ 4.1 düzeltmesi: kuruma ait tüm öğretmen dashboard cache'leri anında
+  // temizlenir — silinen sınıflar/kodlar cache'de kalmaz.
+  for (const tid of teacherIds) {
+    teacherDashboardCache.invalidate(tid);
+  }
 
   void recordAudit(req, "institution.delete", { institutionId: id, name: inst.name });
   res.status(204).send();

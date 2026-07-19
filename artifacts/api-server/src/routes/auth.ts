@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { teacherCodesTable, studentCodesTable, classesTable, institutionsTable } from "@workspace/db";
+import { teacherDashboardCache } from "../lib/cache";
 import {
   AdminLoginBody,
   TeacherLoginBody,
@@ -236,6 +237,7 @@ router.post("/auth/student-login", async (req, res) => {
     return;
   }
   let user;
+  let isNewRegistration = false;
   if (sCode.usedByUserId) {
     [user] = await db
       .select()
@@ -257,6 +259,7 @@ router.post("/auth/student-login", async (req, res) => {
       .update(studentCodesTable)
       .set({ usedByUserId: user.id })
       .where(eq(studentCodesTable.id, sCode.id));
+    isNewRegistration = true;
   }
   const token = signToken({ userId: user.id, role: "student" });
   const [cls] = await db
@@ -264,6 +267,11 @@ router.post("/auth/student-login", async (req, res) => {
     .from(classesTable)
     .where(eq(classesTable.id, sCode.classId))
     .limit(1);
+  // FAZ 4.1 düzeltmesi: öğrenci kodu kullanıldığında öğretmenin dashboard
+  // cache'i anında temizlenir — öğretmen yeni öğrenciyi hemen görür.
+  if (isNewRegistration && cls?.teacherId) {
+    teacherDashboardCache.invalidate(cls.teacherId);
+  }
   const [inst] = await db
     .select()
     .from(institutionsTable)
