@@ -1,0 +1,207 @@
+FAZ 6 — Production Load Test & Final Verification
+
+Öncelikle mevcut projeyi analiz et.
+
+Hiçbir dosyayı değiştirme.
+
+Hiçbir kod yazma.
+
+Hiçbir migration çalıştırma.
+
+Hiçbir veritabanı şemasını değiştirme.
+
+Hiçbir performans optimizasyonu yapma.
+
+Bu fazın amacı yalnızca mevcut Production sürümünün gerçek yük altında davranışını ölçmek ve raporlamaktır.
+
+Mevcut Sistem
+
+Sistem aşağıdaki akış ile çalışmaktadır:
+
+Admin giriş yapar.
+Kurum oluşturur.
+Kuruma öğretmen kodları üretir.
+Öğretmen kod ile giriş yapar.
+Öğretmen sınıf oluşturur.
+Öğrenci kodlarını üretir.
+Öğrenci kod ile giriş yapar.
+Öğrenci dersleri çalışır.
+Öğrenci "Bu konuyu öğrendim" işlemini yapar.
+Öğretmen öğrencilerin ilerlemesini takip eder.
+Öğretmen sınıf tamamlandığında yeni modülü açar.
+Eğitim dönemi sonunda Admin kurumu siler.
+
+Şu ana kadar;
+
+Veri güvenliği
+Transaction
+Foreign Key
+Index
+Admin güvenliği
+Device Authorization
+JWT
+bcrypt
+Global Error Handling
+Cache
+Cache Invalidation
+Performance optimizasyonları
+Monitoring
+Backup
+Production Config
+
+tamamlanmıştır.
+
+Bu fazda hiçbir geliştirme yapılmayacaktır.
+
+TEST SENARYOLARI
+
+Aşağıdaki yük senaryolarını simüle et.
+
+Senaryo 1
+
+100 eş zamanlı aktif kullanıcı
+
+Dağılım:
+
+2 Admin
+8 Öğretmen
+90 Öğrenci
+Senaryo 2
+
+250 eş zamanlı aktif kullanıcı
+
+Dağılım:
+
+3 Admin
+20 Öğretmen
+227 Öğrenci
+Senaryo 3
+
+500 eş zamanlı aktif kullanıcı
+
+Dağılım:
+
+5 Admin
+40 Öğretmen
+455 Öğrenci
+Kullanıcı Davranışları
+
+Admin
+
+Kurum oluşturur.
+Öğretmen kodu üretir.
+Kurum listesini görüntüler.
+Kurum silme işlemi (kontrollü sayıda).
+
+Öğretmen
+
+Giriş yapar.
+Dashboard açar.
+Sınıf oluşturur.
+Öğrenci kodu üretir.
+Modül açar.
+Öğrenci ilerlemesini görüntüler.
+
+Öğrenci
+
+Giriş yapar.
+Ders listesini görüntüler.
+Video açar.
+"Bu konuyu öğrendim" işlemi yapar.
+Dashboard görüntüler.
+Ölçülecek Metrikler
+
+Her senaryo için aşağıdaki bilgileri raporla:
+
+API Performansı
+Ortalama yanıt süresi
+En hızlı endpoint
+En yavaş endpoint
+P95
+P99
+Sunucu
+Ortalama CPU
+Maksimum CPU
+Ortalama RAM
+Maksimum RAM
+PostgreSQL
+Ortalama sorgu süresi
+En yavaş sorgu
+Bağlantı havuzu kullanımı
+Timeout oluştu mu?
+Deadlock oluştu mu?
+Cache
+Hit Rate
+Miss Rate
+Invalidation doğru çalıştı mı?
+Bellek sınırı aşıldı mı?
+Monitoring
+
+Health endpoint'lerini doğrula:
+
+/healthz
+/healthz/ready
+/healthz/details
+
+Yük altında doğru cevap veriyorlar mı?
+
+Güvenlik
+
+Yük altında aşağıdaki sistemler çalışmaya devam ediyor mu?
+
+Admin Device Authorization
+JWT doğrulama
+bcrypt
+Rate Limiting
+Audit Log
+Login Log
+Veri Bütünlüğü
+
+Yük testi sonunda kontrol et:
+
+Veri kaybı var mı?
+Duplicate kayıt oluştu mu?
+Yetim (orphan) kayıt oluştu mu?
+Transaction rollback'leri doğru çalıştı mı?
+Foreign Key ihlali oluştu mu?
+Hata Analizi
+
+Varsa aşağıdakileri listele:
+
+Timeout
+Memory Leak
+CPU Spike
+DB Bottleneck
+Race Condition
+Cache Problemleri
+Beklenmeyen Exception
+Connection Pool Sorunları
+Sonuç
+
+Aşağıdaki sorulara net cevap ver:
+
+Sistem Production için hazır mı?
+10.000 kayıtlı öğrenci hedefi için uygun mu?
+100 aktif kullanıcı sorunsuz çalışıyor mu?
+250 aktif kullanıcı sorunsuz çalışıyor mu?
+500 aktif kullanıcı sorunsuz çalışıyor mu?
+En büyük darboğaz nedir?
+Canlıya alınmadan önce yapılması gereken kritik bir eksik var mı?
+Rapor
+
+En sonunda aşağıdaki başlıklarla ayrıntılı bir rapor hazırla:
+
+Executive Summary
+Test Ortamı
+Test Senaryoları
+Performans Sonuçları
+Veritabanı Sonuçları
+Cache Sonuçları
+Monitoring Sonuçları
+Güvenlik Sonuçları
+Veri Bütünlüğü Sonuçları
+Tespit Edilen Riskler
+İyileştirme Önerileri (yalnızca gerçekten gerekli olanlar)
+Final Production Readiness Skoru (10 üzerinden)
+
+En önemli kural: Bu faz yalnızca ölçüm ve doğrulama içindir. Kod yazma, dosya değiştirme, veritabanı şeması değiştirme veya optimizasyon yapma. Mevcut Production sürümünü gerçek yük altında değerlendir ve sonuçları ayrıntılı şekilde raporla.
