@@ -158,52 +158,64 @@ router.post("/auth/teacher-login", async (req, res) => {
   const lName = lastName.trim();
   const fullName = `${fName} ${lName}`.trim();
 
-  const [tCode] = await db
-    .select()
-    .from(teacherCodesTable)
-    .where(eq(teacherCodesTable.code, cleanCode))
-    .limit(1);
-  if (!tCode) {
+  // Lock the invite-code row so simultaneous first logins cannot create
+  // multiple teacher accounts for the same persistent code.
+  const loginResult = await db.transaction(async (tx) => {
+    const [tCode] = await tx
+      .select()
+      .from(teacherCodesTable)
+      .where(eq(teacherCodesTable.code, cleanCode))
+      .for("update")
+      .limit(1);
+    if (!tCode) return null;
+
+    let user;
+    if (tCode.usedByUserId) {
+      [user] = await tx
+        .select()
+        .from(usersTable)
+        .where(eq(usersTable.id, tCode.usedByUserId))
+        .limit(1);
+      if (user) {
+        [user] = await tx
+          .update(usersTable)
+          .set({ firstName: fName, lastName: lName, name: fullName })
+          .where(eq(usersTable.id, user.id))
+          .returning();
+      }
+    }
+    if (!user) {
+      [user] = await tx
+        .insert(usersTable)
+        .values({
+          role: "teacher",
+          name: fullName,
+          firstName: fName,
+          lastName: lName,
+          institutionId: tCode.institutionId,
+        })
+        .returning();
+      await tx
+        .update(teacherCodesTable)
+        .set({ usedByUserId: user.id })
+        .where(eq(teacherCodesTable.id, tCode.id));
+    }
+
+    const [inst] = await tx
+      .select()
+      .from(institutionsTable)
+      .where(eq(institutionsTable.id, tCode.institutionId))
+      .limit(1);
+    return { user, inst };
+  });
+
+  if (!loginResult) {
     res.status(401).json({ error: "Geçersiz öğretmen kodu" });
     return;
   }
-  let user;
-  if (tCode.usedByUserId) {
-    [user] = await db
-      .select()
-      .from(usersTable)
-      .where(eq(usersTable.id, tCode.usedByUserId))
-      .limit(1);
-    if (user) {
-      [user] = await db
-        .update(usersTable)
-        .set({ firstName: fName, lastName: lName, name: fullName })
-        .where(eq(usersTable.id, user.id))
-        .returning();
-    }
-  }
-  if (!user) {
-    [user] = await db
-      .insert(usersTable)
-      .values({
-        role: "teacher",
-        name: fullName,
-        firstName: fName,
-        lastName: lName,
-        institutionId: tCode.institutionId,
-      })
-      .returning();
-    await db
-      .update(teacherCodesTable)
-      .set({ usedByUserId: user.id })
-      .where(eq(teacherCodesTable.id, tCode.id));
-  }
+
+  const { user, inst } = loginResult;
   const token = signToken({ userId: user.id, role: "teacher" });
-  const [inst] = await db
-    .select()
-    .from(institutionsTable)
-    .where(eq(institutionsTable.id, tCode.institutionId))
-    .limit(1);
   const teacherUser = user as typeof usersTable.$inferSelect;
   res.json({
     token,
@@ -227,48 +239,60 @@ router.post("/auth/student-login", async (req, res) => {
   }
   const { code, name } = parsed.data;
   const cleanCode = code.trim().toUpperCase();
-  const [sCode] = await db
-    .select()
-    .from(studentCodesTable)
-    .where(eq(studentCodesTable.code, cleanCode))
-    .limit(1);
-  if (!sCode) {
+
+  // Lock the invite-code row so simultaneous first logins cannot create
+  // duplicate student accounts or reassign the same code.
+  const registration = await db.transaction(async (tx) => {
+    const [sCode] = await tx
+      .select()
+      .from(studentCodesTable)
+      .where(eq(studentCodesTable.code, cleanCode))
+      .for("update")
+      .limit(1);
+    if (!sCode) return null;
+
+    let user;
+    let isNewRegistration = false;
+    if (sCode.usedByUserId) {
+      [user] = await tx
+        .select()
+        .from(usersTable)
+        .where(eq(usersTable.id, sCode.usedByUserId))
+        .limit(1);
+    }
+    if (!user) {
+      [user] = await tx
+        .insert(usersTable)
+        .values({
+          role: "student",
+          name: name.trim() || "Öğrenci",
+          institutionId: sCode.institutionId,
+          classId: sCode.classId,
+        })
+        .returning();
+      await tx
+        .update(studentCodesTable)
+        .set({ usedByUserId: user.id })
+        .where(eq(studentCodesTable.id, sCode.id));
+      isNewRegistration = true;
+    }
+    return { user, sCode, isNewRegistration };
+  });
+
+  if (!registration) {
     res.status(401).json({ error: "Geçersiz öğrenci kodu" });
     return;
   }
-  let user;
-  let isNewRegistration = false;
-  if (sCode.usedByUserId) {
-    [user] = await db
-      .select()
-      .from(usersTable)
-      .where(eq(usersTable.id, sCode.usedByUserId))
-      .limit(1);
-  }
-  if (!user) {
-    [user] = await db
-      .insert(usersTable)
-      .values({
-        role: "student",
-        name: name.trim() || "Öğrenci",
-        institutionId: sCode.institutionId,
-        classId: sCode.classId,
-      })
-      .returning();
-    await db
-      .update(studentCodesTable)
-      .set({ usedByUserId: user.id })
-      .where(eq(studentCodesTable.id, sCode.id));
-    isNewRegistration = true;
-  }
+
+  const { user, sCode, isNewRegistration } = registration;
   const token = signToken({ userId: user.id, role: "student" });
   const [cls] = await db
     .select()
     .from(classesTable)
     .where(eq(classesTable.id, sCode.classId))
     .limit(1);
-  // FAZ 4.1 düzeltmesi: öğrenci kodu kullanıldığında öğretmenin dashboard
-  // cache'i anında temizlenir — öğretmen yeni öğrenciyi hemen görür.
+  // The dashboard cache is local to one server process; successful registration
+  // invalidates this process so a single-instance deployment shows the new user.
   if (isNewRegistration && cls?.teacherId) {
     teacherDashboardCache.invalidate(cls.teacherId);
   }
