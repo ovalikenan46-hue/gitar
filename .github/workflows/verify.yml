@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      PORT: "10000"
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
