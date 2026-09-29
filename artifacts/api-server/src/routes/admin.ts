@@ -199,36 +199,78 @@ router.patch("/admin/institutions/:id", async (req, res) => {
     return;
   }
   const id = req.params.id;
-  const current = await getInstitutionStats(id);
-  if (!current) {
+  const result = await db.transaction(async (tx) => {
+    const [institution] = await tx
+      .select()
+      .from(institutionsTable)
+      .where(eq(institutionsTable.id, id))
+      .for("update")
+      .limit(1);
+    if (!institution) return { kind: "missing" as const };
+
+    const [[teacherRow], [unusedCodeRow], classRows] = await Promise.all([
+      tx
+        .select({ c: count() })
+        .from(usersTable)
+        .where(and(eq(usersTable.institutionId, id), eq(usersTable.role, "teacher"))),
+      tx
+        .select({ c: count() })
+        .from(teacherCodesTable)
+        .where(and(eq(teacherCodesTable.institutionId, id), isNull(teacherCodesTable.usedByUserId))),
+      tx
+        .select({ cap: classesTable.studentCapacity })
+        .from(classesTable)
+        .where(eq(classesTable.institutionId, id)),
+    ]);
+    const usedTeacherCount = Number(teacherRow?.c ?? 0) + Number(unusedCodeRow?.c ?? 0);
+    const usedStudentCount = classRows.reduce((sum, row) => sum + (row.cap ?? 0), 0);
+
+    if (parsed.data.teacherLimit < usedTeacherCount) {
+      return {
+        kind: "teacher-limit" as const,
+        used: usedTeacherCount,
+      };
+    }
+    if (parsed.data.studentLimit < usedStudentCount) {
+      return {
+        kind: "student-limit" as const,
+        used: usedStudentCount,
+      };
+    }
+
+    await tx
+      .update(institutionsTable)
+      .set({
+        teacherLimit: parsed.data.teacherLimit,
+        studentLimit: parsed.data.studentLimit,
+      })
+      .where(eq(institutionsTable.id, id));
+    return { kind: "updated" as const, institution };
+  });
+
+  if (result.kind === "missing") {
     res.status(404).json({ error: "Kurum bulunamadı" });
     return;
   }
-  if (parsed.data.teacherLimit < current.usedTeacherCount) {
+  if (result.kind === "teacher-limit") {
     res.status(400).json({
-      error: `Öğretmen limiti mevcut kullanımdan (${current.usedTeacherCount}) küçük olamaz`,
+      error: `Öğretmen limiti mevcut kullanımdan (${result.used}) küçük olamaz`,
     });
     return;
   }
-  if (parsed.data.studentLimit < current.usedStudentCount) {
+  if (result.kind === "student-limit") {
     res.status(400).json({
-      error: `Öğrenci limiti mevcut kullanımdan (${current.usedStudentCount}) küçük olamaz`,
+      error: `Öğrenci limiti mevcut kullanımdan (${result.used}) küçük olamaz`,
     });
     return;
   }
-  await db
-    .update(institutionsTable)
-    .set({
-      teacherLimit: parsed.data.teacherLimit,
-      studentLimit: parsed.data.studentLimit,
-    })
-    .where(eq(institutionsTable.id, id));
+
   void recordAudit(req, "institution.update_limits", {
     institutionId: id,
-    name: current.name,
-    oldTeacherLimit: current.teacherLimit,
+    name: result.institution.name,
+    oldTeacherLimit: result.institution.teacherLimit,
     newTeacherLimit: parsed.data.teacherLimit,
-    oldStudentLimit: current.studentLimit,
+    oldStudentLimit: result.institution.studentLimit,
     newStudentLimit: parsed.data.studentLimit,
   });
   const updated = await getInstitutionStats(id);
@@ -237,28 +279,63 @@ router.patch("/admin/institutions/:id", async (req, res) => {
 
 router.post("/admin/institutions/:id/teacher-codes", async (req, res) => {
   const id = req.params.id;
-  const stats = await getInstitutionStats(id);
-  if (!stats) {
+  const result = await db.transaction(async (tx) => {
+    const [institution] = await tx
+      .select()
+      .from(institutionsTable)
+      .where(eq(institutionsTable.id, id))
+      .for("update")
+      .limit(1);
+    if (!institution) return { kind: "missing" as const };
+
+    const [[teacherRow], [unusedCodeRow]] = await Promise.all([
+      tx
+        .select({ c: count() })
+        .from(usersTable)
+        .where(and(eq(usersTable.institutionId, id), eq(usersTable.role, "teacher"))),
+      tx
+        .select({ c: count() })
+        .from(teacherCodesTable)
+        .where(and(eq(teacherCodesTable.institutionId, id), isNull(teacherCodesTable.usedByUserId))),
+    ]);
+    const usedTeacherCount = Number(teacherRow?.c ?? 0) + Number(unusedCodeRow?.c ?? 0);
+    if (usedTeacherCount >= institution.teacherLimit) {
+      return { kind: "full" as const };
+    }
+
+    for (let attempt = 0; attempt < 10; attempt++) {
+      const code = generateInviteCode();
+      const [created] = await tx
+        .insert(teacherCodesTable)
+        .values({ code, institutionId: id })
+        .onConflictDoNothing({ target: teacherCodesTable.code })
+        .returning({ code: teacherCodesTable.code });
+      if (created) {
+        return { kind: "created" as const, code: created.code, institutionName: institution.name };
+      }
+    }
+    return { kind: "generation-failed" as const };
+  });
+
+  if (result.kind === "missing") {
     res.status(404).json({ error: "Kurum bulunamadı" });
     return;
   }
-  if (stats.remainingTeacherSlots <= 0) {
+  if (result.kind === "full") {
     res.status(400).json({ error: "Öğretmen limiti doldu" });
     return;
   }
-  let code = generateInviteCode();
-  for (let i = 0; i < 5; i++) {
-    const [existing] = await db
-      .select()
-      .from(teacherCodesTable)
-      .where(eq(teacherCodesTable.code, code))
-      .limit(1);
-    if (!existing) break;
-    code = generateInviteCode();
+  if (result.kind === "generation-failed") {
+    res.status(500).json({ error: "Öğretmen kodu üretilemedi, lütfen tekrar deneyin" });
+    return;
   }
-  await db.insert(teacherCodesTable).values({ code, institutionId: id });
-  void recordAudit(req, "teacher_code.generate", { institutionId: id, name: stats.name, code });
-  res.status(201).json({ code });
+
+  void recordAudit(req, "teacher_code.generate", {
+    institutionId: id,
+    name: result.institutionName,
+    code: result.code,
+  });
+  res.status(201).json({ code: result.code });
 });
 
 router.get("/admin/stats", async (_req, res) => {
