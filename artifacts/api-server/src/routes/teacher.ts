@@ -168,23 +168,38 @@ async function loadTeacher(userId: string) {
   return t;
 }
 
-async function getInstitutionRemaining(institutionId: string) {
-  const [inst] = await db
+// FAZ 4.1: Toplu kod üretimi — kota kontrolü ve kod oluşturma aynı
+// kurum satırı kilidi altında yapılır, böylece paralel istekler kotayı aşamaz.
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+async function assertStudentCapacityInTransaction(
+  tx: Tx,
+  institutionId: string,
+  requestedStudents: number,
+): Promise<void> {
+  const [institution] = await tx
     .select()
     .from(institutionsTable)
     .where(eq(institutionsTable.id, institutionId))
+    .for("update")
     .limit(1);
-  if (!inst) return null;
-  const allClasses = await db
+  if (!institution) {
+    throw new AppError(400, "Kurum bulunamadı", "INSTITUTION_NOT_FOUND");
+  }
+
+  const classes = await tx
     .select({ cap: classesTable.studentCapacity })
     .from(classesTable)
     .where(eq(classesTable.institutionId, institutionId));
-  const usedStudentCount = allClasses.reduce((acc, r) => acc + (r.cap ?? 0), 0);
-  return {
-    institution: inst,
-    usedStudentCount,
-    remainingStudentSlots: Math.max(0, inst.studentLimit - usedStudentCount),
-  };
+  const usedStudentCount = classes.reduce((sum, row) => sum + (row.cap ?? 0), 0);
+  const remainingStudentSlots = Math.max(0, institution.studentLimit - usedStudentCount);
+  if (requestedStudents > remainingStudentSlots) {
+    throw new AppError(
+      400,
+      `Kurum öğrenci kontenjanı yetersiz (kalan: ${remainingStudentSlots})`,
+      "INSTITUTION_STUDENT_LIMIT",
+    );
+  }
 }
 
 // FAZ 4.1: Toplu kod üretimi — eskiden kod başına 1 SELECT + 1 INSERT (2N sorgu),
@@ -299,19 +314,12 @@ router.post("/teacher/classes", async (req, res) => {
     res.status(400).json({ error: "Önce kimlik bilgilerinizi tamamlayın" });
     return;
   }
-  const remaining = await getInstitutionRemaining(teacher.institutionId);
-  if (!remaining) {
-    res.status(400).json({ error: "Kurum bulunamadı" });
-    return;
-  }
-  if (parsed.data.studentCount > remaining.remainingStudentSlots) {
-    res.status(400).json({
-      error: `Kurum öğrenci kontenjanı yetersiz (kalan: ${remaining.remainingStudentSlots})`,
-    });
-    return;
-  }
-
   const newClass = await db.transaction(async (tx) => {
+    await assertStudentCapacityInTransaction(
+      tx,
+      teacher.institutionId!,
+      parsed.data.studentCount,
+    );
     const [cls] = await tx
       .insert(classesTable)
       .values({
@@ -343,24 +351,26 @@ router.post("/teacher/classes/:id/expand", async (req, res) => {
     res.status(404).json({ error: "Sınıf bulunamadı" });
     return;
   }
-  const remaining = await getInstitutionRemaining(cls.institutionId);
-  if (!remaining) {
-    res.status(400).json({ error: "Kurum bulunamadı" });
-    return;
-  }
-  if (parsed.data.additional > remaining.remainingStudentSlots) {
-    res.status(400).json({
-      error: `Kurum öğrenci kontenjanı yetersiz (kalan: ${remaining.remainingStudentSlots})`,
-    });
-    return;
-  }
-
   await db.transaction(async (tx) => {
+    await assertStudentCapacityInTransaction(
+      tx,
+      cls.institutionId,
+      parsed.data.additional,
+    );
+    const [currentClass] = await tx
+      .select()
+      .from(classesTable)
+      .where(and(eq(classesTable.id, id), eq(classesTable.teacherId, auth.userId)))
+      .for("update")
+      .limit(1);
+    if (!currentClass) {
+      throw new AppError(404, "Sınıf bulunamadı", "CLASS_NOT_FOUND");
+    }
     await tx
       .update(classesTable)
-      .set({ studentCapacity: (cls.studentCapacity ?? 0) + parsed.data.additional })
+      .set({ studentCapacity: (currentClass.studentCapacity ?? 0) + parsed.data.additional })
       .where(eq(classesTable.id, id));
-    await insertStudentCodes(tx, parsed.data.additional, id, cls.institutionId);
+    await insertStudentCodes(tx, parsed.data.additional, id, currentClass.institutionId);
   });
 
   teacherDashboardCache.invalidate(auth.userId);
