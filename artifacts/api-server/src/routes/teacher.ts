@@ -206,7 +206,6 @@ async function assertStudentCapacityInTransaction(
 // şimdi N kod için toplu INSERT (onConflictDoNothing + returning ile çakışma
 // güvenli). Tam N kod garanti edilir; edilemezse AppError fırlatılır ve
 // transaction geri alınır (kapasite ile kod sayısı asla ayrışmaz).
-type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 async function insertStudentCodes(
   tx: Tx,
